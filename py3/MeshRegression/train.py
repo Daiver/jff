@@ -27,7 +27,7 @@ def mk_img_mesh_transforms(image_transforms):
 
 def main():
 
-    epochs = 1000
+    epochs = 10000
     batch_size = 128
     lr = 0.02
     device = 'cuda'
@@ -59,6 +59,7 @@ def main():
     print("START TRAINING")
     model.to(device)
     losses = []
+    best_val = 1e10
     for epoch in range(epochs):
 
         model.train()
@@ -77,7 +78,10 @@ def main():
         mean_loss = np.mean(losses)
         val_loss = run_validate(model, criterion, val_loader, device)
         print(f"{epoch + 1}/{epochs} loss = {mean_loss}, val_loss = {val_loss}")
-        torch.save(model.state_dict(), f"checkpoints/{epoch}_{mean_loss}_{val_loss}.pt")
+        if val_loss < best_val:
+            best_val = val_loss
+            print("New best val loss", val_loss)
+            torch.save(model.state_dict(), f"checkpoints/{epoch}_{mean_loss}_{val_loss}.pt")
 
 
 if __name__ == '__main__':

@@ -49,7 +49,7 @@ def main():
     for img, _ in train_loader:
         vertices = model(img)
         for i in range(vertices.size(0)):
-            replace_obj_vertices(path_to_default_obj, vertices[i], "/home/daiver/res/Object{:03d}.obj")
+            replace_obj_vertices(path_to_default_obj, vertices[i], "/home/daiver/res/Object{:03d}.obj".format(obj_ind))
             obj_ind += 1
 
 
