@@ -68,7 +68,7 @@ sampling_rate = 5
 
 def gen_random_example(image_size):
     # rand_translate = np.random.normal(scale=8, size=2)
-    rand_translate = np.random.uniform(-17, 17, size=2)
+    rand_translate = np.random.uniform(-10, 10, size=2)
     # print('rand_translate =', rand_translate)
     line_offset = default_line_offset + rand_translate
     line_scale = default_line_scale
@@ -76,7 +76,7 @@ def gen_random_example(image_size):
 
     target_img = np.zeros(image_size, dtype=np.float32)
     draw_lines(neutral_lines, target_img, 1, 1)
-    target_img = cv2.GaussianBlur(target_img, (15, 15), 0.5)
+    # target_img = cv2.GaussianBlur(target_img, (15, 15), 0.5)
     return target_img, neutral_lines, rand_translate
 
 
@@ -126,18 +126,6 @@ def main2():
 
             translations = model(target_img_batch.unsqueeze(1))
             loss = points_render_loss(translations, sampled_neutral, target_img_batch)
-            # loss = 0.0
-            # for i in range(target_img_batch.size(0)):
-            #     translation = translations[i]
-            #     target_img = target_img_batch[i]
-            #     diff_img = mk_diff_img(target_img)
-            #     target_colors = torch.FloatTensor(np.ones(len(sampled_neutral))).cuda()
-            #     target_colors = target_colors * target_img.max()
-            #
-            #     points = sampled_neutral + translation
-            #     pixels = diff_img.apply(points)
-            #     diff = pixels - target_colors
-            #     loss = loss + diff.norm(2) / len(points)
 
             losses.append(loss.item())
             loss.backward()
