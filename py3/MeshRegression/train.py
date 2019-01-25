@@ -13,41 +13,27 @@ import pretrainedmodels
 import albumentations
 
 from datasets import mk_kostet_dataset
+from train_utils import run_validate
+from models import Model
 import paths
 
 
 def mk_img_mesh_transforms(image_transforms):
-    to_tensor = torchvision.transforms.ToTensor()
-    
+
     def apply(img, mesh):
-        return image_transforms(img), to_tensor(mesh)
+        return image_transforms(img), torch.from_numpy(mesh)
     return apply
-
-
-class Model(nn.Module):
-    def __init__(self, backbone, n_final_features, n_outputs):
-        super().__init__()
-        self.add_module("backbone", backbone)
-        self.backbone = backbone
-        self.n_final_features = n_final_features
-        self.fc_final = nn.Linear(n_final_features, n_outputs)
-
-    def forward(self, x):
-        x = self.backbone.features(x)
-        x = F.adaptive_avg_pool2d(x, (1, 1)).view(-1, self.n_final_features)
-        x = self.fc_final(x)
-
-        return x
 
 
 def main():
 
-    epochs = 100
-    batch_size = 32
-    lr = 0.002
+    epochs = 1000
+    batch_size = 128
+    lr = 0.02
+    device = 'cuda'
 
     backbone = pretrainedmodels.resnet18()
-    model = Model(backbone, 512 * 4 * 3, 9591 * 3)
+    model = Model(backbone, 512, 9591)
 
     train_img_transforms = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),
@@ -68,20 +54,30 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = nn.MSELoss()
 
+    # model = torch.load("checkpoints/100_0.6407536556351472.pt")
+
+    print("START TRAINING")
+    model.to(device)
     losses = []
     for epoch in range(epochs):
+
         model.train()
         for inp, target in train_loader:
+            inp, target = inp.to(device), target.to(device)
             output = model(inp)
+
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
 
-            losses.append(loss)
+            losses.append(loss.item())
+        model.eval()
+
         mean_loss = np.mean(losses)
-        print(f"{epoch}/{epochs} loss = {mean_loss}")
-        torch.save(model, f"checkpoints/{epoch}_{mean_loss}.pt")
+        val_loss = run_validate(model, criterion, val_loader, device)
+        print(f"{epoch + 1}/{epochs} loss = {mean_loss}, val_loss = {val_loss}")
+        torch.save(model.state_dict(), f"checkpoints/{epoch}_{mean_loss}_{val_loss}.pt")
 
 
 if __name__ == '__main__':
