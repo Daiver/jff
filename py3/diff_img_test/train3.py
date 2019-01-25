@@ -11,7 +11,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 
-from losses import mk_diff_img
+from losses import mk_diff_img, points_render_loss
 from models import Model
 
 
@@ -125,19 +125,19 @@ def main2():
             target_img_batch = target_img_batch.cuda()
 
             translations = model(target_img_batch.unsqueeze(1))
-
-            loss = 0.0
-            for i in range(target_img_batch.size(0)):
-                translation = translations[i]
-                target_img = target_img_batch[i]
-                diff_img = mk_diff_img(target_img)
-                target_colors = torch.FloatTensor(np.ones(len(sampled_neutral))).cuda()
-                target_colors = target_colors * target_img.max()
-
-                points = sampled_neutral + translation
-                pixels = diff_img.apply(points)
-                diff = pixels - target_colors
-                loss = loss + diff.norm(2) / len(points)
+            loss = points_render_loss(translations, sampled_neutral, target_img_batch)
+            # loss = 0.0
+            # for i in range(target_img_batch.size(0)):
+            #     translation = translations[i]
+            #     target_img = target_img_batch[i]
+            #     diff_img = mk_diff_img(target_img)
+            #     target_colors = torch.FloatTensor(np.ones(len(sampled_neutral))).cuda()
+            #     target_colors = target_colors * target_img.max()
+            #
+            #     points = sampled_neutral + translation
+            #     pixels = diff_img.apply(points)
+            #     diff = pixels - target_colors
+            #     loss = loss + diff.norm(2) / len(points)
 
             losses.append(loss.item())
             loss.backward()

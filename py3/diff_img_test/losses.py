@@ -1,6 +1,7 @@
 import torch
 import torch.autograd as autograd
 import torch.nn.functional as F
+import numpy as np
 
 
 def mk_diff_img(image, channels_first=True):
@@ -79,3 +80,19 @@ def loop_laplacian_loss(points_positions, old_positions):
 
         res += (edge - old_edge).norm(2)
     return res
+
+
+def points_render_loss(translations, sampled_neutral, target_img_batch):
+    loss = 0.0
+    for i in range(target_img_batch.size(0)):
+        translation = translations[i]
+        target_img = target_img_batch[i]
+        diff_img = mk_diff_img(target_img)
+        target_colors = torch.FloatTensor(np.ones(len(sampled_neutral))).cuda()
+        target_colors = target_colors * target_img.max()
+
+        points = sampled_neutral + translation
+        pixels = diff_img.apply(points)
+        diff = pixels - target_colors
+        loss = loss + diff.norm(2) / len(points)
+    return loss
