@@ -29,7 +29,7 @@ def main():
 
     epochs = 10000
     batch_size = 128
-    lr = 0.02
+    lr = 0.002
     device = 'cuda'
 
     backbone = pretrainedmodels.resnet18()
@@ -51,7 +51,8 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-    optimizer = optim.Adam(model.parameters(), lr=lr)
+    # optimizer = optim.Adam(model.parameters(), lr=lr)
+    optimizer = optim.Adam(model.fc_final.parameters(), lr=lr)
     criterion = nn.MSELoss()
 
     # model = torch.load("checkpoints/100_0.6407536556351472.pt")
@@ -78,10 +79,14 @@ def main():
         mean_loss = np.mean(losses)
         val_loss = run_validate(model, criterion, val_loader, device)
         print(f"{epoch + 1}/{epochs} loss = {mean_loss}, val_loss = {val_loss}")
+
+        if epoch % 10 == 0:
+            torch.save(model.state_dict(), "checkpoints/current.pt")
         if val_loss < best_val:
             best_val = val_loss
             print("New best val loss", val_loss)
-            torch.save(model.state_dict(), f"checkpoints/{epoch}_{mean_loss}_{val_loss}.pt")
+            torch.save(model.state_dict(), "checkpoints/{:05d}_{}_{}.pt".format(
+                epoch, mean_loss, val_loss))
 
 
 if __name__ == '__main__':

@@ -27,12 +27,9 @@ def main():
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize(backbone.mean, backbone.std),
     ])
-    val_img_transforms = train_img_transforms
     train_transforms = mk_img_mesh_transforms(train_img_transforms)
-    val_transforms = mk_img_mesh_transforms(val_img_transforms)
 
     train_dataset = mk_kostet_dataset(list(range(0, 299)), train_transforms)
-    val_dataset = mk_kostet_dataset(list(range(100, 200)), val_transforms)
 
     print(f"n train = {len(train_dataset)}, n val = {len(val_dataset)}")
 
