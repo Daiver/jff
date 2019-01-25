@@ -56,12 +56,13 @@ def main():
     criterion = nn.MSELoss()
 
     # model = torch.load("checkpoints/100_0.6407536556351472.pt")
+    model.load_state_dict(torch.load("checkpoints/current.pt"))
 
     print("START TRAINING")
     model.to(device)
     losses = []
     best_val = 1e10
-    for epoch in range(epochs):
+    for epoch in range(400, epochs):
 
         model.train()
         for inp, target in train_loader:
