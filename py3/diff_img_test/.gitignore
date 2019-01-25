@@ -1,0 +1,5 @@
+.venv/*
+saved_models/*
+tmp*
+res/*
+*.pt

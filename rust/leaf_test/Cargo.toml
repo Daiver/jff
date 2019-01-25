@@ -1,0 +1,13 @@
+[package]
+name = "leaf_test"
+version = "0.1.0"
+authors = ["daiver <ra22341@ya.ru>"]
+
+[dependencies]
+collenchyma = { version = "0.0.8", default-features = false, features = ["native"] } # native feature to read/write data into tensors
+collenchyma-blas = { version = "0.2.0", default-features = false, features = ["native"] } # only compiles with native feature
+collenchyma-nn = { version = "0.3.2", default-features = false }
+
+
+[dependencies.leaf]
+path = "/home/daiver/coding/leaf"

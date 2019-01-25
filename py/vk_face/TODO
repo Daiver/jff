@@ -1,0 +1,20 @@
+PROBLEMS:
+    * Classification over 1kk classes
+
+    * Classification with very small numbers of samples for each class
+        - google article
+            - hard to unserstand
+            - hard to implement
+            - ???
+        - random forest 
+            - may be bad for over 1k classes
+            - good enough for start
+
+    * Samples filtering (dirty samples)
+        - K-means (two classes) through one class samples
+            - bearing sample is needed
+            - good descriptor(s) is needed
+
+    * Image parsing
+
+    * Social crawler

@@ -1,0 +1,6 @@
+data*
+dump*
+logs*
+to_show*
+.*.py.swn
+.ipynb_checkpoints/

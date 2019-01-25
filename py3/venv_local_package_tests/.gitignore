@@ -1,0 +1,4 @@
+.venv/*
+build/*
+dist/*
+test_package_pkg.egg-info/*

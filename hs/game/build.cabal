@@ -1,0 +1,22 @@
+Name:           TestPackage
+Version:        0.0
+Cabal-Version:  >= 1.2
+License:        BSD3
+Author:         Dark Daiver
+Synopsis:       Small package with program and tests
+Build-Type:     Simple
+
+Executable Tests
+  Build-Depends:  base,
+                  containers ,
+                  lens,
+                  HUnit
+  Main-Is:        Tests.hs
+  Hs-Source-Dirs: .
+
+Executable Main
+  Build-Depends:  base,
+                  containers ,
+                  lens
+  Main-Is:        Main.hs
+  Hs-Source-Dirs: .

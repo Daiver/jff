@@ -1,0 +1,24 @@
+Name:           Cloud
+Version:        0.1
+Cabal-Version:  >= 1.2
+License:        BSD3
+Author:         Dark Daiver
+Synopsis:       Small package with program and tests
+Build-Type:     Simple
+
+Executable ServerCloud
+  Build-Depends:  base,
+                  mtl,
+                  cloud-haskell,
+                  distributed-process,
+                  distributed-process-p2p
+  Main-Is:        ServerCloud.hs
+  Hs-Source-Dirs: .
+
+Executable ClientCloud
+  Build-Depends:  base,
+                  containers,
+                  network-transport-tcp,
+                  binary
+  Main-Is:        ClientCloud.hs
+  Hs-Source-Dirs: .

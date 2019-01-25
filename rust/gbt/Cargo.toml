@@ -1,0 +1,10 @@
+[package]
+name = "gbt"
+version = "0.1.0"
+authors = ["Kirill Klimov <ra22341@ya.ru>"]
+
+[lib]
+name = "gbt"
+path = "src/lib.rs"
+
+[dependencies]

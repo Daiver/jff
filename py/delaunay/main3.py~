@@ -1,0 +1,206 @@
+import copy
+import cv2
+import numpy as np
+import numpy.linalg as npli
+
+import delcommon
+
+def checkDelaunay2(points, p):
+    A = np.array([[points[0][0], points[0][1], 1], 
+                  [points[1][0], points[1][1], 1], 
+                  [points[2][0], points[2][1],1]])
+    a = npli.det(A)
+    B = np.array([
+                  [points[0][0]**2 + points[0][1]**2, points[0][1], 1 ],
+                  [points[1][0]**2 + points[1][1]**2, points[1][1], 1 ],
+                  [points[2][0]**2 + points[2][1]**2, points[2][1], 1 ],
+                  ])
+    b = npli.det(B)
+    C = np.array([
+                  [points[0][0]**2 + points[0][1]**2, points[0][0], 1 ],
+                  [points[1][0]**2 + points[1][1]**2, points[1][0], 1 ],
+                  [points[2][0]**2 + points[2][1]**2, points[2][0], 1 ],
+                  ])
+    c = npli.det(C)
+    D = np.array([
+                  [points[0][0]**2 + points[0][1]**2, points[0][0], points[0][1] ],
+                  [points[1][0]**2 + points[1][1]**2, points[1][0], points[1][1] ],
+                  [points[2][0]**2 + points[2][1]**2, points[2][0], points[2][1] ],
+                  ])
+    d = npli.det(D)
+    exp = (p[0]**2 + p[1]**2)*a - p[0]*b + p[1]*c - d
+    print a, b, c, d
+    return exp*np.sign(a)
+
+class Vertex:
+    def __init__(self, vertexes, faces, hedges, point, _edge):
+        self.vertexes = vertexes
+        self.faces = faces
+        self.hedges = hedges
+        self.point = point
+        self._edge = _edge
+    
+    def edge(self): return self.hedges[self._edge]
+
+    def __repr__(self):
+        return 'Vertex(%s, %d)' % (str(self.point), str(self._edge))
+
+class Face:
+    def __init__(self, vertexes, faces, hedges, _edge):
+        self.vertexes = vertexes
+        self.faces = faces
+        self.hedges = hedges
+        self._edge = _edge
+
+    def edge(self): return self.hedges[self._edge]
+
+    def __repr__(self):
+        return 'Face(%d)' % (str(self._edge))
+
+    def getVertexesForDelTest(self, testFace, commonHEdgeInd):
+        res = []
+        commonHEdge = self.hedges[commonHEdgeInd]
+        p0 = commonHEdge.opposite().next().head().point
+        p3 = commonHEdge.head().point
+        p2 = commonHEdge.next().head().point
+        p1 = commonHEdge.next().next().head().point
+        return (p1, p2, p3), p0
+
+    def getNeighFaces(self):
+        res = []
+        headHEdge = self.edge()
+        op = headHEdge.opposite()._leftFace
+        #print headHEdge, op
+        if op != None:
+            res.append((op, headHEdge.index))
+        curHEdge = headHEdge.next()
+        while curHEdge != headHEdge:
+            op = curHEdge.opposite()._leftFace
+            if op != None: res.append((op, curHEdge.index))
+            curHEdge = curHEdge.next()
+        return res
+
+class HEdge:
+    def __init__(self, vertexes, faces, hedges, _head, _opposite, _next, _leftFace=None):
+        self.vertexes = vertexes
+        self.faces = faces
+        self.hedges = hedges
+        self._head = _head
+        self._opposite = _opposite
+        self._next = _next
+        self._leftFace = _leftFace
+
+    def head(self):     return self.vertexes[self._head]
+    def opposite(self): 
+        if self._opposite == None: return None
+        return self.hedges[self._opposite]
+    def next(self):     return self.hedges[self._next]
+    def leftFace(self): return self.faces[self._leftFace]
+    def __repr__(self): 
+        return 'HEdge(head %d opposite %d next %d leftFace %s)' % (
+                self._head, self._opposite, self._next, str(self._leftFace))
+
+class Mesh:
+    def __init__(self):
+        self.vertexes = []
+        self.faces    = []
+        self.hedges   = []
+        self.numOfVertex = 0
+        self.numOfFaces  = 0
+        self.numOfHEdges = 0
+
+    def newVertex(self, point, _edge):
+        self.numOfVertex += 1
+        self.vertexes.append(Vertex(self.vertexes, self.faces, self.hedges, point, _edge))
+        self.vertexes[-1].index = self.numOfVertex - 1
+
+    def newFace(self, _edge):
+        self.numOfFaces += 1
+        self.faces.append(Face(self.vertexes, self.faces, self.hedges, _edge))
+        self.faces[-1].index = self.numOfFaces - 1
+
+    def newHEdge(self, _head, _opposite, _next, _leftFace=None):
+        self.numOfHEdges += 1
+        self.hedges.append(
+                HEdge(self.vertexes, self.faces, self.hedges, 
+                    _head, _opposite, _next, _leftFace))
+        self.hedges[-1].index = self.numOfHEdges - 1
+
+    def draw(self):
+        canvas = np.ones((300, 300, 3))*255
+        scale = 30
+
+        stVertex = self.vertexes[0]
+        stHEdge = stVertex.edge()
+        visited = [False for _ in self.hedges]
+        stack = [stHEdge]
+        while len(stack) > 0:
+            curHEdge = stack.pop()
+            if visited[curHEdge.index]: continue
+            visited[curHEdge.index] = True
+            p1, p2 = curHEdge.head().point, curHEdge.opposite().head().point
+            cv2.line(canvas, 
+                    (p1[0]*scale, p1[1]*scale), (p2[0]*scale, p2[1]*scale), (255, 0, 0), 3)
+            stack += [curHEdge.opposite(), curHEdge.next()]
+
+        for v in self.vertexes:
+            cv2.circle(canvas, (v.point[0]*scale, v.point[1]*scale), 5, (0, 255, 0), 5)
+        return canvas
+
+    def flip(self, badHEdgeInd):
+        badHEdge   = self.hedges[badHEdgeInd]
+        badHEdgeOp = self.hedges[badHEdgeInd].opposite()
+        cpBadHEdge   = copy.deepcopy(badHEdge)         
+        cpBadHEdgeOp = copy.deepcopy(badHEdgeOp)         
+
+        badHEdge._head = cpBadHEdge.next()._head
+        badHEdge._next = cpBadHEdge.next()._next
+        badHEdgeOp.next()._next = badHEdge.index
+
+        badHEdgeOp._head = cpBadHEdgeOp.next()._head
+        badHEdgeOp._next = cpBadHEdgeOp.next()._next
+        badHEdge.next()._next = badHEdgeOp.index
+
+if __name__ == '__main__':
+    mesh = Mesh()
+    mesh.newVertex((0, 1), 0)
+    mesh.newVertex((3, 0), 1)
+    mesh.newVertex((4, 1), 2)
+    mesh.newVertex((3, 6), 3)
+
+    mesh.newFace(0)
+    mesh.newHEdge(1, 1, 2, 0) #0
+    mesh.newHEdge(0, 0, 5, None)#1
+    mesh.newHEdge(3, 3, 4, 0)#2
+    mesh.newHEdge(1, 2, 6, 1)#3
+    mesh.newHEdge(0, 5, 0, 0) #4
+    mesh.newHEdge(3, 4, 3, None) #5
+
+    mesh.newFace(6)
+    mesh.newHEdge(2, 7, 8, 1) #6
+    mesh.newHEdge(1, 6, 1, None) #7
+    mesh.newHEdge(3, 9, 3, 1) #8
+    mesh.newHEdge(2, 8, 7, None) #9
+
+    #mesh.draw()
+
+    print mesh.faces[0].getNeighFaces()
+    print mesh.faces[0].getVertexesForDelTest(1, 2)
+    points = mesh.faces[0].getVertexesForDelTest(1, 2)
+    print delcommon.checkDelaunay1(points[0], points[1])
+
+    print mesh.faces[1].getNeighFaces()
+    print mesh.faces[1].getVertexesForDelTest(0, 3)
+    points = mesh.faces[1].getVertexesForDelTest(0, 3)
+    print delcommon.checkDelaunay1(points[0], points[1])
+
+    img1 = mesh.draw()
+    mesh.flip(2)
+    img2 = mesh.draw()
+
+    cv2.imshow('1', img1)
+    cv2.imshow('2', img2)
+    cv2.waitKey()
+
+    #print checkDelaunay2(((3, 10), (6, 1), (3, 0)), (0, 1))
+    #print checkDelaunay2(( (3, 0), (0, 1), (3, 6)) , (6, 1))

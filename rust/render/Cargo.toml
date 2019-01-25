@@ -1,0 +1,19 @@
+[package]
+name = "render"
+version = "0.6.0"
+authors = ["daiver <ra22341@ya.ru>"]
+
+[dependencies]
+itertools = "0.4"
+time = "0.1"
+
+[dependencies.rustonum]
+git = "https://github.com/daiver/rustonum"
+#path = "../../../rustonum"
+#path = "src/rustonum"
+
+[dependencies.ppmiors]
+git = "https://github.com/daiver/ppmiors"
+#path = "../../../rustonum"
+#path = "src/rustonum"
+
