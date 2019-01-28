@@ -25,7 +25,8 @@ def resize_all_images_in_directory(src_dir, dst_dir, dst_size):
 def main():
     src_dir = os.path.join(paths.data_root, "KostetCentral")
     dst_dir = os.path.join(paths.data_root, "KostetCentralResized")
-    resize_all_images_in_directory(src_dir, dst_dir, (96, 128))
+    # resize_all_images_in_directory(src_dir, dst_dir, (96 * 2, 128 * 2))
+    resize_all_images_in_directory(src_dir, dst_dir, (96 * 3, 128 * 3))
 
 
 if __name__ == '__main__':

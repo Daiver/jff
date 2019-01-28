@@ -14,7 +14,8 @@ import albumentations
 
 from datasets import mk_kostet_dataset
 from train_utils import run_validate
-from models import Model
+from models import Model, Model2
+from losses import L1L2Loss
 import paths
 
 
@@ -28,12 +29,21 @@ def mk_img_mesh_transforms(image_transforms):
 def main():
 
     epochs = 10000
-    batch_size = 128
-    lr = 0.002
+    batch_size = 32
+    lr = 2.5
     device = 'cuda'
+    epochs_split = 50
 
-    backbone = pretrainedmodels.resnet18()
-    model = Model(backbone, 512, 9591)
+    backbone, n_backbone_features = pretrainedmodels.resnet18(), 512
+    # backbone, n_backbone_features = pretrainedmodels.resnet34(), 512
+    # backbone, n_backbone_features = pretrainedmodels.resnet50(), 1024
+    # backbone, n_backbone_features = pretrainedmodels.resnet101(), 2048
+    # backbone, n_backbone_features = pretrainedmodels.se_resnext50_32x4d(), 1024
+    # backbone, n_backbone_features = pretrainedmodels.se_resnext101_32x4d(), 2048
+    # backbone, n_backbone_features = pretrainedmodels.nasnetamobile(num_classes=1000), 1056
+
+    # model = Model(backbone, n_backbone_features, 9591)
+    model = Model2(backbone, n_backbone_features, 20, 9591)
 
     train_img_transforms = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),
@@ -51,19 +61,17 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-    # optimizer = optim.Adam(model.parameters(), lr=lr)
-    optimizer = optim.Adam(model.fc_final.parameters(), lr=lr)
-    criterion = nn.MSELoss()
+    # criterion = nn.MSELoss()
+    criterion = L1L2Loss()
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+    # optimizer = optim.Adam(model.fc_final.parameters(), lr=lr)
+    # optimizer = optim.Adam(list(model.fc_final.parameters()) + list(model.fc1.parameters()), lr=lr)
 
-    # model = torch.load("checkpoints/100_0.6407536556351472.pt")
-    model.load_state_dict(torch.load("checkpoints/current.pt"))
-
-    print("START TRAINING")
+    print("START ALL TRAINING")
     model.to(device)
-    losses = []
     best_val = 1e10
-    for epoch in range(400, epochs):
-
+    for epoch in range(1, epochs + 1):
+        losses = []
         model.train()
         for inp, target in train_loader:
             inp, target = inp.to(device), target.to(device)
@@ -79,14 +87,33 @@ def main():
 
         mean_loss = np.mean(losses)
         val_loss = run_validate(model, criterion, val_loader, device)
-        print(f"{epoch + 1}/{epochs} loss = {mean_loss}, val_loss = {val_loss}")
+        print(f"{epoch}/{epochs} loss = {mean_loss}, val_loss = {val_loss}")
 
-        if epoch % 10 == 0:
-            torch.save(model.state_dict(), "checkpoints/current.pt")
+        if epoch == 30:
+            lr = 0.1
+            print(f'new lr = {lr}')
+            for param_group in optimizer.param_groups: param_group['lr'] = lr
+
+        if epoch == 50:
+            lr = 0.05
+            print(f'new lr = {lr}')
+            for param_group in optimizer.param_groups: param_group['lr'] = lr
+
+        if epoch == 100:
+            lr = 0.01
+            print(f'new lr = {lr}')
+            for param_group in optimizer.param_groups: param_group['lr'] = lr
+
+        if epoch == 150:
+            lr = 0.005
+            print(f'new lr = {lr}')
+            for param_group in optimizer.param_groups: param_group['lr'] = lr
+
+        torch.save(model.state_dict(), "/work/checkpoints/current.pt")
         if val_loss < best_val:
             best_val = val_loss
             print("New best val loss", val_loss)
-            torch.save(model.state_dict(), "checkpoints/{:05d}_{}_{}.pt".format(
+            torch.save(model.state_dict(), "/work/checkpoints/{:05d}_{}_{}.pt".format(
                 epoch, mean_loss, val_loss))
 
 
