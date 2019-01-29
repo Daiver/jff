@@ -1,8 +1,10 @@
 import setuptools
 
+from torch_fuze.version import version
+
 setuptools.setup(
     name="torch_fuze",
-    version="0.0.1",
+    version=version,
     author="Daiver",
     author_email="ra22341@ya.ru",
     description="Yet another PyTorch training framework",
