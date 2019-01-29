@@ -1,4 +1,7 @@
-import time
+import catalyst
+from catalyst.dl.runner import SupervisedModelRunner
+import collections
+
 import random
 import sys
 import os
@@ -19,15 +22,11 @@ from models import Model, Model2
 from losses import L1L2Loss
 import paths
 
-
-def mk_img_mesh_transforms(image_transforms):
-    def apply(img, mesh):
-        return image_transforms(img), torch.from_numpy(mesh)
-    return apply
+from train import mk_img_mesh_transforms
 
 
 def main():
-    epochs = 10000
+    n_epochs = 10000
     batch_size = 16
     lr = 0.02
     device = 'cuda'
@@ -56,56 +55,45 @@ def main():
 
     print(f"n train = {len(train_dataset)}, n val = {len(val_dataset)}")
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+
+    loaders = collections.OrderedDict()
+    loaders["train"] = train_loader
+    loaders["valid"] = val_loader
 
     criterion = nn.MSELoss()
     # criterion = L1L2Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [30, 70, 200], 0.1)
-    # optimizer = optim.Adam(model.fc_final.parameters(), lr=lr)
-    # optimizer = optim.Adam(list(model.fc_final.parameters()) + list(model.fc1.parameters()), lr=lr)
 
-    print("START ALL TRAINING")
-    model.to(device)
-    best_val = 1e10
-    for epoch in range(1, epochs + 1):
-        losses = []
-        model.train()
-        start = time.time()
-        for inp, target in train_loader:
-            inp, target = inp.to(device), target.to(device)
-            output = model(inp)
+    from catalyst.dl.callbacks import (
+        LossCallback,
+        Logger, TensorboardLogger,
+        OptimizerCallback, SchedulerCallback, CheckpointCallback,
+        PrecisionCallback, OneCycleLR)
 
-            loss = criterion(output, target)
-            loss.backward()
-            optimizer.step()
-            optimizer.zero_grad()
+    logdir = "logs/"
+    callbacks = collections.OrderedDict()
+    callbacks["loss"] = LossCallback()
+    callbacks["optimizer"] = OptimizerCallback()
+    callbacks["scheduler"] = OneCycleLR(
+        cycle_len=n_epochs,
+        div=3, cut_div=4, momentum_range=(0.95, 0.85))
+    callbacks["saver"] = CheckpointCallback()
+    callbacks["logger"] = Logger()
+    callbacks["tflogger"] = TensorboardLogger()
 
-            losses.append(loss.item())
-        model.eval()
-        elapsed = time.time() - start
-
-        scheduler.step(epoch)
-
-        mean_loss = np.mean(losses)
-        val_loss = run_validate(model, criterion, val_loader, device)
-        val_l1l2 = run_validate(model, L1L2Loss(), val_loader, device)
-        print(
-            f"{epoch}/{epochs} "
-            f"loss = {mean_loss}, "
-            f"val_loss = {val_loss}, "
-            f"val_l1l2 = {val_l1l2} "
-            f"lr = {scheduler.get_lr()},"
-            f"elpsd = {elapsed}")
-
-
-        torch.save(model.state_dict(), "/work/checkpoints/current.pt")
-        if val_loss < best_val:
-            best_val = val_loss
-            print("New best val loss", val_loss)
-            torch.save(model.state_dict(), "/work/checkpoints/{:05d}_{}_{}.pt".format(
-                epoch, mean_loss, val_loss))
+    runner = SupervisedModelRunner(
+        model=model,
+        criterion=criterion,
+        optimizer=optimizer,
+        scheduler=scheduler)
+    runner.train(
+        loaders=loaders,
+        callbacks=callbacks,
+        logdir=logdir,
+        epochs=n_epochs, verbose=True)
 
 
 if __name__ == '__main__':

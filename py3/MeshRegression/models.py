@@ -45,7 +45,7 @@ class Model2(nn.Module):
 
         x = self.dropout_1(x)
         x = F.relu(self.fc1(x))
-        x = self.dropout_final(x)
+        # x = self.dropout_final(x)
         x = self.fc_final(x)
         x = x.view(-1, self.n_out_vertices, 3)
 

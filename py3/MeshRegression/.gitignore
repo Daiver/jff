@@ -1,2 +1,4 @@
 .venv/*
 checkpoints*
+catalyst/*
+logs/*
