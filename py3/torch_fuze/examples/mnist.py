@@ -1,8 +1,8 @@
-import torch
+import torch_fuze
 
 
 def main():
-    pass
+    print(torch_fuze.__version__)
 
 
 if __name__ == '__main__':
