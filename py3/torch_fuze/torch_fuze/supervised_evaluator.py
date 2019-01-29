@@ -23,7 +23,7 @@ class SupervisedEvaluator:
             res[name] = np.sum(values)
             if average and len(values) > 0:
                 res[name] /= len(values)
-                
+
         return res
 
     def run(self, loader):
@@ -38,4 +38,5 @@ class SupervisedEvaluator:
                 for metric_name, metric_func in self.metrics.items():
                     metrics_values_per_batch[metric_name] = metric_func(outputs, targets)
 
-        return np.mean(losses)
+        res = self.sum_metrics_values(metrics_values_per_batch, average=True)
+        return res
