@@ -21,7 +21,7 @@
 scala/*/project/*
 scala/*/target/*
 
-*.venv/*
+**/.venv/*
 *events.out*
 */.ipynb_checkpoints/*
 
