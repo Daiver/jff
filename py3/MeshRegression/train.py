@@ -49,7 +49,7 @@ def main():
     lr = 0.00005
     device = 'cuda'
 
-    n_pca_components = 512
+    n_pca_components = 160
 
     # backbone, n_backbone_features = pretrainedmodels.resnet18(), 512
     backbone, n_backbone_features = pretrainedmodels.resnet34(), 512
