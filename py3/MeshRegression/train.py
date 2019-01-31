@@ -49,6 +49,8 @@ def main():
     lr = 0.00005
     device = 'cuda'
 
+    n_pca_components = 512
+
     # backbone, n_backbone_features = pretrainedmodels.resnet18(), 512
     backbone, n_backbone_features = pretrainedmodels.resnet34(), 512
     # backbone, n_backbone_features = pretrainedmodels.resnet50(), 1024
@@ -59,7 +61,7 @@ def main():
 
     # model = Model(backbone, n_backbone_features, 9591)
     # model = Model2(backbone, n_backbone_features, 160, 9591)
-    model = FinNet(160, 9591)
+    model = FinNet(n_pca_components, 9591)
 
     train_img_transforms = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),
@@ -76,7 +78,7 @@ def main():
 
     print(f"n train = {len(train_dataset)}, n val = {len(val_dataset)}")
 
-    pca_mean, pca_std = mk_pca_init(train_dataset, 160)
+    pca_mean, pca_std = mk_pca_init(train_dataset, n_pca_components)
     print(model.fc_final.bias.shape, model.fc_final.weight.shape)
     model.fc_final.bias.data = torch.FloatTensor(pca_mean)
     model.fc_final.weight.data = torch.FloatTensor(pca_std.T)
@@ -113,6 +115,10 @@ def main():
         elapsed = time.time() - start
 
         scheduler.step(epoch)
+
+        if epoch == 100:
+            model.fc_final.requires_grad = True
+            print("Enabled last layer!!!")
 
         mean_loss = np.mean(losses)
         val_loss = run_validate(model, criterion, val_loader, device)

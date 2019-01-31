@@ -119,17 +119,19 @@ class FinNet(nn.Module):
             block(144, 216, stride=2),
             block(216, 324, stride=2),
             block(324, 486, stride=2),
-            block(486, 512, stride=2),
+            # block(486, 512, stride=2),
         )
 
         # self.n_flat_features = 486 * 5 * 6
-        self.n_flat_features = 512 * 3 * 3
+        # self.n_flat_features = 512 * 3 * 3
+        self.n_flat_features = 486
         self.dropout = nn.Dropout(0.2)
         self.fc1 = nn.Linear(self.n_flat_features, n_middle_features)
         self.fc_final = nn.Linear(n_middle_features, 3 * n_out_vertices)
 
     def forward(self, x):
         x = self.feature_extractor(x)
+        x = F.adaptive_avg_pool2d(x, (1, 1))
         x = x.view(-1, self.n_flat_features)
         x = self.dropout(x)
         x = F.relu(self.fc1(x))
