@@ -13,7 +13,7 @@ import pretrainedmodels
 
 from datasets import mk_kostet_dataset
 from train_utils import run_validate
-from models import Model, Model2
+from models import *
 from utils import replace_obj_vertices
 
 from train import mk_img_mesh_transforms
@@ -23,14 +23,15 @@ def main():
     # backbone = pretrainedmodels.resnet18()
     # backbone = pretrainedmodels.resnet34()
     # model = Model(backbone, 512, 9591)
-    backbone, n_backbone_features = pretrainedmodels.resnet18(), 512
-    # backbone, n_backbone_features = pretrainedmodels.resnet34(), 512
+    # backbone, n_backbone_features = pretrainedmodels.resnet18(), 512
+    backbone, n_backbone_features = pretrainedmodels.resnet34(), 512
 
     # model = Model(backbone, n_backbone_features, 9591)
-    model = Model2(backbone, n_backbone_features, 20, 9591)
+    # model = Model2(backbone, n_backbone_features, 100, 9591)
+    model = FinNet(160, 9591)
 
     path_to_model = "/work/checkpoints/current.pt"
-    # path_to_model = "/work/checkpoints/00205_0.4464458099433354_0.578594408929348.pt"
+    # path_to_model = "/work/checkpoints/00057_0.0626826686784625_0.027283317409455776.pt"
     model.load_state_dict(torch.load(path_to_model))
     model.eval()
 
