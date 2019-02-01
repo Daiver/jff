@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import time
 import random
 import sys
@@ -92,53 +93,29 @@ def main():
     criterion = nn.MSELoss()
     # criterion = L1L2Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [100, 200, 300], 0.2)
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [50, 100, 150, 200], 0.2)
     # optimizer = optim.Adam(model.fc_final.parameters(), lr=lr)
     # optimizer = optim.Adam(list(model.fc_final.parameters()) + list(model.fc1.parameters()), lr=lr)
 
     print("START ALL TRAINING")
-    model.to(device)
-    best_val = 1e10
-    for epoch in range(1, epochs + 1):
-        losses = []
-        model.train()
-        start = time.time()
-        for inp, target in train_loader:
-            inp, target = inp.to(device), target.to(device)
-            output = model(inp)
 
-            loss = criterion(output, target)
-            loss.backward()
-            optimizer.step()
-            optimizer.zero_grad()
-
-            losses.append(loss.item())
-        model.eval()
-        elapsed = time.time() - start
-
-        scheduler.step(epoch)
-
-        if epoch == 100:
-            model.fc_final.requires_grad = True
-            print("Enabled last layer!!!")
-
-        mean_loss = np.mean(losses)
-        val_loss = run_validate(model, criterion, val_loader, device)
-        val_l1l2 = run_validate(model, L1L2Loss(), val_loader, device)
-        print(
-            f"{epoch}/{epochs} "
-            f"loss = {mean_loss}, "
-            f"val_loss = {val_loss}, "
-            f"val_l1l2 = {val_l1l2} "
-            f"lr = {scheduler.get_lr()},"
-            f"elpsd = {elapsed}")
-
-        torch.save(model.state_dict(), "/work/checkpoints/current.pt")
-        if val_loss < best_val:
-            best_val = val_loss
-            print("New best val loss", val_loss)
-            torch.save(model.state_dict(), "/work/checkpoints/{:05d}_{}_{}.pt".format(
-                epoch, mean_loss, val_loss))
+    metrics = OrderedDict([
+        ("loss", criterion),
+        ("l1_2", L1L2Loss())
+    ])
+    callbacks = [
+        torch_fuze.callbacks.ProgressCallback(),
+        torch_fuze.callbacks.BestModelSaverCallback(
+            model, "checkpoints/best.pt", metric_name="loss", lower_is_better=True),
+        torch_fuze.callbacks.TensorBoardXCallback("logs", remove_old_logs=True),
+        torch_fuze.callbacks.MLFlowCallback(
+            lowest_metrics_to_track={"valid_loss", "valid_l1_2"},
+            files_to_save_at_every_batch={"checkpoints/best.pt"})
+    ]
+    trainer = torch_fuze.SupervisedTrainer(model, criterion, device)
+    trainer.run(
+        train_loader, val_loader, optimizer, scheduler=scheduler, n_epochs=epochs, callbacks=callbacks, metrics=metrics
+    )
 
 
 if __name__ == '__main__':

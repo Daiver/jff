@@ -2,6 +2,7 @@
 checkpoints*
 catalyst/*
 logs/*
+mlruns/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
