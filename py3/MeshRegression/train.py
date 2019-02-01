@@ -90,7 +90,7 @@ def main():
     criterion = nn.MSELoss()
     # criterion = L1L2Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [100, 200], 0.2)
+    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [100, 200, 300], 0.2)
     # optimizer = optim.Adam(model.fc_final.parameters(), lr=lr)
     # optimizer = optim.Adam(list(model.fc_final.parameters()) + list(model.fc1.parameters()), lr=lr)
 
