@@ -17,6 +17,7 @@ import albumentations
 from sklearn.decomposition import PCA
 
 import torch_fuze
+import mlflow
 
 from datasets import mk_kostet_dataset
 from train_utils import run_validate
@@ -45,15 +46,13 @@ def mk_img_mesh_transforms(image_transforms):
     return apply
 
 
-def main():
-    epochs = 10000
-    # batch_size = 16
-    batch_size = 50
-    lr = 0.00005
-    device = 'cuda'
-
-    n_pca_components = 160
-
+def main(
+        epochs,
+        batch_size,
+        lr,
+        n_pca_components,
+        device
+):
     # backbone, n_backbone_features = pretrainedmodels.resnet18(), 512
     backbone, n_backbone_features = pretrainedmodels.resnet34(), 512
     # backbone, n_backbone_features = pretrainedmodels.resnet50(), 1024
@@ -91,6 +90,7 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
     criterion = nn.MSELoss()
+    # criterion = nn.L1Loss()
     # criterion = L1L2Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [50, 100, 150, 200], 0.2)
@@ -101,6 +101,8 @@ def main():
 
     metrics = OrderedDict([
         ("loss", criterion),
+        ("l1", nn.L1Loss()),
+        ("l2", nn.MSELoss()),
         ("l1_2", L1L2Loss())
     ])
     callbacks = [
@@ -109,7 +111,7 @@ def main():
             model, "checkpoints/best.pt", metric_name="loss", lower_is_better=True),
         torch_fuze.callbacks.TensorBoardXCallback("logs", remove_old_logs=True),
         torch_fuze.callbacks.MLFlowCallback(
-            lowest_metrics_to_track={"valid_loss", "valid_l1_2"},
+            lowest_metrics_to_track={"valid_loss", "valid_l1_2", "train_loss"},
             files_to_save_at_every_batch={"checkpoints/best.pt"})
     ]
     trainer = torch_fuze.SupervisedTrainer(model, criterion, device)
@@ -119,4 +121,67 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    with mlflow.start_run(run_name="L2 loss"):
+        params = {
+            "epochs": 100,
+            "batch_size": 50,
+            "lr": 0.001,
+            "n_pca_components": 160,
+        }
+        for k, v in params.items():
+            mlflow.log_param(k, v)
+        main(
+            epochs=params["epochs"],
+            batch_size=params["batch_size"],
+            lr=params["lr"],
+            n_pca_components=params["n_pca_components"],
+            device="cuda"
+        )
+    with mlflow.start_run(run_name="L2 loss"):
+        params = {
+            "epochs": 100,
+            "batch_size": 50,
+            "lr": 0.0005,
+            "n_pca_components": 160,
+        }
+        for k, v in params.items():
+            mlflow.log_param(k, v)
+        main(
+            epochs=params["epochs"],
+            batch_size=params["batch_size"],
+            lr=params["lr"],
+            n_pca_components=params["n_pca_components"],
+            device="cuda"
+        )
+        with mlflow.start_run(run_name="L2 loss"):
+            params = {
+                "epochs": 100,
+                "batch_size": 50,
+                "lr": 0.0002,
+                "n_pca_components": 160,
+            }
+            for k, v in params.items():
+                mlflow.log_param(k, v)
+            main(
+                epochs=params["epochs"],
+                batch_size=params["batch_size"],
+                lr=params["lr"],
+                n_pca_components=params["n_pca_components"],
+                device="cuda"
+            )
+        with mlflow.start_run(run_name="L2 loss"):
+            params = {
+                "epochs": 100,
+                "batch_size": 50,
+                "lr": 0.0001,
+                "n_pca_components": 160,
+            }
+            for k, v in params.items():
+                mlflow.log_param(k, v)
+            main(
+                epochs=params["epochs"],
+                batch_size=params["batch_size"],
+                lr=params["lr"],
+                n_pca_components=params["n_pca_components"],
+                device="cuda"
+            )
