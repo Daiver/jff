@@ -1,0 +1,11 @@
+torch>=1.0
+torchvision 
+pretrainedmodels
+numpy 
+opencv-python
+ipython 
+sklearn 
+scipy
+albumentations
+tensorboardX
+mlflow

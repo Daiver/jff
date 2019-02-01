@@ -15,8 +15,6 @@ import albumentations
 
 from sklearn.decomposition import PCA
 
-import torch_fuze
-
 from datasets import mk_kostet_dataset
 from train_utils import run_validate
 from models import *
