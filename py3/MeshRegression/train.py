@@ -47,12 +47,15 @@ def mk_img_mesh_transforms(image_transforms):
 
 
 def main(
-        epochs,
-        batch_size,
-        lr,
-        n_pca_components,
+        params,
+        run_start_time,
         device
 ):
+    epochs = params["epochs"]
+    batch_size = params["batch_size"]
+    lr = params["lr"]
+    n_pca_components = params["n_pca_components"]
+
     # backbone, n_backbone_features = pretrainedmodels.resnet18(), 512
     backbone, n_backbone_features = pretrainedmodels.resnet34(), 512
     # backbone, n_backbone_features = pretrainedmodels.resnet50(), 1024
@@ -109,7 +112,7 @@ def main(
         torch_fuze.callbacks.ProgressCallback(),
         torch_fuze.callbacks.BestModelSaverCallback(
             model, "checkpoints/best.pt", metric_name="loss", lower_is_better=True),
-        torch_fuze.callbacks.TensorBoardXCallback("logs", remove_old_logs=True),
+        torch_fuze.callbacks.TensorBoardXCallback(f"logs/{str(run_start_time)}", remove_old_logs=True),
         torch_fuze.callbacks.MLFlowCallback(
             lowest_metrics_to_track={"valid_loss", "valid_l1_2", "train_loss"},
             files_to_save_at_every_batch={"checkpoints/best.pt"})
@@ -121,67 +124,43 @@ def main(
 
 
 if __name__ == '__main__':
-    with mlflow.start_run(run_name="L2 loss"):
+    with mlflow.start_run(run_name="Leaky ReLU") as run:
         params = {
             "epochs": 100,
-            "batch_size": 50,
-            "lr": 0.001,
-            "n_pca_components": 160,
+            "batch_size": 16,
+            "lr": 0.0007,
+            "n_pca_components": 160
         }
         for k, v in params.items():
             mlflow.log_param(k, v)
-        main(
-            epochs=params["epochs"],
-            batch_size=params["batch_size"],
-            lr=params["lr"],
-            n_pca_components=params["n_pca_components"],
-            device="cuda"
-        )
-    with mlflow.start_run(run_name="L2 loss"):
+        main(params=params, run_start_time=run.info.start_time, device="cuda")
+    with mlflow.start_run(run_name="Leaky ReLU") as run:
         params = {
             "epochs": 100,
-            "batch_size": 50,
+            "batch_size": 16,
             "lr": 0.0005,
-            "n_pca_components": 160,
+            "n_pca_components": 160
         }
         for k, v in params.items():
             mlflow.log_param(k, v)
-        main(
-            epochs=params["epochs"],
-            batch_size=params["batch_size"],
-            lr=params["lr"],
-            n_pca_components=params["n_pca_components"],
-            device="cuda"
-        )
-        with mlflow.start_run(run_name="L2 loss"):
-            params = {
-                "epochs": 100,
-                "batch_size": 50,
-                "lr": 0.0002,
-                "n_pca_components": 160,
-            }
-            for k, v in params.items():
-                mlflow.log_param(k, v)
-            main(
-                epochs=params["epochs"],
-                batch_size=params["batch_size"],
-                lr=params["lr"],
-                n_pca_components=params["n_pca_components"],
-                device="cuda"
-            )
-        with mlflow.start_run(run_name="L2 loss"):
-            params = {
-                "epochs": 100,
-                "batch_size": 50,
-                "lr": 0.0001,
-                "n_pca_components": 160,
-            }
-            for k, v in params.items():
-                mlflow.log_param(k, v)
-            main(
-                epochs=params["epochs"],
-                batch_size=params["batch_size"],
-                lr=params["lr"],
-                n_pca_components=params["n_pca_components"],
-                device="cuda"
-            )
+        main(params=params, run_start_time=run.info.start_time, device="cuda")
+    with mlflow.start_run(run_name="Leaky ReLU") as run:
+        params = {
+            "epochs": 100,
+            "batch_size": 16,
+            "lr": 0.0003,
+            "n_pca_components": 160
+        }
+        for k, v in params.items():
+            mlflow.log_param(k, v)
+        main(params=params, run_start_time=run.info.start_time, device="cuda")
+    with mlflow.start_run(run_name="Leaky ReLU") as run:
+        params = {
+            "epochs": 100,
+            "batch_size": 16,
+            "lr": 0.0001,
+            "n_pca_components": 160
+        }
+        for k, v in params.items():
+            mlflow.log_param(k, v)
+        main(params=params, run_start_time=run.info.start_time, device="cuda")

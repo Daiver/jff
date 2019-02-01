@@ -87,10 +87,14 @@ class ResidualFinBlock(nn.Module):
         self.model = nn.Sequential(
             nn.Conv2d(in_filters, out_filters, 3, stride=stride, padding=1),
             nn.BatchNorm2d(out_filters),
-            nn.ReLU(),
+            # nn.ReLU(),
+            # nn.LeakyReLU(),
+            nn.PReLU(),
             nn.Conv2d(out_filters, out_filters, 3, stride=1, padding=1),
             nn.BatchNorm2d(out_filters),
-            nn.ReLU(),
+            # nn.ReLU(),
+            # nn.LeakyReLU(),
+            nn.PReLU(),
         )
         if stride != 0:
             self.shortcut = nn.Conv2d(in_filters, out_filters, 3, stride=stride, padding=1)
