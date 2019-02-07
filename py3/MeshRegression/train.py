@@ -59,7 +59,9 @@ def train(
     dropout = params["dropout"]
     device = params["device"]
 
-    best_checkpoint_name = f"checkpoints/best_{str(run_start_time)}.pt"
+    readable_start_time = time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(run_start_time / 1000))
+
+    best_checkpoint_name = f"checkpoints/best_{readable_start_time}.pt"
 
     # n_vertices = 9591
     n_vertices = 5958
@@ -117,7 +119,8 @@ def train(
         torch_fuze.callbacks.ProgressCallback(),
         torch_fuze.callbacks.BestModelSaverCallback(
             model, best_checkpoint_name, metric_name="loss", lower_is_better=True),
-        torch_fuze.callbacks.TensorBoardXCallback(f"logs/{str(run_start_time)}", remove_old_logs=True),
+        torch_fuze.callbacks.TensorBoardXCallback(
+            f"logs/{readable_start_time}", remove_old_logs=True),
         torch_fuze.callbacks.MLFlowCallback(
             lowest_metrics_to_track={"valid_loss", "valid_l1_2", "train_loss"},
             files_to_save_at_every_batch={best_checkpoint_name})
@@ -136,8 +139,8 @@ if __name__ == '__main__':
             "batch_size": 32,
             "lr": 0.00005,
             "n_pca_components": 400,
-            "dropout": 0.1,
-            "device": "cuda:0",
+            "dropout": 0.3,
+            "device": "cuda:1",
         }
         for k, v in params.items():
             mlflow.log_param(k, v)
