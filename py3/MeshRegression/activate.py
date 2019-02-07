@@ -12,7 +12,7 @@ import torchvision
 import pretrainedmodels
 
 from datasets import mk_kostet_dataset, mk_synth_dataset_test, mk_synth_dataset_train
-from train_utils import run_validate
+
 from models import *
 from utils import replace_obj_vertices
 
@@ -33,9 +33,9 @@ def main():
 
     # model = Model(backbone, n_backbone_features, 9591)
     # model = Model2(backbone, n_backbone_features, 100, 9591)
-    model = FinNet(500, n_vertices)
+    model = FinNet(400, n_vertices)
 
-    path_to_model = "checkpoints/best_1549537190236.pt"
+    path_to_model = "checkpoints/best_2019-02-07_16:45:26.pt"
     model.load_state_dict(torch.load(path_to_model))
     model.eval()
 

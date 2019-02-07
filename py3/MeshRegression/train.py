@@ -21,10 +21,11 @@ import torch_fuze
 import mlflow
 
 from datasets import mk_kostet_dataset, mk_synth_dataset_test, mk_synth_dataset_train
-from train_utils import run_validate
+
 from models import *
 from losses import L1L2Loss
 import paths
+import lr_schedulers as custom_schedulers
 
 
 def mk_pca_init(mesh_dataset, n_components):
@@ -59,7 +60,7 @@ def train(
     dropout = params["dropout"]
     device = params["device"]
 
-    readable_start_time = time.strftime('%Y-%m-%d_%H:%M:%S %Z', time.localtime(run_start_time / 1000))
+    readable_start_time = time.strftime('%Y-%m-%d_%H:%M:%S', time.localtime(run_start_time / 1000))
 
     best_checkpoint_name = f"checkpoints/best_{readable_start_time}.pt"
 
@@ -105,7 +106,8 @@ def train(
     # criterion = L1L2Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     # scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [50, 100, 150, 200], 0.2)
-    scheduler = None
+    scheduler = custom_schedulers.GeomRampUpLinearDecayLR(optimizer, epochs, 10, 20, rampup_gamma=1.3, middle_coeff=0.5)
+    # scheduler = None
 
     print("START ALL TRAINING")
 
@@ -133,28 +135,29 @@ def train(
 
 
 if __name__ == '__main__':
-    with mlflow.start_run(run_name="") as run:
+
+    with mlflow.start_run(run_name="Fin scheduler 3") as run:
         params = {
             "epochs": 100,
             "batch_size": 32,
-            "lr": 0.00005,
-            "n_pca_components": 300,
-            "dropout": 0.3,
-            "device": "cuda:0",
+            "lr": 0.00002,
+            "n_pca_components": 400,
+            "dropout": 0.1,
+            "device": "cuda:1",
         }
         for k, v in params.items():
             mlflow.log_param(k, v)
         train(params=params, run_start_time=run.info.start_time)
 
-    with mlflow.start_run(run_name="") as run:
-        params = {
-            "epochs": 100,
-            "batch_size": 32,
-            "lr": 0.00005,
-            "n_pca_components": 500,
-            "dropout": 0.3,
-            "device": "cuda:0",
-        }
-        for k, v in params.items():
-            mlflow.log_param(k, v)
-        train(params=params, run_start_time=run.info.start_time)
+    # with mlflow.start_run(run_name="") as run:
+    #     params = {
+    #         "epochs": 100,
+    #         "batch_size": 32,
+    #         "lr": 0.00005,
+    #         "n_pca_components": 400,
+    #         "dropout": 0.1,
+    #         "device": "cuda:1",
+    #     }
+    #     for k, v in params.items():
+    #         mlflow.log_param(k, v)
+    #     train(params=params, run_start_time=run.info.start_time)
