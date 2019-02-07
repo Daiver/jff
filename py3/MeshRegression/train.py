@@ -48,13 +48,15 @@ def mk_img_mesh_transforms(image_transforms):
 
 def main(
         params,
-        run_start_time,
-        device
+        run_start_time
 ):
     epochs = params["epochs"]
     batch_size = params["batch_size"]
     lr = params["lr"]
     n_pca_components = params["n_pca_components"]
+    device = params["device"]
+
+    best_checkpoint_name = f"checkpoints/best_{str(run_start_time)}.pt"
 
     # n_vertices = 9591
     n_vertices = 5958
@@ -119,12 +121,12 @@ def main(
     ])
     callbacks = [
         torch_fuze.callbacks.ProgressCallback(),
-        # torch_fuze.callbacks.BestModelSaverCallback(
-        #     model, "checkpoints/best.pt", metric_name="loss", lower_is_better=True),
+        torch_fuze.callbacks.BestModelSaverCallback(
+            model, best_checkpoint_name, metric_name="loss", lower_is_better=True),
         torch_fuze.callbacks.TensorBoardXCallback(f"logs/{str(run_start_time)}", remove_old_logs=True),
         torch_fuze.callbacks.MLFlowCallback(
             lowest_metrics_to_track={"valid_loss", "valid_l1_2", "train_loss"},
-            files_to_save_at_every_batch={"checkpoints/best.pt"})
+            files_to_save_at_every_batch={best_checkpoint_name})
     ]
     trainer = torch_fuze.SupervisedTrainer(model, criterion, device)
     trainer.run(
@@ -138,11 +140,12 @@ if __name__ == '__main__':
             "epochs": 100,
             "batch_size": 128,
             "lr": 0.0007,
-            "n_pca_components": 160
+            "n_pca_components": 160,
+            "device": "cuda:1",
         }
         for k, v in params.items():
             mlflow.log_param(k, v)
-        main(params=params, run_start_time=run.info.start_time, device="cuda:1")
+        main(params=params, run_start_time=run.info.start_time)
     # with mlflow.start_run(run_name="Leaky ReLU") as run:
     #     params = {
     #         "epochs": 100,
