@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import datetime
 import time
 import random
 import sys
@@ -46,14 +47,16 @@ def mk_img_mesh_transforms(image_transforms):
     return apply
 
 
-def main(
+def train(
         params,
         run_start_time
 ):
+    print(params)
     epochs = params["epochs"]
     batch_size = params["batch_size"]
     lr = params["lr"]
     n_pca_components = params["n_pca_components"]
+    dropout = params["dropout"]
     device = params["device"]
 
     best_checkpoint_name = f"checkpoints/best_{str(run_start_time)}.pt"
@@ -67,15 +70,8 @@ def main(
 
     # backbone, n_backbone_features = pretrainedmodels.resnet18(), 512
     backbone, n_backbone_features = pretrainedmodels.resnet34(), 512
-    # backbone, n_backbone_features = pretrainedmodels.resnet50(), 1024
-    # backbone, n_backbone_features = pretrainedmodels.resnet101(), 2048
-    # backbone, n_backbone_features = pretrainedmodels.se_resnext50_32x4d(), 1024
-    # backbone, n_backbone_features = pretrainedmodels.se_resnext101_32x4d(), 2048
-    # backbone, n_backbone_features = pretrainedmodels.nasnetamobile(num_classes=1000), 1056
 
-    # model = Model(backbone, n_backbone_features, n_vertices)
-    # model = Model2(backbone, n_backbone_features, 160, n_vertices)
-    model = FinNet(n_pca_components, n_vertices)
+    model = FinNet(n_pca_components, n_vertices, dropout_val=dropout)
 
     train_img_transforms = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),
@@ -87,16 +83,15 @@ def main(
 
     # train_dataset = mk_kostet_dataset(list(range(0, 100)) + list(range(200, 299)), train_transforms)
     # val_dataset = mk_kostet_dataset(list(range(100, 200)), val_transforms)
-    # train_dataset = mk_kostet_dataset(list(range(0, 250)), train_transforms)
-    # val_dataset = mk_kostet_dataset(list(range(250, 299)), val_transforms)
+
     train_dataset = mk_synth_dataset_train(transform=train_transforms)
     val_dataset = mk_synth_dataset_test(transform=val_transforms)
 
     print(f"n train = {len(train_dataset)}, n val = {len(val_dataset)}")
 
-    # pca_mean, pca_std = mk_pca_init(train_dataset, n_pca_components)
+    pca_mean, pca_std = mk_pca_init(train_dataset, n_pca_components)
     print(model.fc_final.bias.shape, model.fc_final.weight.shape)
-    # model.fc_final.bias.data = torch.FloatTensor(pca_mean)
+    model.fc_final.bias.data = torch.FloatTensor(pca_mean)
     # model.fc_final.weight.data = torch.FloatTensor(pca_std.T)
     # model.fc_final.requires_grad = False
 
@@ -107,16 +102,15 @@ def main(
     # criterion = nn.L1Loss()
     # criterion = L1L2Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [50, 100, 150, 200], 0.2)
-    # optimizer = optim.Adam(model.fc_final.parameters(), lr=lr)
-    # optimizer = optim.Adam(list(model.fc_final.parameters()) + list(model.fc1.parameters()), lr=lr)
+    # scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [50, 100, 150, 200], 0.2)
+    scheduler = None
 
     print("START ALL TRAINING")
 
     metrics = OrderedDict([
         ("loss", criterion),
-        ("l1", nn.L1Loss()),
-        ("l2", nn.MSELoss()),
+        # ("l1", nn.L1Loss()),
+        # ("l2", nn.MSELoss()),
         ("l1_2", L1L2Loss())
     ])
     callbacks = [
@@ -132,47 +126,19 @@ def main(
     trainer.run(
         train_loader, val_loader, optimizer, scheduler=scheduler, n_epochs=epochs, callbacks=callbacks, metrics=metrics
     )
+    print(f"Finished. device: {device}")
 
 
 if __name__ == '__main__':
-    with mlflow.start_run(run_name="PReLU") as run:
+    with mlflow.start_run(run_name="") as run:
         params = {
             "epochs": 100,
-            "batch_size": 128,
-            "lr": 0.0007,
-            "n_pca_components": 160,
-            "device": "cuda:1",
+            "batch_size": 32,
+            "lr": 0.00005,
+            "n_pca_components": 400,
+            "dropout": 0.1,
+            "device": "cuda:0",
         }
         for k, v in params.items():
             mlflow.log_param(k, v)
-        main(params=params, run_start_time=run.info.start_time)
-    # with mlflow.start_run(run_name="Leaky ReLU") as run:
-    #     params = {
-    #         "epochs": 100,
-    #         "batch_size": 16,
-    #         "lr": 0.0005,
-    #         "n_pca_components": 160
-    #     }
-    #     for k, v in params.items():
-    #         mlflow.log_param(k, v)
-    #     main(params=params, run_start_time=run.info.start_time, device="cuda")
-    # with mlflow.start_run(run_name="Leaky ReLU") as run:
-    #     params = {
-    #         "epochs": 100,
-    #         "batch_size": 16,
-    #         "lr": 0.0003,
-    #         "n_pca_components": 160
-    #     }
-    #     for k, v in params.items():
-    #         mlflow.log_param(k, v)
-    #     main(params=params, run_start_time=run.info.start_time, device="cuda")
-    # with mlflow.start_run(run_name="Leaky ReLU") as run:
-    #     params = {
-    #         "epochs": 100,
-    #         "batch_size": 16,
-    #         "lr": 0.0001,
-    #         "n_pca_components": 160
-    #     }
-    #     for k, v in params.items():
-    #         mlflow.log_param(k, v)
-    #     main(params=params, run_start_time=run.info.start_time, device="cuda")
+        train(params=params, run_start_time=run.info.start_time)

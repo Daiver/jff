@@ -26,14 +26,16 @@ def main():
     # backbone, n_backbone_features = pretrainedmodels.resnet18(), 512
     backbone, n_backbone_features = pretrainedmodels.resnet34(), 512
 
-    n_vertices = 9591
+    # n_vertices = 9591
+    n_vertices = 5958
+    # path_to_default_obj = "/work/R3DS/Data/MeshRegression/KostetSmoothCutted/Object000.obj"
+    path_to_default_obj = "/home/daiver/test_geoms/Object000.obj"
 
     # model = Model(backbone, n_backbone_features, 9591)
     # model = Model2(backbone, n_backbone_features, 100, 9591)
-    model = FinNet(160, n_vertices)
+    model = FinNet(500, n_vertices)
 
-    path_to_model = "/work/checkpoints/current.pt"
-    # path_to_model = "/work/checkpoints/00057_0.0626826686784625_0.027283317409455776.pt"
+    path_to_model = "checkpoints/best_1549537190236.pt"
     model.load_state_dict(torch.load(path_to_model))
     model.eval()
 
@@ -41,19 +43,20 @@ def main():
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize(backbone.mean, backbone.std),
     ])
-    train_transforms = mk_img_mesh_transforms(train_img_transforms)
+    transforms = mk_img_mesh_transforms(train_img_transforms)
 
-    train_dataset = mk_kostet_dataset(list(range(0, 299)), train_transforms)
+    # train_dataset = mk_kostet_dataset(list(range(0, 299)), train_transforms)
+    dataset = mk_synth_dataset_test(transform=transforms)
+    # dataset = mk_synth_dataset_train(transform=transforms)
 
-    print(f"n train = {len(train_dataset)}")
+    print(f"n train = {len(dataset)}")
 
     # path_to_model = "checkpoints/999_0.07310015199537988.pt"
     # path_to_model = "checkpoints2/620_0.11420603259766532.pt"
 
     batch_size = 128
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
-    path_to_default_obj = "/work/R3DS/Data/MeshRegression/KostetSmoothCutted/Object000.obj"
     obj_ind = 0
     print("Start activation")
     for img_batch, _ in train_loader:

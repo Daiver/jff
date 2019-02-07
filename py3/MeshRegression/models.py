@@ -87,14 +87,14 @@ class ResidualFinBlock(nn.Module):
         self.model = nn.Sequential(
             nn.Conv2d(in_filters, out_filters, 3, stride=stride, padding=1),
             nn.BatchNorm2d(out_filters),
-            # nn.ReLU(),
+            nn.ReLU(),
             # nn.LeakyReLU(),
-            nn.PReLU(),
+            # nn.PReLU(),
             nn.Conv2d(out_filters, out_filters, 3, stride=1, padding=1),
             nn.BatchNorm2d(out_filters),
-            # nn.ReLU(),
+            nn.ReLU(),
             # nn.LeakyReLU(),
-            nn.PReLU(),
+            # nn.PReLU(),
         )
         if stride != 0:
             self.shortcut = nn.Conv2d(in_filters, out_filters, 3, stride=stride, padding=1)
@@ -109,7 +109,7 @@ class ResidualFinBlock(nn.Module):
 
 
 class FinNet(nn.Module):
-    def __init__(self, n_middle_features, n_out_vertices):
+    def __init__(self, n_middle_features, n_out_vertices, dropout_val=0.2):
         super().__init__()
         self.n_out_vertices = n_out_vertices
 
@@ -129,7 +129,7 @@ class FinNet(nn.Module):
         self.n_flat_features = 486 * 5 * 4
         # self.n_flat_features = 512 * 3 * 3
         # self.n_flat_features = 486
-        self.dropout = nn.Dropout(0.2)
+        self.dropout = nn.Dropout(dropout_val)
         self.fc1 = nn.Linear(self.n_flat_features, n_middle_features)
         self.fc_final = nn.Linear(n_middle_features, 3 * n_out_vertices)
 
