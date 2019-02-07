@@ -59,7 +59,7 @@ def train(
     dropout = params["dropout"]
     device = params["device"]
 
-    readable_start_time = time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(run_start_time / 1000))
+    readable_start_time = time.strftime('%Y-%m-%d_%H:%M:%S %Z', time.localtime(run_start_time / 1000))
 
     best_checkpoint_name = f"checkpoints/best_{readable_start_time}.pt"
 
@@ -138,9 +138,22 @@ if __name__ == '__main__':
             "epochs": 100,
             "batch_size": 32,
             "lr": 0.00005,
-            "n_pca_components": 400,
+            "n_pca_components": 300,
             "dropout": 0.3,
-            "device": "cuda:1",
+            "device": "cuda:0",
+        }
+        for k, v in params.items():
+            mlflow.log_param(k, v)
+        train(params=params, run_start_time=run.info.start_time)
+
+    with mlflow.start_run(run_name="") as run:
+        params = {
+            "epochs": 100,
+            "batch_size": 32,
+            "lr": 0.00005,
+            "n_pca_components": 500,
+            "dropout": 0.3,
+            "device": "cuda:0",
         }
         for k, v in params.items():
             mlflow.log_param(k, v)
