@@ -38,18 +38,34 @@ test_loader = torch.utils.data.DataLoader(
     batch_size=args.batch_size, shuffle=True, **kwargs)
 
 
+latent_size = 16
+hidden_size = 400
+
 class VAE(nn.Module):
     def __init__(self):
+        # activation = nn.ReLU()
+        activation = nn.ELU
         super(VAE, self).__init__()
+        self.encoder_base = nn.Sequential(
+            nn.Linear(784, hidden_size),
+            activation(),
+            nn.Linear(hidden_size, hidden_size),
+            activation(),
+        )
+        self.fc21 = nn.Linear(hidden_size, latent_size)
+        self.fc22 = nn.Linear(hidden_size, latent_size)
 
-        self.fc1 = nn.Linear(784, 400)
-        self.fc21 = nn.Linear(400, 20)
-        self.fc22 = nn.Linear(400, 20)
-        self.fc3 = nn.Linear(20, 400)
-        self.fc4 = nn.Linear(400, 784)
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_size, hidden_size),
+            activation(),
+            nn.Linear(hidden_size, hidden_size),
+            activation(),
+            nn.Linear(hidden_size, 784),
+            nn.Sigmoid()
+        )
 
     def encode(self, x):
-        h1 = F.relu(self.fc1(x))
+        h1 = self.encoder_base(x)
         return self.fc21(h1), self.fc22(h1)
 
     def reparameterize(self, mu, logvar):
@@ -58,8 +74,7 @@ class VAE(nn.Module):
         return eps.mul(std).add_(mu)
 
     def decode(self, z):
-        h3 = F.relu(self.fc3(z))
-        return torch.sigmoid(self.fc4(h3))
+        return self.decoder(z)
 
     def forward(self, x):
         mu, logvar = self.encode(x.view(-1, 784))
@@ -70,6 +85,11 @@ class VAE(nn.Module):
 model = VAE().to(device)
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
+def classes_to_one_hot(sample, n_classes=10):
+    res = torch.zeros((sample.size(0), n_classes))
+    for i, s in enumerate(sample):
+        res[i, s] = 1
+    return res
 
 # Reconstruction + KL divergence losses summed over all elements and batch
 def loss_function(recon_x, x, mu, logvar):
@@ -91,8 +111,12 @@ def train(epoch):
     start_time = datetime.datetime.now()
     prefix = 'vanila'
 
-    for batch_idx, (data, _) in enumerate(train_loader):
+    for batch_idx, (data, labels) in enumerate(train_loader):
         data = data.to(device)
+        # print(labels)
+        labels = classes_to_one_hot(labels)
+        # print(labels)
+        labels = labels.to(device)
         optimizer.zero_grad()
         recon_batch, mu, logvar = model(data)
         loss = loss_function(recon_batch, data, mu, logvar)
@@ -115,8 +139,9 @@ def test(epoch):
     model.eval()
     test_loss = 0
     with torch.no_grad():
-        for i, (data, _) in enumerate(test_loader):
+        for i, (data, labels) in enumerate(test_loader):
             data = data.to(device)
+            labels = labels.to(device)
             recon_batch, mu, logvar = model(data)
             test_loss += loss_function(recon_batch, data, mu, logvar).item()
             if i == 0:
@@ -134,7 +159,7 @@ if __name__ == "__main__":
         train(epoch)
         test(epoch)
         with torch.no_grad():
-            sample = torch.randn(64, 20).to(device)
+            sample = torch.randn(64, latent_size).to(device)
             sample = model.decode(sample).cpu()
             save_image(sample.view(64, 1, 28, 28),
                        'results/sample_' + str(epoch) + '.png')

@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 import torchvision
 import pretrainedmodels
 
-from datasets import mk_kostet_dataset
+from datasets import mk_kostet_dataset, mk_synth_dataset_test, mk_synth_dataset_train
 from train_utils import run_validate
 from models import *
 from utils import replace_obj_vertices
@@ -26,9 +26,11 @@ def main():
     # backbone, n_backbone_features = pretrainedmodels.resnet18(), 512
     backbone, n_backbone_features = pretrainedmodels.resnet34(), 512
 
+    n_vertices = 9591
+
     # model = Model(backbone, n_backbone_features, 9591)
     # model = Model2(backbone, n_backbone_features, 100, 9591)
-    model = FinNet(160, 9591)
+    model = FinNet(160, n_vertices)
 
     path_to_model = "/work/checkpoints/current.pt"
     # path_to_model = "/work/checkpoints/00057_0.0626826686784625_0.027283317409455776.pt"

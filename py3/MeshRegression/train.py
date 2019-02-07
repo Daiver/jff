@@ -19,7 +19,7 @@ from sklearn.decomposition import PCA
 import torch_fuze
 import mlflow
 
-from datasets import mk_kostet_dataset
+from datasets import mk_kostet_dataset, mk_synth_dataset_test, mk_synth_dataset_train
 from train_utils import run_validate
 from models import *
 from losses import L1L2Loss
@@ -56,6 +56,9 @@ def main(
     lr = params["lr"]
     n_pca_components = params["n_pca_components"]
 
+    # n_vertices = 9591
+    n_vertices = 5958
+
     print(f"Device: {device}")
     if device.startswith("cuda"):
         print(f"GPU name: {torch.cuda.get_device_name(int(device.split(':')[-1]))}")
@@ -68,9 +71,9 @@ def main(
     # backbone, n_backbone_features = pretrainedmodels.se_resnext101_32x4d(), 2048
     # backbone, n_backbone_features = pretrainedmodels.nasnetamobile(num_classes=1000), 1056
 
-    # model = Model(backbone, n_backbone_features, 9591)
-    # model = Model2(backbone, n_backbone_features, 160, 9591)
-    model = FinNet(n_pca_components, 9591)
+    # model = Model(backbone, n_backbone_features, n_vertices)
+    # model = Model2(backbone, n_backbone_features, 160, n_vertices)
+    model = FinNet(n_pca_components, n_vertices)
 
     train_img_transforms = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),
@@ -82,16 +85,18 @@ def main(
 
     # train_dataset = mk_kostet_dataset(list(range(0, 100)) + list(range(200, 299)), train_transforms)
     # val_dataset = mk_kostet_dataset(list(range(100, 200)), val_transforms)
-    train_dataset = mk_kostet_dataset(list(range(0, 250)), train_transforms)
-    val_dataset = mk_kostet_dataset(list(range(250, 299)), val_transforms)
+    # train_dataset = mk_kostet_dataset(list(range(0, 250)), train_transforms)
+    # val_dataset = mk_kostet_dataset(list(range(250, 299)), val_transforms)
+    train_dataset = mk_synth_dataset_train(transform=train_transforms)
+    val_dataset = mk_synth_dataset_test(transform=val_transforms)
 
     print(f"n train = {len(train_dataset)}, n val = {len(val_dataset)}")
 
-    pca_mean, pca_std = mk_pca_init(train_dataset, n_pca_components)
+    # pca_mean, pca_std = mk_pca_init(train_dataset, n_pca_components)
     print(model.fc_final.bias.shape, model.fc_final.weight.shape)
-    model.fc_final.bias.data = torch.FloatTensor(pca_mean)
-    model.fc_final.weight.data = torch.FloatTensor(pca_std.T)
-    model.fc_final.requires_grad = False
+    # model.fc_final.bias.data = torch.FloatTensor(pca_mean)
+    # model.fc_final.weight.data = torch.FloatTensor(pca_std.T)
+    # model.fc_final.requires_grad = False
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
@@ -128,16 +133,16 @@ def main(
 
 
 if __name__ == '__main__':
-    with mlflow.start_run(run_name="Leaky ReLU") as run:
+    with mlflow.start_run(run_name="PReLU") as run:
         params = {
             "epochs": 100,
-            "batch_size": 96,
+            "batch_size": 128,
             "lr": 0.0007,
             "n_pca_components": 160
         }
         for k, v in params.items():
             mlflow.log_param(k, v)
-        main(params=params, run_start_time=run.info.start_time, device="cuda:0")
+        main(params=params, run_start_time=run.info.start_time, device="cuda:1")
     # with mlflow.start_run(run_name="Leaky ReLU") as run:
     #     params = {
     #         "epochs": 100,
