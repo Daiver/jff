@@ -117,7 +117,7 @@ class FinNet(nn.Module):
         # block = BNFinBlock
         block = ResidualFinBlock
         self.feature_extractor = nn.Sequential(
-            block(3, 64, stride=2),
+            block(1, 64, stride=2),
             block(64, 96, stride=2),
             block(96, 144, stride=2),
             block(144, 216, stride=2),

@@ -1,5 +1,6 @@
 import os
 import cv2
+import numpy as np
 
 from utils import read_obj_vertices
 import paths
@@ -32,7 +33,7 @@ def mk_dataset_from_folders(
     indices, transform
 ):
     images = [
-        cv2.imread(os.path.join(images_root, image_name_pattern.format(idx)))
+        np.expand_dims(cv2.imread(os.path.join(images_root, image_name_pattern.format(idx)), 0), axis=2)
         for idx in indices
     ]
 
@@ -63,6 +64,8 @@ def mk_kostet_dataset(indices: list=None, transform=None):
 def mk_synth_dataset_train(indices: list=None, transform=None):
     images_root = os.path.join("/home/daiver/train_renders/")
     meshes_root = os.path.join("/home/daiver/train_geoms")
+    # images_root = os.path.join("/home/daiver/train_renders_many_blends/")
+    # meshes_root = os.path.join("/home/daiver/train_geoms_many_blends")
     image_name_pattern = "Mesh{:03d}.obj.png"
     mesh_name_pattern = "Object{:03d}.obj"
 
@@ -75,6 +78,8 @@ def mk_synth_dataset_train(indices: list=None, transform=None):
 def mk_synth_dataset_test(indices: list=None, transform=None):
     images_root = os.path.join("/home/daiver/test_renders/")
     meshes_root = os.path.join("/home/daiver/test_geoms")
+    # images_root = os.path.join("/home/daiver/test_renders_shading/")
+    # meshes_root = os.path.join("/home/daiver/test_geoms_shading")
     image_name_pattern = "Mesh{:03d}.obj.png"
     mesh_name_pattern = "Object{:03d}.obj"
 

@@ -120,7 +120,7 @@ def train(
     callbacks = [
         torch_fuze.callbacks.ProgressCallback(),
         torch_fuze.callbacks.BestModelSaverCallback(
-            model, best_checkpoint_name, metric_name="loss", lower_is_better=True),
+            model, best_checkpoint_name, metric_name="l1_2", lower_is_better=True),
         torch_fuze.callbacks.TensorBoardXCallback(
             f"logs/{readable_start_time}", remove_old_logs=True),
         torch_fuze.callbacks.MLFlowCallback(
@@ -136,7 +136,7 @@ def train(
 
 if __name__ == '__main__':
 
-    with mlflow.start_run(run_name="Fin scheduler 3") as run:
+    with mlflow.start_run(run_name="FS3, Eyes") as run:
         params = {
             "epochs": 100,
             "batch_size": 32,
