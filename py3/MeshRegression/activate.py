@@ -33,9 +33,11 @@ def main():
 
     # model = Model(backbone, n_backbone_features, 9591)
     # model = Model2(backbone, n_backbone_features, 100, 9591)
-    model = FinNet(400, n_vertices)
+    model = FinNet(1000, n_vertices)
 
-    path_to_model = "checkpoints/best_2019-02-08_10:26:08.pt"
+    # path_to_model = "checkpoints/best_2019-02-08_10:44:40.pt"
+    path_to_model = "checkpoints/best_2019-02-08_11:48:39.pt"
+
     model.load_state_dict(torch.load(path_to_model))
     model.eval()
 

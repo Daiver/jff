@@ -29,6 +29,9 @@ import lr_schedulers as custom_schedulers
 
 
 def mk_pca_init(mesh_dataset, n_components):
+    if n_components > len(mesh_dataset):
+        n_components = len(mesh_dataset) - 1
+
     pca = PCA(n_components)
     data = []
     for _, mesh in mesh_dataset:
@@ -74,7 +77,8 @@ def train(
     # backbone, n_backbone_features = pretrainedmodels.resnet18(), 512
     backbone, n_backbone_features = pretrainedmodels.resnet34(), 512
 
-    model = FinNet(n_pca_components, n_vertices, dropout_val=dropout)
+    # model = FinNet(n_pca_components, n_vertices, dropout_val=dropout)
+    model = FinNetWide(n_pca_components, n_vertices, dropout_val=dropout)
 
     train_img_transforms = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),
@@ -114,7 +118,7 @@ def train(
     metrics = OrderedDict([
         ("loss", criterion),
         # ("l1", nn.L1Loss()),
-        # ("l2", nn.MSELoss()),
+        ("l2", nn.MSELoss()),
         ("l1_2", L1L2Loss())
     ])
     callbacks = [
@@ -136,28 +140,15 @@ def train(
 
 if __name__ == '__main__':
 
-    with mlflow.start_run(run_name="FS3, Eyes") as run:
+    with mlflow.start_run(run_name="FS3, Mouth WideNet") as run:
         params = {
             "epochs": 100,
             "batch_size": 32,
-            "lr": 0.00002,
-            "n_pca_components": 400,
-            "dropout": 0.1,
-            "device": "cuda:1",
+            "lr": 2e-5,
+            "n_pca_components": 1000,
+            "dropout": 0.75,
+            "device": "cuda:0",
         }
         for k, v in params.items():
             mlflow.log_param(k, v)
         train(params=params, run_start_time=run.info.start_time)
-
-    # with mlflow.start_run(run_name="") as run:
-    #     params = {
-    #         "epochs": 100,
-    #         "batch_size": 32,
-    #         "lr": 0.00005,
-    #         "n_pca_components": 400,
-    #         "dropout": 0.1,
-    #         "device": "cuda:1",
-    #     }
-    #     for k, v in params.items():
-    #         mlflow.log_param(k, v)
-    #     train(params=params, run_start_time=run.info.start_time)
