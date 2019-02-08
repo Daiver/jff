@@ -148,7 +148,7 @@ def train(
 
 if __name__ == '__main__':
 
-    with mlflow.start_run(run_name="FS3, Mouth deeper net") as run:
+    with mlflow.start_run(run_name="FS3, Mouth deeper net2") as run:
         params = {
             "epochs": 100,
             "batch_size": 32,
