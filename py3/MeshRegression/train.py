@@ -78,7 +78,10 @@ def train(
     backbone, n_backbone_features = pretrainedmodels.resnet34(), 512
 
     # model = FinNet(n_pca_components, n_vertices, dropout_val=dropout)
-    model = FinNetWide(n_pca_components, n_vertices, dropout_val=dropout)
+    model = FinNetDeeper(n_pca_components, n_vertices, dropout_val=dropout)
+    # model = FinNetWide(n_pca_components, n_vertices, dropout_val=dropout)
+
+    model = model.to(device)
 
     train_img_transforms = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),
@@ -110,7 +113,12 @@ def train(
     # criterion = L1L2Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     # scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [50, 100, 150, 200], 0.2)
-    scheduler = custom_schedulers.GeomRampUpLinearDecayLR(optimizer, epochs, 10, 20, rampup_gamma=1.3, middle_coeff=0.5)
+    # scheduler = custom_schedulers.GeomRampUpLinearDecayLR(optimizer, epochs, 12, 20,
+    # rampup_gamma=1.2, middle_coeff=0.5)
+    scheduler = custom_schedulers.GeomRampUpLinearDecayLR(optimizer, epochs, 10, 20,
+                                                          rampup_gamma=1.3,
+                                                          middle_coeff=0.5)
+
     # scheduler = None
 
     print("START ALL TRAINING")
@@ -128,7 +136,7 @@ def train(
         torch_fuze.callbacks.TensorBoardXCallback(
             f"logs/{readable_start_time}", remove_old_logs=True),
         torch_fuze.callbacks.MLFlowCallback(
-            lowest_metrics_to_track={"valid_loss", "valid_l1_2", "train_loss"},
+            lowest_metrics_to_track={"valid_loss", "valid_l1_2"},
             files_to_save_at_every_batch={best_checkpoint_name})
     ]
     trainer = torch_fuze.SupervisedTrainer(model, criterion, device)
@@ -140,14 +148,15 @@ def train(
 
 if __name__ == '__main__':
 
-    with mlflow.start_run(run_name="FS3, Mouth WideNet") as run:
+    with mlflow.start_run(run_name="FS3, Mouth deeper net") as run:
         params = {
             "epochs": 100,
             "batch_size": 32,
             "lr": 2e-5,
+            # "lr": 5e-5,
             "n_pca_components": 1000,
             "dropout": 0.75,
-            "device": "cuda:0",
+            "device": "cuda:1",
         }
         for k, v in params.items():
             mlflow.log_param(k, v)

@@ -89,11 +89,13 @@ class ResidualFinBlock(nn.Module):
             nn.BatchNorm2d(out_filters),
             nn.ReLU(),
             # nn.LeakyReLU(),
+            # nn.ELU(),
             # nn.PReLU(),
             nn.Conv2d(out_filters, out_filters, 3, stride=1, padding=1),
             nn.BatchNorm2d(out_filters),
             nn.ReLU(),
             # nn.LeakyReLU(),
+            # nn.ELU(),
             # nn.PReLU(),
         )
         if stride != 0:
@@ -127,7 +129,7 @@ class FinNet(nn.Module):
         )
 
         self.n_flat_features = 486 * 5 * 4
-        # self.n_flat_features = 512 * 3 * 3
+        # self.n_flat_features = 512 * 3 * 2
         # self.n_flat_features = 486
         self.dropout = nn.Dropout(dropout_val)
         self.fc1 = nn.Linear(self.n_flat_features, n_middle_features)
@@ -146,7 +148,7 @@ class FinNet(nn.Module):
         return x
 
 
-class FinNetWide(nn.Module):
+class FinNetDeeper(nn.Module):
     def __init__(self, n_middle_features, n_out_vertices, dropout_val=0.2):
         super().__init__()
         self.n_out_vertices = n_out_vertices
@@ -156,15 +158,17 @@ class FinNetWide(nn.Module):
         block = ResidualFinBlock
         self.feature_extractor = nn.Sequential(
             block(1, 64, stride=2),
-            block(64, 128, stride=2),
-            block(128, 256, stride=2),
-            block(256, 512, stride=2),
-            block(512, 512, stride=2),
-            block(512, 512, stride=2),
+            block(64, 96, stride=2),
+            block(96, 144, stride=2),
+            block(144, 216, stride=2),
+            block(216, 324, stride=2),
+            block(324, 486, stride=2),
             # block(486, 512, stride=2),
         )
 
-        self.n_flat_features = 512 * 5 * 4
+        self.n_flat_features = 486 * 5 * 4
+        # self.n_flat_features = 512 * 3 * 2
+        # self.n_flat_features = 486
         self.dropout = nn.Dropout(dropout_val)
         self.fc1 = nn.Linear(self.n_flat_features, n_middle_features)
         self.fc_final = nn.Linear(n_middle_features, 3 * n_out_vertices)
@@ -180,4 +184,3 @@ class FinNetWide(nn.Module):
         x = x.view(-1, self.n_out_vertices, 3)
 
         return x
-
