@@ -6,6 +6,7 @@ import sys
 import os
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -55,6 +56,11 @@ def train(
         params,
         run_start_time
 ):
+    torch.manual_seed(42)
+    random.seed(42)
+    np.random.seed(42)
+    # torch.backends.cudnn.deterministic = True
+
     print(params)
     epochs = params["epochs"]
     batch_size = params["batch_size"]
@@ -112,12 +118,24 @@ def train(
     # criterion = nn.L1Loss()
     # criterion = L1L2Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    # scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [50, 100, 150, 200], 0.2)
-    # scheduler = custom_schedulers.GeomRampUpLinearDecayLR(optimizer, epochs, 12, 20,
-    # rampup_gamma=1.2, middle_coeff=0.5)
-    scheduler = custom_schedulers.GeomRampUpLinearDecayLR(optimizer, epochs, 10, 20,
-                                                          rampup_gamma=1.3,
-                                                          middle_coeff=0.5)
+
+    best_lr, summary = torch_fuze.utils.find_lr_supervised(
+        model, criterion, optimizer, train_loader, 1e-9, 0.05, device=device)
+
+    # plt.plot(np.log10(summary.learning_rates), summary.losses)
+    # plt.plot(np.log10(summary.learning_rates), summary.smoothed_losses)
+    # plt.draw()
+    # plt.pause(10)
+
+    torch.manual_seed(42)
+    random.seed(42)
+    np.random.seed(42)
+    # torch.backends.cudnn.deterministic = True
+
+    # scheduler = custom_schedulers.GeomRampUpLinearDecayLR(optimizer, epochs, 10, 20,
+    #                                                       rampup_gamma=1.3, middle_coeff=0.5)
+    scheduler = custom_schedulers.GeomRampUpLinearDecayLR(optimizer, epochs, 15, 20,
+                                                          rampup_gamma=1.2, middle_coeff=0.5)
 
     # scheduler = None
 
@@ -147,8 +165,8 @@ def train(
 
 
 if __name__ == '__main__':
-
-    with mlflow.start_run(run_name="FS3, Mouth deeper net2") as run:
+    # mlflow.set_experiment("")
+    with mlflow.start_run(run_name="FS7, Mouth deeper net2") as run:
         params = {
             "epochs": 100,
             "batch_size": 32,
