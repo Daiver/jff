@@ -90,39 +90,31 @@ def loss_function(landmarks_positions, cameras_parameters, target_landmark_posit
 
 
 def main():
-    img1 = downscale(cv2.imread(str(root / "views_d18_0/0.jpg")))
-    img2 = downscale(cv2.imread(str(root / "views_d18_0/1_2.jpg")))
-    landmarks1 = read_landmarks(str(root / "views_d18_0/0.json"))
-    landmarks2 = read_landmarks(str(root / "views_d18_0/1_2.json"))
+    img0_1 = downscale(cv2.imread(str(root / "views_d18_0/0.jpg")))
+    img0_2 = downscale(cv2.imread(str(root / "views_d18_0/1_2.jpg")))
+    landmarks0_1 = read_landmarks(str(root / "views_d18_0/0.json"))
+    landmarks0_2 = read_landmarks(str(root / "views_d18_0/1_2.json"))
 
-    img1 = downscale(cv2.imread(str(root / "views_d18_16/0.jpg")))
-    img2 = downscale(cv2.imread(str(root / "views_d18_16/1_2.jpg")))
-    landmarks1 = read_landmarks(str(root / "views_d18_16/0.json"))
-    landmarks2 = read_landmarks(str(root / "views_d18_16/1_2.json"))
+    img1_1 = downscale(cv2.imread(str(root / "views_d18_16/0.jpg")))
+    img1_2 = downscale(cv2.imread(str(root / "views_d18_16/1_2.jpg")))
+    landmarks1_1 = read_landmarks(str(root / "views_d18_16/0.json"))
+    landmarks1_2 = read_landmarks(str(root / "views_d18_16/1_2.json"))
 
-    img1 = downscale(cv2.imread(str(root / "views_d18_1/0.jpg")))
-    img2 = downscale(cv2.imread(str(root / "views_d18_1/1_2.jpg")))
-    landmarks1 = read_landmarks(str(root / "views_d18_1/0.json"))
-    landmarks2 = read_landmarks(str(root / "views_d18_1/1_2.json"))
+    img2_1 = downscale(cv2.imread(str(root / "views_d18_1/0.jpg")))
+    img2_2 = downscale(cv2.imread(str(root / "views_d18_1/1_2.jpg")))
+    landmarks2_1 = read_landmarks(str(root / "views_d18_1/0.json"))
+    landmarks2_2 = read_landmarks(str(root / "views_d18_1/1_2.json"))
 
-    # landmarks = torch.randn(8, 3)
-    # landmarks = torch.randn(8, 3)
-    # cameras_parameters = torch.randn(2, 11)
+    target_landmarks_per_view_per_emotion = torch.FloatTensor(np.array([
+        [landmarks0_1, landmarks0_2],
+        [landmarks1_1, landmarks1_2],
+        [landmarks2_1, landmarks2_2],
+    ]))
+    landmarks = torch.ones(
+        target_landmarks_per_view_per_emotion.size(0),
+        target_landmarks_per_view_per_emotion.size(2),
+        3)
 
-    target_landmarks_per_image = torch.FloatTensor(np.array([landmarks1, landmarks2]))
-    landmarks = torch.ones(target_landmarks_per_image.size(1), 3) * 0.1
-    # landmarks = torch.FloatTensor([
-    #     [-2, 0, 0],
-    #     [-1, 0, 0],
-    #     [1, 0, 0],
-    #     [2, 0, 0],
-    #
-    #     [0, -1, 0],
-    #     [0, -3, 0],
-    #     [-1, -2, 0],
-    #     [1, -2, 0]
-    # ])
-    # cameras_params = torch.ones(2, 11)
     cameras_params = torch.FloatTensor([
         [
             1, 0, 0, 0,
@@ -143,32 +135,36 @@ def main():
         if outer_iter > 2:
             cameras_params.requires_grad_(True)
         optimizer = optim.Adam([landmarks, cameras_params], lr=lr)
-        for i in range(4000):
-            loss = loss_function(landmarks, cameras_params, target_landmarks_per_image)
+        for i in range(10000):
+            loss = 0.0
+            n_emotions = target_landmarks_per_view_per_emotion.size(0)
+            for emotion_ind in range(n_emotions):
+                loss = loss + loss_function(
+                    landmarks[emotion_ind], cameras_params, target_landmarks_per_view_per_emotion[emotion_ind])
             print(f"{i} -> {loss.item()}")
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
 
-    projected_landmarks_per_image = project_landmarks(landmarks, cameras_params)
-
-    landmarks1_p = projected_landmarks_per_image[0].detach().numpy()
-    landmarks2_p = projected_landmarks_per_image[1].detach().numpy()
     landmarks = landmarks.detach()
 
-    draw_landmarks(img1, landmarks1)
-    draw_landmarks(img1, landmarks1_p, (255, 0, 0))
+    projected_landmarks_per_image = project_landmarks(landmarks[1], cameras_params)
+    landmarks1_p = projected_landmarks_per_image[0].detach().numpy()
+    landmarks2_p = projected_landmarks_per_image[1].detach().numpy()
 
-    draw_landmarks(img2, landmarks2)
-    draw_landmarks(img2, landmarks2_p, (255, 0, 0))
+    draw_landmarks(img1_1, landmarks1_1)
+    draw_landmarks(img1_1, landmarks1_p, (255, 0, 0))
 
-    cv2.imshow("1", img1)
-    cv2.imshow("2", img2)
+    draw_landmarks(img1_2, landmarks1_2)
+    draw_landmarks(img1_2, landmarks2_p, (255, 0, 0))
+
+    cv2.imshow("1", img1_1)
+    cv2.imshow("2", img1_2)
     cv2.waitKey()
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.plot(landmarks[:, 0].numpy(), landmarks[:, 1].numpy(), landmarks[:, 2].numpy(), 'ro')
+    ax.plot(landmarks[0, :, 0].numpy(), landmarks[0, :, 1].numpy(), landmarks[0, :, 2].numpy(), 'ro')
     plt.axis('equal')
     plt.show()
 
