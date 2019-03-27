@@ -10,7 +10,9 @@ from torchvision.datasets import CIFAR10
 import torchvision.transforms as transforms
 
 
-def mk_dataset()
+def mk_dataset():
+
+    pass
 
 
 def main():
