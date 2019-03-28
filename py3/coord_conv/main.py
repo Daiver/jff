@@ -1,3 +1,7 @@
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
 from collections import OrderedDict
 import random
 import cv2
@@ -15,7 +19,7 @@ import torchvision.transforms as transforms
 from coord_conv import CoordConv2d
 
 
-canvas_size = (32, 32)
+canvas_size = (64, 64)
 
 
 def mk_point_sample():
@@ -43,10 +47,13 @@ class Net(nn.Module):
     def __init__(self):
         super().__init__()
         self.feature_extractor = nn.Sequential(
-            nn.Conv2d(3, 16, 5, stride=2, padding=2),  # 32 -> 16
+            nn.Conv2d(3, 16, 3, stride=2, padding=1),  # 64 -> 32
             nn.BatchNorm2d(16),
             nn.ReLU(True),
-            nn.Conv2d(16, 32, 5, stride=2, padding=2),  # 16 -> 8
+            nn.Conv2d(16, 32, 3, stride=2, padding=1),  # 32 -> 16
+            nn.BatchNorm2d(32),
+            nn.ReLU(True),
+            nn.Conv2d(32, 32, 3, stride=2, padding=1),  # 16 -> 8
             nn.BatchNorm2d(32),
             nn.ReLU(True),
             nn.Conv2d(32, 32, 3, stride=2, padding=1),  # 8 -> 4
@@ -70,10 +77,13 @@ class Net2(nn.Module):
     def __init__(self):
         super().__init__()
         self.feature_extractor = nn.Sequential(
-            CoordConv2d(3, 16, 5, stride=2, padding=2),  # 32 -> 16
+            CoordConv2d(3, 16, 3, stride=2, padding=1),  # 64 -> 32
             nn.BatchNorm2d(16),
             nn.ReLU(True),
-            CoordConv2d(16, 32, 5, stride=2, padding=2),  # 16 -> 8
+            CoordConv2d(16, 32, 3, stride=2, padding=1),  # 32 -> 16
+            nn.BatchNorm2d(32),
+            nn.ReLU(True),
+            CoordConv2d(32, 32, 3, stride=2, padding=1),  # 16 -> 8
             nn.BatchNorm2d(32),
             nn.ReLU(True),
             CoordConv2d(32, 32, 3, stride=2, padding=1),  # 8 -> 4
@@ -98,14 +108,18 @@ def main_train():
 
     torch_fuze.utils.manual_seed(42)
     n_train_samples = 1000
-    n_test_samples = 200
+    n_test_samples = 500
     train_set = mk_points_dataset(n_train_samples)
     test_set = mk_points_dataset(n_test_samples)
+
+    use_ordinary_model = True
+    use_ordinary_model = False
 
     # lr = 0.01
     # batch_size = 32
     # batch_size = 64
     batch_size = 256
+    # batch_size = 512
     # device = "cpu"
     device = "cuda:0"
 
@@ -121,24 +135,48 @@ def main_train():
     test_loader = DataLoader(torch_fuze.data.InputOutputTransformsWrapper(test_set, inp_trans, out_trans),
                              batch_size=batch_size, shuffle=False, pin_memory=False, num_workers=4)
 
-    # model = Net()
-    model = Net2()
+    if use_ordinary_model:
+        model = Net()
+    else:
+        model = Net2()
     model = nn.DataParallel(model)
     model.to(device)
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 30], gamma=0.2)
+    scheduler = None
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[300], gamma=0.1)
+
+    # best_lr = torch_fuze.utils.find_lr_supervised(
+    #     model, criterion, optimizer, train_loader, 0.0001, 1, device=device, n_iterations=100)[0]
+    # best_lr = 0.9120108393559097
+    # print("best lr", best_lr)
+    # torch_fuze.utils.manual_seed(42)
+    # torch_fuze.utils.set_lr(optimizer, best_lr)
+    # # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30, 50, 100], gamma=0.1)
+    # cycle_len = int(200 * len(train_loader))
+    # print("cycle_len", cycle_len)
+    # scheduler = torch_fuze.lr_scheduler.OneCycleLR(
+    #     optimizer, 1e-6, best_lr * 0.1, 1e-6, cycle_len)
 
     metrics = OrderedDict([
         ("loss", criterion),
         # ("acc", torch_fuze.metrics.Accuracy())
     ])
+    log_dir = "conv" if use_ordinary_model else "coord"
     callbacks = [
         torch_fuze.callbacks.ProgressCallback(),
+        torch_fuze.callbacks.TensorBoardXCallback(log_dir=f"logs/{log_dir}/", remove_old_logs=True)
     ]
     trainer = torch_fuze.SupervisedTrainer(model, criterion, device)
     trainer.run(
-        train_loader, test_loader, optimizer, scheduler=scheduler, n_epochs=200, callbacks=callbacks, metrics=metrics)
+        train_loader, test_loader, optimizer,
+        scheduler=scheduler, n_epochs=1000, callbacks=callbacks, metrics=metrics,
+        scheduler_after_each_batch=True)
+
+    if use_ordinary_model:
+        print("Conv training finished")
+    else:
+        print("CoordConv training finished")
 
 
 if __name__ == '__main__':
