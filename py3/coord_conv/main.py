@@ -44,12 +44,16 @@ class Net(nn.Module):
         super().__init__()
         self.feature_extractor = nn.Sequential(
             nn.Conv2d(3, 16, 5, stride=2, padding=2),  # 32 -> 16
+            nn.BatchNorm2d(16),
             nn.ReLU(True),
             nn.Conv2d(16, 32, 5, stride=2, padding=2),  # 16 -> 8
+            nn.BatchNorm2d(32),
             nn.ReLU(True),
             nn.Conv2d(32, 32, 3, stride=2, padding=1),  # 8 -> 4
+            nn.BatchNorm2d(32),
             nn.ReLU(True),
             nn.Conv2d(32, 32, 3, stride=2, padding=1),  # 4 -> 2
+            nn.BatchNorm2d(32),
             nn.ReLU(True),
         )
 
@@ -67,12 +71,16 @@ class Net2(nn.Module):
         super().__init__()
         self.feature_extractor = nn.Sequential(
             CoordConv2d(3, 16, 5, stride=2, padding=2),  # 32 -> 16
+            nn.BatchNorm2d(16),
             nn.ReLU(True),
             CoordConv2d(16, 32, 5, stride=2, padding=2),  # 16 -> 8
+            nn.BatchNorm2d(32),
             nn.ReLU(True),
             CoordConv2d(32, 32, 3, stride=2, padding=1),  # 8 -> 4
+            nn.BatchNorm2d(32),
             nn.ReLU(True),
             CoordConv2d(32, 32, 3, stride=2, padding=1),  # 4 -> 2
+            nn.BatchNorm2d(32),
             nn.ReLU(True),
         )
 
@@ -113,8 +121,8 @@ def main_train():
     test_loader = DataLoader(torch_fuze.data.InputOutputTransformsWrapper(test_set, inp_trans, out_trans),
                              batch_size=batch_size, shuffle=False, pin_memory=False, num_workers=4)
 
-    model = Net()
-    # model = Net2()
+    # model = Net()
+    model = Net2()
     model = nn.DataParallel(model)
     model.to(device)
     criterion = nn.MSELoss()
