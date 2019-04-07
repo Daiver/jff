@@ -11,21 +11,20 @@ void add(int n, float *x, float *y)
 
 int main(int, char **)
 {
-    const int N = 1 << 20;
+    const int N = 1 << 2;
     float *x;
     float *y;
     std::cout << "Before alloc" << std::endl;
     //x = new float[N];
     //y = new float[N];
-    cudaMallocManaged(&x, N * sizeof(float));
-    cudaMallocManaged(&y, N * sizeof(float));
+    std::cout << "alloc x " << cudaMallocManaged(&x, N * sizeof(float)) << std::endl;
+    std::cout << "alloc y " << cudaMallocManaged(&y, N * sizeof(float)) << std::endl;
 
     std::cout << "Before fill" << std::endl;
     for (int i = 0; i < N; i++) {
         x[i] = 1.0f;
         y[i] = 2.0f;
     }
-    return 0;
 
     std::cout << std::flush;
     std::cout << "Before add" << std::endl;
