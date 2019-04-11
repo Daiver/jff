@@ -2,53 +2,91 @@ import cv2
 import numpy as np
 import torch
 
-from barycentric import barycoords_from_2d_triangle
+import pywavefront
+
+from rasterization import rasterize_triangles
 
 
-def rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer, tri_index, tri_coords_3d):
-    n_rows = z_buffer.shape[0]
-    n_cols = z_buffer.shape[1]
-    tri_coords_xy = tri_coords_3d[:, :2]
-    tri_coords_xy_int = tri_coords_xy.round().astype(np.int32)
-    x_start = tri_coords_xy_int[:, 0].min()
-    x_finish = tri_coords_xy_int[:, 0].max()
-    y_start = tri_coords_xy_int[:, 1].min()
-    y_finish = tri_coords_xy_int[:, 1].max()
-    for x in range(x_start, x_finish + 1):
-        if not (0 <= x < n_cols):
-            continue
-        for y in range(y_start, y_finish + 1):
-            if not (0 <= y < n_rows):
-                continue
-            l1, l2, l3 = barycoords_from_2d_triangle(tri_coords_xy, (float(x), float(y)))
-            is_l1_ok = 0.0 <= l1 <= 1.0
-            is_l2_ok = 0.0 <= l2 <= 1.0
-            is_l3_ok = 0.0 <= l3 <= 1.0
-            if not (is_l1_ok and is_l2_ok and is_l3_ok):
-                continue
-            z_val = tri_coords_3d[0, 2] * l1 + tri_coords_3d[1, 2] * l2 + tri_coords_3d[2, 2] * l3
-            if z_buffer[y, x] > z_val:
-                continue
-            barycentrics_l1l2l3[y, x] = [l1, l2, l3]
-            barycentrics_triangle_indices[y, x] = tri_index
-            z_buffer[y, x] = z_val
+# Super ineffective, i don't care
+def fit_to_view_transform(vertices, width_and_height):
+    width, height = width_and_height
+    screen_center = (width / 2, height / 2)
+
+    x_min, x_max = vertices[:, 0].min(), vertices[:, 0].max()
+    y_min, y_max = vertices[:, 1].min(), vertices[:, 1].max()
+    z_min, z_max = vertices[:, 2].min(), vertices[:, 2].max()
+
+    x_d = x_max - x_min
+    y_d = y_max - y_min
+    z_d = y_max - z_min
+
+    model_center = (x_min + x_d / 2, y_min + y_d / 2, z_min + z_d / 2)
+    max_dxy = max(x_d, y_d)
+
+    transformation = np.eye(4)
+    transformation = np.array([
+        [1, 0, 0, -model_center[0]],
+        [0, 1, 0, -model_center[1]],
+        [0, 0, 1, -model_center[2]],
+        [0, 0, 0, 1],
+    ]) @ transformation
+
+    scale = width / x_d if width < height else height / y_d
+    transformation = np.array([
+        [scale, 0, 0, 0],
+        [0, -scale, 0, 0],
+        [0, 0, scale, 0],
+        [0, 0, 0, 1],
+    ]) @ transformation
+
+    transformation = np.array([
+        [1, 0, 0, screen_center[0]],
+        [0, 1, 0, screen_center[1]],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1],
+    ]) @ transformation
+
+    mat = transformation[:3, :3]
+    vec = transformation[:3, 3]
+    print(transformation)
+    print(mat)
+    print(vec)
+    return mat, vec, z_min * scale
+
+
+def transform_vertices(mat, vec, vertices):
+    return vertices @ mat.T + vec
 
 
 def main():
-    canvas_size = (64, 64)
+    canvas_size = (512, 512)
     barycentrics_l1l2l3 = np.zeros((canvas_size[0], canvas_size[1], 3), dtype=np.float32)
     barycentrics_triangle_indices = np.zeros((canvas_size[0], canvas_size[1]), dtype=np.int32)
+    barycentrics_triangle_indices[:] = 1
     z_buffer = np.zeros((canvas_size[0], canvas_size[1]), dtype=np.float32)
-    tri_index = 0
-    tri_coords_3d = np.array([
-        [1, 1, 5],
-        [50, 5, 7],
-        [10, 30, 3]
-    ], dtype=np.float32)
-    rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer, tri_index, tri_coords_3d)
+
+    path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
+    model = pywavefront.Wavefront(path_to_obj, collect_faces=True)
+    mesh = model.meshes[None]
+    print(dir(mesh))
+    print(mesh.materials[0].has_uvs)
+
+    vertices = np.array(model.vertices, dtype=np.float32)
+    # vertices *= 2
+    # vertices += (30, 0, 0)
+    # vertices[:, 1] = 60 - vertices[:, 1]
+    mat, vec, z_min = fit_to_view_transform(vertices, (canvas_size[1], canvas_size[0]))
+    vertices = transform_vertices(mat, vec, vertices)
+
+    z_buffer[:] = z_min
+
+    rasterize_triangles(
+        model.meshes[None].faces, vertices,
+        barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
 
     z_buffer = (z_buffer - z_buffer.min()) / (z_buffer.max() - z_buffer.min())
     cv2.imshow("", cv2.pyrUp(z_buffer))
+    cv2.imshow("1", cv2.pyrUp(barycentrics_l1l2l3))
     cv2.waitKey()
 
 
