@@ -48,9 +48,6 @@ def fit_to_view_transform(vertices, width_and_height):
 
     mat = transformation[:3, :3]
     vec = transformation[:3, 3]
-    print(transformation)
-    print(mat)
-    print(vec)
     return mat, vec, z_min * scale
 
 
@@ -60,6 +57,9 @@ def transform_vertices(mat, vec, vertices):
 
 def main():
     canvas_size = (512, 512)
+    # canvas_size = (1024, 1024)
+    # canvas_size = (2048, 2048)
+
     barycentrics_l1l2l3 = np.zeros((canvas_size[0], canvas_size[1], 3), dtype=np.float32)
     barycentrics_triangle_indices = np.zeros((canvas_size[0], canvas_size[1]), dtype=np.int32)
     barycentrics_triangle_indices[:] = 1
@@ -85,8 +85,8 @@ def main():
         barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
 
     z_buffer = (z_buffer - z_buffer.min()) / (z_buffer.max() - z_buffer.min())
-    cv2.imshow("", cv2.pyrUp(z_buffer))
-    cv2.imshow("1", cv2.pyrUp(barycentrics_l1l2l3))
+    cv2.imshow("", z_buffer)
+    cv2.imshow("1", barycentrics_l1l2l3)
     cv2.waitKey()
 
 
