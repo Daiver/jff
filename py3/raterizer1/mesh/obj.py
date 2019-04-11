@@ -1,16 +1,18 @@
+import numpy as np
 from .mesh import Mesh
+from .tools import triangulate_polygons
 
 
 # Currently normals are not supported
 # TODO: not effective, use file streams or something like this
-def from_obj_file(file_name):
+def from_obj_file(file_name, triangulate=False):
     with open(file_name) as f:
         string = f.read()
-        return from_obj_string(string)
+        return from_obj_string(string, triangulate=triangulate)
 
 
 # TODO: just ugly, split it to several functions, add assertions, etc
-def from_obj_string(string):
+def from_obj_string(string, triangulate=False):
     lines = string.split("\n")
     vertices = []
     texture_vertices = []
@@ -44,9 +46,21 @@ def from_obj_string(string):
             if len(texture_face) > 0:
                 texture_polygon_vertex_indices.append(texture_face)
 
+    vertices = np.array(vertices, dtype=np.float32)
+    if len(texture_vertices) > 0:
+        texture_vertices = np.array(texture_vertices, dtype=np.float32)
+    else:
+        texture_vertices = None
+        texture_polygon_vertex_indices = None
+
     normals = None
     triangle_vertex_indices = None
     triangle_texture_vertex_indices = None
+
+    if triangulate:
+        triangle_vertex_indices = triangulate_polygons(polygon_vertex_indices)
+    if triangulate and texture_vertices is not None:
+        triangle_texture_vertex_indices = triangulate_polygons(texture_polygon_vertex_indices)
 
     return Mesh(
         vertices=vertices,
