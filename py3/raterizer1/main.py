@@ -68,8 +68,15 @@ def main():
     path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
     model = pywavefront.Wavefront(path_to_obj, collect_faces=True)
     mesh = model.meshes[None]
-    print(dir(mesh))
+    print(dir(mesh.materials[0]))
     print(mesh.materials[0].has_uvs)
+    print(len(mesh.materials[0].vertices))
+    print(mesh.materials[0].vertex_size)
+    print(mesh.materials[0].vertex_format)
+
+    print(len(model.vertices))
+
+    return
 
     vertices = np.array(model.vertices, dtype=np.float32)
 
