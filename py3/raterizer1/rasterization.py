@@ -31,7 +31,7 @@ def rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buf
             z_buffer[y, x] = z_val
 
 
-def rasterize_triangles(
+def rasterize_barycentrics_and_z_buffer_by_triangles(
         triangle_vertex_indices, vertices,
         barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer):
     for tri_index, face in enumerate(triangle_vertex_indices):

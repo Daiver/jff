@@ -4,7 +4,7 @@ import torch
 
 import pywavefront
 
-from rasterization import rasterize_triangles
+from rasterization import rasterize_barycentrics_and_z_buffer_by_triangles
 
 
 # Super ineffective, i don't care
@@ -72,15 +72,13 @@ def main():
     print(mesh.materials[0].has_uvs)
 
     vertices = np.array(model.vertices, dtype=np.float32)
-    # vertices *= 2
-    # vertices += (30, 0, 0)
-    # vertices[:, 1] = 60 - vertices[:, 1]
+
     mat, vec, z_min = fit_to_view_transform(vertices, (canvas_size[1], canvas_size[0]))
     vertices = transform_vertices(mat, vec, vertices)
 
-    z_buffer[:] = z_min
+    z_buffer[:] = z_min - abs(z_min) * 0.1
 
-    rasterize_triangles(
+    rasterize_barycentrics_and_z_buffer_by_triangles(
         model.meshes[None].faces, vertices,
         barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
 
