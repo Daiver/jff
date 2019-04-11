@@ -1,6 +1,6 @@
 import unittest
 
-import mesh
+import geometry_tools
 
 
 class ObjTests(unittest.TestCase):

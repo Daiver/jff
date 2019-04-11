@@ -5,14 +5,14 @@ from .tools import triangulate_polygons
 
 # Currently normals are not supported
 # TODO: not effective, use file streams or something like this
-def from_obj_file(file_name, triangulate=False):
+def from_obj_file(file_name, triangulate=True):
     with open(file_name) as f:
         string = f.read()
         return from_obj_string(string, triangulate=triangulate)
 
 
 # TODO: just ugly, split it to several functions, add assertions, etc
-def from_obj_string(string, triangulate=False):
+def from_obj_string(string, triangulate=True):
     lines = string.split("\n")
     vertices = []
     texture_vertices = []
@@ -24,19 +24,19 @@ def from_obj_string(string, triangulate=False):
         if len(line) == 0:
             continue
 
-        tokens = line.split(" ")
+        tokens = [x for x in line.split(" ") if len(x) > 0]
 
         if tokens[0] == "v":
             assert len(tokens) == 4
-            vertices.append([float(x) for x in tokens])
+            vertices.append([float(x) for x in tokens[1:]])
         elif tokens[0] == "vt":
-            assert len(tokens) == 3
-            texture_vertices.append([float(x) for x in tokens])
+            assert len(tokens) in [3, 4]
+            texture_vertices.append([float(x) for x in tokens[1:]])
         elif tokens[0] == "f":
             assert len(tokens) >= 3
             vertex_face = []
             texture_face = []
-            for token in tokens:
+            for token in tokens[1:]:
                 is_token_contains_double_slash = "//" in token
                 face_tokens = token.split("/")
                 vertex_face.append(int(face_tokens[0]))
