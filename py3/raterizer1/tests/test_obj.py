@@ -1,5 +1,6 @@
 import unittest
 
+import mesh
 
 
 class ObjTests(unittest.TestCase):
