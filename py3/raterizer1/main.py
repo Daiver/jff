@@ -62,7 +62,7 @@ def main():
 
     barycentrics_l1l2l3 = np.zeros((canvas_size[0], canvas_size[1], 3), dtype=np.float32)
     barycentrics_triangle_indices = np.zeros((canvas_size[0], canvas_size[1]), dtype=np.int32)
-    barycentrics_triangle_indices[:] = 1
+    barycentrics_triangle_indices[:] = -1
     z_buffer = np.zeros((canvas_size[0], canvas_size[1]), dtype=np.float32)
 
     path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
