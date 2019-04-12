@@ -88,5 +88,5 @@ def warp_grid(barycentrics_triangle_indices, grid, image):
     res = F.grid_sample(torch_image, torch_grid).squeeze()
     res = res.transpose(0, 2)
     res = res.numpy() / 255
-    # res[barycentrics_triangle_indices == -1] = 0
+    res[barycentrics_triangle_indices == -1] = 0
     return res
