@@ -8,8 +8,8 @@ from scipy.ndimage.interpolation import map_coordinates
 # window_size = (11, 11)
 # window_size = (41, 41)
 # window_size = (21, 21)
-# window_size = (61, 61)
-window_size = (41, 41)
+window_size = (61, 61)
+# window_size = (41, 41)
 
 
 def draw_circle(canvas, point, radius=5):
@@ -129,13 +129,17 @@ if __name__ == '__main__':
     # patch_center = (800, 887)
     # patch_center = (457, 1079)
     # patch_center = (420, 632)
-    patch_center = (419, 581)
+    # patch_center = (681, 1356)
+    # patch_center = (858, 1269)
+    patch_center = (693, 1170)
+
     patch_center = np.array(patch_center, dtype=np.float32) / 2.0
 
-    data_root = "/work/R3DS/Data/SashaFrontView/"
+    # data_root = "/work/R3DS/Data/SashaFrontView/"
+    data_root = "/home/daiver/CentralView_Perspective/"
     names = [os.path.join(data_root, x) for x in os.listdir(data_root)]
     names.sort()
-    res_dir = "/home/daiver/res7"
+    res_dir = "/home/daiver/res10"
     os.makedirs(res_dir, exist_ok=True)
     for i in range(1, len(names)):
         name0 = names[i]
