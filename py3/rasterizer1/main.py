@@ -32,7 +32,7 @@ def fit_to_view_transform(vertices, width_and_height):
     ]) @ transformation
 
     # scale = width / x_d if width < height else height / y_d
-    scale = max(width / x_d, height / y_d)
+    scale = min(width / x_d, height / y_d)
     transformation = np.array([
         [scale, 0, 0, 0],
         [0, -scale, 0, 0],
@@ -57,20 +57,9 @@ def transform_vertices(mat, vec, vertices):
 
 
 def main():
-    # path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
-    path_to_obj = "models/teapot.obj"
+    path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
+    # path_to_obj = "models/teapot.obj"
     model = geom_tools.from_obj_file(path_to_obj)
-    print(f"Model loaded, n vertices: "
-          f"{model.n_vertices()}, "
-          f"n vts: {model.n_texture_vertices()}, "
-          f"n polygons: {model.n_polygons()}, "
-          f"n triangles: {model.n_triangles()}")
-    print(model.vertices[:5])  # NumPy array, same for texture vertices, etc
-    print(model.polygon_vertex_indices[:5])  # List of lists, same for texture topology, triangulated topology, etc
-    print(model.triangle_vertex_indices[:5])  # Fan like triangulation of topology. Keep original triangles
-
-    model.vertices[0] = (1, 2, 3)
-    geom_tools.save("/home/daiver/tmp.obj", model)
 
     canvas_size = (512, 512)
     # canvas_size = (1024, 1024)
@@ -81,16 +70,6 @@ def main():
     barycentrics_triangle_indices[:] = -1
     z_buffer = np.zeros((canvas_size[0], canvas_size[1]), dtype=np.float32)
 
-    # geom_tools = model.meshes[None]
-    # print(dir(geom_tools.materials[0]))
-    # print(geom_tools.materials[0].has_uvs)
-    # print(len(geom_tools.materials[0].vertices))
-    # print(geom_tools.materials[0].vertex_size)
-    # print(geom_tools.materials[0].vertex_format)
-    #
-    # print(len(model.vertices))
-    #
-    # vertices = np.array(model.vertices, dtype=np.float32)
     vertices = model.vertices
 
     mat, vec, z_min = fit_to_view_transform(vertices, (canvas_size[1], canvas_size[0]))

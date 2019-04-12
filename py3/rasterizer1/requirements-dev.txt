@@ -1,0 +1,2 @@
+numpy
+-e /home/daiver/coding/pygeom_tools
