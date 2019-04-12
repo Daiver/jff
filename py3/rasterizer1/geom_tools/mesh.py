@@ -1,5 +1,7 @@
 import numpy as np
 
+from .utils import is_arrays_equal
+
 
 # TODO: asserts for consistent texture information
 class Mesh:
@@ -25,10 +27,13 @@ class Mesh:
     def has_normals(self) -> bool:
         return self.normals is not None
 
+    def has_triangulated(self) -> bool:
+        return self.triangle_vertex_indices is not None
+
     def __eq__(self, other) -> bool:
         assert isinstance(other, Mesh)
 
-        if not np.allclose(self.vertices, other.vertices):
+        if not is_arrays_equal(self.vertices, other.vertices):
             return False
         if not self.polygon_vertex_indices == other.polygon_vertex_indices:
             return False
@@ -36,7 +41,7 @@ class Mesh:
         if self.has_uv() != other.has_uv():
             return False
         if self.has_uv():
-            if not np.allclose(self.texture_vertices, other.texture_vertices):
+            if not is_arrays_equal(self.texture_vertices, other.texture_vertices):
                 return False
             if not self.texture_polygon_vertex_indices == other.texture_polygon_vertex_indices:
                 return False
@@ -44,8 +49,9 @@ class Mesh:
         if self.has_normals() != other.has_normals():
             return False
         if self.has_normals():
-            if not self.normals == other.normals:
+            if not is_arrays_equal(self.normals, other.normals):
                 return False
+            
         if not self.triangle_vertex_indices == other.triangle_vertex_indices:
             return False
         if not self.triangle_texture_vertex_indices == other.triangle_texture_vertex_indices:
