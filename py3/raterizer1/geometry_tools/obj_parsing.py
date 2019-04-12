@@ -41,9 +41,9 @@ def from_obj_string(string, triangulate=True):
             for token in tokens[1:]:
                 is_token_contains_double_slash = "//" in token
                 face_tokens = token.split("/")
-                vertex_face.append(int(face_tokens[0]))
+                vertex_face.append(int(face_tokens[0]) - 1)
                 if len(face_tokens) > 1 and not is_token_contains_double_slash:
-                    texture_face.append(int(face_tokens[1]))
+                    texture_face.append(int(face_tokens[1]) - 1)
             polygon_vertex_indices.append(vertex_face)
             if len(texture_face) > 0:
                 texture_polygon_vertex_indices.append(texture_face)

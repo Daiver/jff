@@ -17,4 +17,13 @@ class Mesh:
 
     def __eq__(self, other):
         assert isinstance(other, Mesh)
-        
+        res = True
+        res = res and self.vertices == other.vertices
+        res = res and self.polygon_vertex_indices == other.polygon_vertex_indices
+        res = res and self.texture_vertices == other.texture_vertices
+        res = res and self.texture_polygon_vertex_indices == other.texture_polygon_vertex_indices
+        res = res and self.normals == other.normals
+        res = res and self.triangle_vertex_indices == other.triangle_vertex_indices
+        res = res and self.triangle_texture_vertex_indices == other.triangle_texture_vertex_indices
+
+        return res

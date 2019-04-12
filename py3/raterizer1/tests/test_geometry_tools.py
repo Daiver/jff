@@ -10,7 +10,7 @@ class ObjTests(unittest.TestCase):
         ]
         res = geometry_tools.tools.triangulate_polygons(faces)
         ans = [[5, 3, 5]]
-        self.assertEquals(res, ans)
+        self.assertTrue(res == ans)
 
     def test_triangulate02(self):
         faces = [
@@ -21,7 +21,7 @@ class ObjTests(unittest.TestCase):
             [5, 3, 6],
             [5, 6, 5],
         ]
-        self.assertEquals(res, ans)
+        self.assertTrue(res == ans)
 
     def test_triangulate03(self):
         faces = [
@@ -38,7 +38,7 @@ class ObjTests(unittest.TestCase):
             [1, 2, 3],
             [1, 3, 4]
         ]
-        self.assertEquals(res, ans)
+        self.assertTrue(res == ans)
 
 
 if __name__ == '__main__':
