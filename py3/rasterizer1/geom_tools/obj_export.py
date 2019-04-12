@@ -25,7 +25,7 @@ def _write_vertices(vertices, stream: io.TextIOWrapper):
 
 def _write_texture_vertices(texture_vertices, stream: io.TextIOWrapper):
     for v in texture_vertices:
-        stream.write(f"vt {v[0]} {v[1]} {v[2]}\n")
+        stream.write(f"vt {v[0]} {v[1]}\n")
 
 
 def _write_faces(polygon_vertex_indices, texture_polygon_vertex_indices, stream: io.TextIOWrapper):
