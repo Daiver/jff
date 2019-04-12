@@ -77,13 +77,26 @@ def main():
 
     z_buffer[:] = z_min - abs(z_min) * 0.1
 
+    # rasterize_barycentrics_and_z_buffer_by_triangles(
+    #     model.triangle_vertex_indices,
+    #     vertices,
+    #     barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
+
+    vertices = np.zeros((model.n_texture_vertices(), 3))
+    print(model.texture_vertices.shape)
+    vertices[:, 0:2] = model.texture_vertices
+    vertices[:, 0] *= canvas_size[1]
+    vertices[:, 1] *= canvas_size[0]
+
     rasterize_barycentrics_and_z_buffer_by_triangles(
-        # model.meshes[None].faces,
-        model.triangle_vertex_indices,
+        model.triangle_texture_vertex_indices,
         vertices,
         barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
 
-    z_buffer = (z_buffer - z_buffer.min()) / (z_buffer.max() - z_buffer.min())
+    z_buffer_diff = z_buffer.max() - z_buffer.min()
+    if z_buffer_diff < 1e-6:
+        z_buffer_diff = 1
+    z_buffer = (z_buffer - z_buffer.min()) / z_buffer_diff
     cv2.imshow("", z_buffer)
     cv2.imshow("1", barycentrics_l1l2l3)
     cv2.waitKey()

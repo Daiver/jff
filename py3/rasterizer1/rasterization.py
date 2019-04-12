@@ -41,3 +41,4 @@ def rasterize_barycentrics_and_z_buffer_by_triangles(
             vertices[face[2]],
         ], dtype=np.float32)
         rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer, tri_index, tri_coords_3d)
+
