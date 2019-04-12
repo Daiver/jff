@@ -1,6 +1,6 @@
 import unittest
 
-import geometry_tools
+import geom_tools
 
 
 class ObjTests(unittest.TestCase):
@@ -8,7 +8,7 @@ class ObjTests(unittest.TestCase):
         faces = [
             [5, 3, 5]
         ]
-        res = geometry_tools.tools.triangulate_polygons(faces)
+        res = geom_tools.utils.triangulate_polygons(faces)
         ans = [[5, 3, 5]]
         self.assertTrue(res == ans)
 
@@ -16,7 +16,7 @@ class ObjTests(unittest.TestCase):
         faces = [
             [5, 3, 6, 5]
         ]
-        res = geometry_tools.tools.triangulate_polygons(faces)
+        res = geom_tools.utils.triangulate_polygons(faces)
         ans = [
             [5, 3, 6],
             [5, 6, 5],
@@ -29,7 +29,7 @@ class ObjTests(unittest.TestCase):
             [0, 3, 4],
             [1, 2, 3, 4]
         ]
-        res = geometry_tools.tools.triangulate_polygons(faces)
+        res = geom_tools.utils.triangulate_polygons(faces)
         ans = [
             [11, 5, 3],
             [11, 3, 6],

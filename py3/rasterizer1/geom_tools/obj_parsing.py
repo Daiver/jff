@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from .mesh import Mesh
-from .tools import triangulate_polygons
+from .utils import triangulate_polygons
 
 
 # Currently normals are not supported

@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import torch
 
-import geometry_tools
+import geom_tools
 
 from rasterization import rasterize_barycentrics_and_z_buffer_by_triangles
 
@@ -67,14 +67,14 @@ def main():
     path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
     # path_to_obj = "models/teapot.obj"
     # model = pywavefront.Wavefront(path_to_obj, collect_faces=True)
-    model = geometry_tools.from_obj_file(path_to_obj)
+    model = geom_tools.from_obj_file(path_to_obj)
     print("Model loaded")
-    # geometry_tools = model.meshes[None]
-    # print(dir(geometry_tools.materials[0]))
-    # print(geometry_tools.materials[0].has_uvs)
-    # print(len(geometry_tools.materials[0].vertices))
-    # print(geometry_tools.materials[0].vertex_size)
-    # print(geometry_tools.materials[0].vertex_format)
+    # geom_tools = model.meshes[None]
+    # print(dir(geom_tools.materials[0]))
+    # print(geom_tools.materials[0].has_uvs)
+    # print(len(geom_tools.materials[0].vertices))
+    # print(geom_tools.materials[0].vertex_size)
+    # print(geom_tools.materials[0].vertex_format)
     #
     # print(len(model.vertices))
     #
