@@ -83,7 +83,6 @@ def main():
     #     barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
 
     vertices = np.zeros((model.n_texture_vertices(), 3))
-    print(model.texture_vertices.shape)
     vertices[:, 0:2] = model.texture_vertices
     vertices[:, 0] *= canvas_size[1]
     vertices[:, 1] *= canvas_size[0]

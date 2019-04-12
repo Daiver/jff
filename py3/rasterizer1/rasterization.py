@@ -42,3 +42,23 @@ def rasterize_barycentrics_and_z_buffer_by_triangles(
         ], dtype=np.float32)
         rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer, tri_index, tri_coords_3d)
 
+
+def grid_for_texture_warp(
+        barycentrics_l1l2l3,
+        barycentrics_triangle_indices,
+        texture_vertices,
+        triangle_texture_polygon_indices):
+    res = np.zeros((barycentrics_l1l2l3.shape[0], barycentrics_l1l2l3.shape[1], 2), dtype=np.float32)
+
+    for x in range(res.shape[1]):
+        for y in range(res.shape[0]):
+            tri_ind = barycentrics_triangle_indices[y, x]
+            if tri_ind == -1:
+                continue
+            l1, l2, l3 = barycentrics_l1l2l3[y, x]
+            i1, i2, i3 = triangle_texture_polygon_indices[tri_ind]
+            vt1, vt2, vt3 = texture_vertices[i1], texture_vertices[i2], texture_vertices[i3]
+            final_coord = vt1 * l1 + vt2 * l2 + vt3 * l3
+            res[y, x] = final_coord
+
+    return res
