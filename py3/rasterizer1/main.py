@@ -31,7 +31,7 @@ def fit_to_view_transform(vertices, width_and_height):
     ]) @ transformation
 
     # scale = width / x_d if width < height else height / y_d
-    scale = width / x_d if width > height else height / y_d
+    scale = max(width / x_d, height / y_d)
     transformation = np.array([
         [scale, 0, 0, 0],
         [0, -scale, 0, 0],
@@ -65,8 +65,8 @@ def main():
     barycentrics_triangle_indices[:] = -1
     z_buffer = np.zeros((canvas_size[0], canvas_size[1]), dtype=np.float32)
 
-    # path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
-    path_to_obj = "models/teapot.obj"
+    path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
+    # path_to_obj = "models/teapot.obj"
     # model = pywavefront.Wavefront(path_to_obj, collect_faces=True)
     model = geom_tools.from_obj_file(path_to_obj)
     print("Model loaded")
@@ -89,7 +89,7 @@ def main():
 
     rasterize_barycentrics_and_z_buffer_by_triangles(
         # model.meshes[None].faces,
-        model.polygon_vertex_indices,
+        model.triangle_vertex_indices,
         vertices,
         barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
 
