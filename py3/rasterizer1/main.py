@@ -5,7 +5,7 @@ import torch
 import geom_tools
 
 
-from rasterization import rasterize_barycentrics_and_z_buffer_by_triangles
+from rasterization import rasterize_barycentrics_and_z_buffer_by_triangles, grid_for_texture_warp
 
 
 # Super ineffective, i don't care
@@ -61,6 +61,7 @@ def main():
     # path_to_obj = "models/teapot.obj"
     model = geom_tools.from_obj_file(path_to_obj)
 
+    # canvas_size = (64, 64)
     canvas_size = (512, 512)
     # canvas_size = (1024, 1024)
     # canvas_size = (2048, 2048)
@@ -77,20 +78,25 @@ def main():
 
     z_buffer[:] = z_min - abs(z_min) * 0.1
 
-    # rasterize_barycentrics_and_z_buffer_by_triangles(
-    #     model.triangle_vertex_indices,
-    #     vertices,
-    #     barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
-
-    vertices = np.zeros((model.n_texture_vertices(), 3))
-    vertices[:, 0:2] = model.texture_vertices
-    vertices[:, 0] *= canvas_size[1]
-    vertices[:, 1] *= canvas_size[0]
-
     rasterize_barycentrics_and_z_buffer_by_triangles(
-        model.triangle_texture_vertex_indices,
+        model.triangle_vertex_indices,
         vertices,
         barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
+    grid = grid_for_texture_warp(
+        barycentrics_l1l2l3, barycentrics_triangle_indices,
+        model.texture_vertices, model.triangle_texture_vertex_indices)
+    cv2.imshow("2-0", grid[:, :, 0])
+    cv2.imshow("2-1", grid[:, :, 1])
+
+    # vertices = np.zeros((model.n_texture_vertices(), 3))
+    # vertices[:, 0:2] = model.texture_vertices
+    # vertices[:, 0] *= canvas_size[1]
+    # vertices[:, 1] *= canvas_size[0]
+    #
+    # rasterize_barycentrics_and_z_buffer_by_triangles(
+    #     model.triangle_texture_vertex_indices,
+    #     vertices,
+    #     barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
 
     z_buffer_diff = z_buffer.max() - z_buffer.min()
     if z_buffer_diff < 1e-6:
