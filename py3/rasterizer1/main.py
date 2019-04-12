@@ -49,7 +49,7 @@ def fit_to_view_transform(vertices, width_and_height):
 
     mat = transformation[:3, :3]
     vec = transformation[:3, 3]
-    return mat, vec, z_min * scale
+    return mat, vec, (z_min - model_center[2]) * scale
 
 
 def transform_vertices(mat, vec, vertices):
@@ -57,8 +57,8 @@ def transform_vertices(mat, vec, vertices):
 
 
 def main():
-    path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
-    path_to_texture = "/home/daiver/chess.jpg"
+    # path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
+    # path_to_texture = "/home/daiver/chess.jpg"
 
     path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
     path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
@@ -68,9 +68,9 @@ def main():
     img = cv2.imread(path_to_texture)
 
     # canvas_size = (64, 64)
-    # canvas_size = (256, 256)
+    canvas_size = (256, 256)
     # canvas_size = (512, 512)
-    canvas_size = (1024, 1024)
+    # canvas_size = (1024, 1024)
     # canvas_size = (2048, 2048)
 
     barycentrics_l1l2l3 = np.zeros((canvas_size[0], canvas_size[1], 3), dtype=np.float32)
@@ -85,8 +85,8 @@ def main():
     vertices = transform_vertices(mat, vec, vertices)
 
     # z_buffer[:] = z_min
-    # z_buffer[:] = z_min - abs(z_min) * 0.1
-    z_buffer[:] = vertices[:, 2].min()
+    z_buffer[:] = z_min - abs(z_min) * 0.1
+    # z_buffer[:] = vertices[:, 2].min()
 
     rasterize_barycentrics_and_z_buffer_by_triangles(
         model.triangle_vertex_indices,
