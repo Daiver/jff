@@ -121,12 +121,12 @@ def main_train():
     test_loader = DataLoader(torch_fuze.data.InputOutputTransformsWrapper(test_set, inp_trans, out_trans),
                              batch_size=batch_size, shuffle=False, pin_memory=False, num_workers=4)
 
-    # model = Net()
-    model = Net2()
+    model = Net()
+    # model = Net2()
     model = nn.DataParallel(model)
     model.to(device)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-2)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 30], gamma=0.2)
 
     metrics = OrderedDict([
