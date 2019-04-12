@@ -23,6 +23,23 @@ class ObjTests(unittest.TestCase):
         ]
         self.assertEquals(res, ans)
 
+    def test_triangulate03(self):
+        faces = [
+            [11, 5, 3, 6, 5],
+            [0, 3, 4],
+            [1, 2, 3, 4]
+        ]
+        res = geometry_tools.tools.triangulate_polygons(faces)
+        ans = [
+            [11, 5, 3],
+            [11, 3, 6],
+            [11, 6, 5],
+            [0, 3, 4],
+            [1, 2, 3],
+            [1, 3, 4]
+        ]
+        self.assertEquals(res, ans)
+
 
 if __name__ == '__main__':
     unittest.main()
