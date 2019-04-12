@@ -4,7 +4,7 @@ import numpy as np
 import geom_tools
 
 
-class ObjParserTests(unittest.TestCase):
+class TestObjParser(unittest.TestCase):
     def test_is_array_equal01(self):
         self.assertTrue(geom_tools.utils.is_arrays_equal(np.array([1, 2]), np.array([1, 2])))
 

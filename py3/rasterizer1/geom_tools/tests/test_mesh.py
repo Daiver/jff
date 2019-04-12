@@ -4,7 +4,7 @@ import numpy as np
 from geom_tools import Mesh
 
 
-class MeshTests(unittest.TestCase):
+class TestMesh(unittest.TestCase):
     def test_mesh_has_uv01(self):
         mesh1 = Mesh(vertices=np.arange(3), polygon_vertex_indices=[0, 1, 2])
         self.assertFalse(mesh1.has_uv())
@@ -33,4 +33,3 @@ class MeshTests(unittest.TestCase):
         mesh1 = Mesh(vertices=np.arange(3), polygon_vertex_indices=[0, 1, 2])
         mesh2 = Mesh(vertices=np.arange(2), polygon_vertex_indices=[0, 1, 2])
         self.assertTrue(mesh1 != mesh2)
-

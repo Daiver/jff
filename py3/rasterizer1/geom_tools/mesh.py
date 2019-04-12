@@ -51,7 +51,7 @@ class Mesh:
         if self.has_normals():
             if not is_arrays_equal(self.normals, other.normals):
                 return False
-            
+
         if not self.triangle_vertex_indices == other.triangle_vertex_indices:
             return False
         if not self.triangle_texture_vertex_indices == other.triangle_texture_vertex_indices:
