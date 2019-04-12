@@ -1,0 +1,4 @@
+[
+  "tests/test_obj.py::ObjTests::test_triangulate01",
+  "tests/test_obj.py::ObjTests::test_triangulate02"
+]
