@@ -1,2 +1,2 @@
 numpy
-git+https://github.com/Daiver/pygeom_tools#egg=geom_tools
+-e git+https://github.com/Daiver/pygeom_tools#egg=geom_tools
