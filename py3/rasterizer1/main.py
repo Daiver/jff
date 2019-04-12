@@ -5,7 +5,7 @@ import torch
 import geom_tools
 
 
-from rasterization import rasterize_barycentrics_and_z_buffer_by_triangles, grid_for_texture_warp
+from rasterization import rasterize_barycentrics_and_z_buffer_by_triangles, grid_for_texture_warp, warp_grid
 
 
 # Super ineffective, i don't care
@@ -58,11 +58,18 @@ def transform_vertices(mat, vec, vertices):
 
 def main():
     path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
-    # path_to_obj = "models/teapot.obj"
+    path_to_texture = "/home/daiver/chess.jpg"
+
+    path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
+    path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
+
     model = geom_tools.from_obj_file(path_to_obj)
 
+    img = cv2.imread(path_to_texture)
+
     # canvas_size = (64, 64)
-    canvas_size = (512, 512)
+    canvas_size = (256, 256)
+    # canvas_size = (512, 512)
     # canvas_size = (1024, 1024)
     # canvas_size = (2048, 2048)
 
@@ -85,6 +92,11 @@ def main():
     grid = grid_for_texture_warp(
         barycentrics_l1l2l3, barycentrics_triangle_indices,
         model.texture_vertices, model.triangle_texture_vertex_indices)
+
+    warped = warp_grid(barycentrics_triangle_indices, grid, img)
+
+    cv2.imshow("warped", warped)
+
     cv2.imshow("2-0", grid[:, :, 0])
     cv2.imshow("2-1", grid[:, :, 1])
 

@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import torch.nn.functional as F
 from barycentric import barycoords_from_2d_triangle
 
 
@@ -65,5 +66,21 @@ def grid_for_texture_warp(
     return res
 
 
-def warp_grid(grid, image):
-    pass
+def warp_grid(barycentrics_triangle_indices, grid, image):
+    torch_image = torch.from_numpy(image).float()
+    torch_image = torch_image.transpose(2, 0)
+    torch_image = torch_image.unsqueeze(0)
+
+    grid[:, :, 0] = 1.0 - grid[:, :, 0]
+    # grid[:, :, 1] = 1.0 - grid[:, :, 1]
+    grid = grid * 2 - 1
+    tmp = grid[:, :, 0]
+    grid[:, :, 0] = grid[:, :, 1]
+    grid[:, :, 0] = tmp
+    torch_grid = torch.from_numpy(grid)
+    torch_grid = torch_grid.unsqueeze(0)
+    res = F.grid_sample(torch_image, torch_grid).squeeze()
+    res = res.transpose(0, 2)
+    res = res.numpy() / 255
+    # res[barycentrics_triangle_indices == -1] = 0
+    return res
