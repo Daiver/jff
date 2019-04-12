@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from barycentric import barycoords_from_2d_triangle
 
 
@@ -62,3 +63,7 @@ def grid_for_texture_warp(
             res[y, x] = final_coord
 
     return res
+
+
+def warp_grid(grid, image):
+    pass
