@@ -47,3 +47,13 @@ class TestMesh(unittest.TestCase):
         mesh2 = Mesh(
             vertices=np.arange(3), polygon_vertex_indices=[0, 1, 2, 4], triangle_vertex_indices=[[0, 1, 2], [0, 6, 4]])
         self.assertTrue(mesh1 != mesh2)
+
+    def test_mesh_n_vertices01(self):
+        mesh1 = Mesh(vertices=np.arange(5), polygon_vertex_indices=[0, 1, 2])
+        self.assertEqual(mesh1.n_vertices(), 5)
+
+    def test_mesh_n_texture_vertices01(self):
+        mesh1 = Mesh(
+            vertices=np.arange(3), polygon_vertex_indices=[0, 1, 2],
+            texture_vertices=np.arange(6), texture_polygon_vertex_indices=[2, 1, 0])
+        self.assertTrue(mesh1.n_texture_vertices(), 6)

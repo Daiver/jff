@@ -21,6 +21,13 @@ class Mesh:
         self.triangle_vertex_indices = triangle_vertex_indices
         self.triangle_texture_vertex_indices = triangle_texture_vertex_indices
 
+    def n_vertices(self) -> int:
+        return len(self.vertices)
+
+    def n_texture_vertices(self) -> int:
+        assert self.has_uv()
+        return len(self.texture_vertices)
+
     def has_uv(self) -> bool:
         return self.texture_vertices is not None
 
