@@ -14,3 +14,7 @@ class Mesh:
         self.normals = normals
         self.triangle_vertex_indices = triangle_vertex_indices
         self.triangle_texture_vertex_indices = triangle_texture_vertex_indices
+
+    def __eq__(self, other):
+        assert isinstance(other, Mesh)
+        
