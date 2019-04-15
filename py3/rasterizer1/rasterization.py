@@ -72,13 +72,8 @@ def warp_grid(barycentrics_triangle_indices, grid, image):
     torch_image = torch_image.transpose(1, 2)
     torch_image = torch_image.unsqueeze(0)
 
-    # grid[:, :, 0] = 1.0 - grid[:, :, 0]
     grid[:, :, 1] = 1.0 - grid[:, :, 1]
     grid = grid * 2 - 1
-
-    # tmp = grid[:, :, 0]
-    # grid[:, :, 0] = grid[:, :, 1]
-    # grid[:, :, 1] = tmp
 
     torch_grid = torch.from_numpy(grid)
 
