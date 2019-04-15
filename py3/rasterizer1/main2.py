@@ -5,7 +5,8 @@ import torch
 import geom_tools
 
 from utils import fit_to_view_transform, transform_vertices
-from rasterization import rasterize_barycentrics_and_z_buffer_by_triangles, grid_for_texture_warp, warp_grid_numpy
+from rasterization import (
+    rasterize_barycentrics_and_z_buffer_by_triangles, grid_for_texture_warp, warp_grid_numpy, warp_grid_torch)
 
 
 def main():
@@ -49,7 +50,13 @@ def main():
         barycentrics_l1l2l3, barycentrics_triangle_indices,
         model.texture_vertices, model.triangle_texture_vertex_indices)
 
-    warped = warp_grid_numpy(barycentrics_triangle_indices, grid, img)
+    torch_image = torch.FloatTensor(img).float()
+    torch_image.requires_grad_(True)
+    torch_warped = warp_grid_torch(barycentrics_triangle_indices, grid, torch_image)
+    print(torch_warped.requires_grad)
+    loss = torch_warped.sum()
+    loss.backward()
+    warped = (torch_warped.transpose(0, 2) / 255).detach().numpy()
 
     print(warped.shape, warped.dtype)
     warped = (warped * 255).astype(np.uint8)
