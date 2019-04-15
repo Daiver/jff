@@ -21,7 +21,9 @@ def main():
 
     model = geom_tools.from_obj_file(path_to_obj)
 
-    img = cv2.imread(path_to_texture)
+    texture = cv2.imread(path_to_texture)
+    texture = cv2.pyrDown(texture)
+    texture = cv2.pyrDown(texture)
 
     target = cv2.imread("render1.png")
 
@@ -52,14 +54,24 @@ def main():
         barycentrics_l1l2l3, barycentrics_triangle_indices,
         model.texture_vertices, model.triangle_texture_vertex_indices)
 
-    torch_image = torch.FloatTensor(img).float()
-    torch_image.requires_grad_(True)
-    torch_warped = warp_grid_torch(barycentrics_triangle_indices, grid, torch_image)
-    torch_target = torch.FloatTensor(target).transpose(2, 0)
-    print(torch_warped.requires_grad, torch_warped.shape, torch_target.shape)
-    loss = (torch_warped - torch_target).pow(2).sum()
-    print(loss)
-    loss.backward()
+    torch_texture = torch.FloatTensor(texture).float()
+    torch_texture.requires_grad_(True)
+    torch_texture.data.zero_()
+
+    for i in range(1000):
+        torch_warped = warp_grid_torch(barycentrics_triangle_indices, grid, torch_texture)
+        torch_target = torch.FloatTensor(target).transpose(2, 0)
+        print(torch_warped.requires_grad, torch_warped.shape, torch_target.shape)
+        loss = (torch_warped - torch_target).pow(2).sum()
+        print(loss)
+        loss.backward()
+        torch_texture.data.sub_(0.01 * torch_texture.grad.data)
+        torch_texture.grad.data.zero_()
+
+        texture2 = torch_texture.detach().numpy().astype(np.uint8)
+        cv2.imshow("tex2", texture2)
+        cv2.waitKey(100)
+
     warped = (torch_warped.transpose(0, 2) / 255).detach().numpy()
 
     print(warped.shape, warped.dtype)
@@ -67,8 +79,10 @@ def main():
     cv2.imshow("warped", warped)
 
     target2 = torch_target.transpose(2, 0).detach().numpy().astype(np.uint8)
-    print("err", ((target2 - warped) ** 2).sum())
     cv2.imshow("t2", target2)
+
+    texture2 = torch_texture.detach().numpy().astype(np.uint8)
+    cv2.imshow("tex2", texture2)
 
     z_buffer_diff = z_buffer.max() - z_buffer.min()
     if z_buffer_diff < 1e-6:
