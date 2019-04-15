@@ -31,7 +31,6 @@ def fit_to_view_transform(vertices, width_and_height):
         [0, 0, 0, 1],
     ]) @ transformation
 
-    # scale = width / x_d if width < height else height / y_d
     scale = min(width / x_d, height / y_d)
     transformation = np.array([
         [scale, 0, 0, 0],
