@@ -23,6 +23,8 @@ def main():
 
     img = cv2.imread(path_to_texture)
 
+    target = cv2.imread("render1.png")
+
     # canvas_size = (64, 64)
     canvas_size = (256, 256)
     # canvas_size = (512, 512)
@@ -53,14 +55,20 @@ def main():
     torch_image = torch.FloatTensor(img).float()
     torch_image.requires_grad_(True)
     torch_warped = warp_grid_torch(barycentrics_triangle_indices, grid, torch_image)
-    print(torch_warped.requires_grad)
-    loss = torch_warped.sum()
+    torch_target = torch.FloatTensor(target).transpose(2, 0)
+    print(torch_warped.requires_grad, torch_warped.shape, torch_target.shape)
+    loss = (torch_warped - torch_target).pow(2).sum()
+    print(loss)
     loss.backward()
     warped = (torch_warped.transpose(0, 2) / 255).detach().numpy()
 
     print(warped.shape, warped.dtype)
     warped = (warped * 255).astype(np.uint8)
     cv2.imshow("warped", warped)
+
+    target2 = torch_target.transpose(2, 0).detach().numpy().astype(np.uint8)
+    print("err", ((target2 - warped) ** 2).sum())
+    cv2.imshow("t2", target2)
 
     z_buffer_diff = z_buffer.max() - z_buffer.min()
     if z_buffer_diff < 1e-6:

@@ -60,6 +60,9 @@ def main():
         z_buffer_diff = 1
     z_buffer = (z_buffer - z_buffer.min()) / z_buffer_diff
     z_buffer = (255 * z_buffer).astype(np.uint8)
+
+    cv2.imwrite("render1.png", warped)
+
     cv2.imshow("", z_buffer)
     cv2.waitKey()
 
