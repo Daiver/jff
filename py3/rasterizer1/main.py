@@ -5,7 +5,7 @@ import torch
 import geom_tools
 
 
-from rasterization import rasterize_barycentrics_and_z_buffer_by_triangles, grid_for_texture_warp, warp_grid
+from rasterization import rasterize_barycentrics_and_z_buffer_by_triangles, grid_for_texture_warp, warp_grid_numpy
 
 
 # Super ineffective, i don't care
@@ -93,7 +93,7 @@ def main():
         barycentrics_l1l2l3, barycentrics_triangle_indices,
         model.texture_vertices, model.triangle_texture_vertex_indices)
 
-    warped = warp_grid(barycentrics_triangle_indices, grid, img)
+    warped = warp_grid_numpy(barycentrics_triangle_indices, grid, img)
 
     cv2.imshow("warped", warped)
 

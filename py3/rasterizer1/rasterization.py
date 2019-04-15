@@ -66,7 +66,7 @@ def grid_for_texture_warp(
     return res
 
 
-def warp_grid(barycentrics_triangle_indices, grid, image):
+def warp_grid_numpy(barycentrics_triangle_indices, grid, image):
     torch_image = torch.from_numpy(image).float()
     torch_image = torch_image.transpose(2, 0)
     torch_image = torch_image.transpose(1, 2)
@@ -85,3 +85,24 @@ def warp_grid(barycentrics_triangle_indices, grid, image):
     res = res.numpy() / 255
     res[barycentrics_triangle_indices == -1] = 0
     return res
+
+
+# def warp_grid_torch(barycentrics_triangle_indices, grid, image):
+#     torch_image = torch.from_numpy(image).float()
+#     torch_image = torch_image.transpose(2, 0)
+#     torch_image = torch_image.transpose(1, 2)
+#     torch_image = torch_image.unsqueeze(0)
+#
+#     grid[:, :, 1] = 1.0 - grid[:, :, 1]
+#     grid = grid * 2 - 1
+#
+#     torch_grid = torch.from_numpy(grid)
+#
+#     torch_grid = torch_grid.transpose(0, 1)
+#
+#     torch_grid = torch_grid.unsqueeze(0)
+#     res = F.grid_sample(torch_image, torch_grid).squeeze()
+#     res = res.transpose(0, 2)
+#     res = res.numpy() / 255
+#     res[barycentrics_triangle_indices == -1] = 0
+#     return res
