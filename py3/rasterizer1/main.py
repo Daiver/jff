@@ -84,9 +84,7 @@ def main():
     print(z_min)
     vertices = transform_vertices(mat, vec, vertices)
 
-    # z_buffer[:] = z_min
     z_buffer[:] = z_min - abs(z_min) * 0.1
-    # z_buffer[:] = vertices[:, 2].min()
 
     rasterize_barycentrics_and_z_buffer_by_triangles(
         model.triangle_vertex_indices,
