@@ -42,10 +42,7 @@ class TestTorchRasterizer(unittest.TestCase):
         vertices = torch.FloatTensor(model.vertices)
         texture = torch.zeros(canvas_size)
         _, z_buffer, bary, tri_indices = rasterizer(vertices, texture)
-
-        print(z_buffer)
-        print(bary.transpose(0, 2))
-        print(tri_indices)
+        bary = bary.transpose(0, 2)
 
         ans_tri_indices = torch.tensor([
             [0, 0, 0, 0, 0],
@@ -54,7 +51,33 @@ class TestTorchRasterizer(unittest.TestCase):
             [0, 0, -1, -1, -1],
             [0, -1, -1, -1, -1],
         ]).int()
+        ans_z_buffer = torch.FloatTensor([
+            [1.0000, 1.0000, 1.0000, 1.0000, 1.0000],
+            [0.7500, 0.7500, 0.7500, 0.7500, 0.0000],
+            [0.5000, 0.5000, 0.5000, 0.0000, 0.0000],
+            [0.2500, 0.2500, 0.0000, 0.0000, 0.0000],
+            [0.0000, 0.0000, 0.0000, 0.0000, 0.0000]])
+        ans_bary = torch.FloatTensor([
+            [[1.0000, 0.7500, 0.5000, 0.2500, -0.0000],
+             [0.7500, 0.5000, 0.2500, 0.0000, 0.0000],
+             [0.5000, 0.2500, 0.0000, 0.0000, 0.0000],
+             [0.2500, 0.0000, 0.0000, 0.0000, 0.0000],
+             [0.0000, 0.0000, 0.0000, 0.0000, 0.0000]],
+
+            [[0.0000, 0.0000, 0.0000, 0.0000, 0.0000],
+             [0.2500, 0.2500, 0.2500, 0.2500, 0.0000],
+             [0.5000, 0.5000, 0.5000, 0.0000, 0.0000],
+             [0.7500, 0.7500, 0.0000, 0.0000, 0.0000],
+             [1.0000, 0.0000, 0.0000, 0.0000, 0.0000]],
+
+            [[0.0000, 0.2500, 0.5000, 0.7500, 1.0000],
+             [0.0000, 0.2500, 0.5000, 0.7500, 0.0000],
+             [0.0000, 0.2500, 0.5000, 0.0000, 0.0000],
+             [0.0000, 0.2500, 0.0000, 0.0000, 0.0000],
+             [0.0000, 0.0000, 0.0000, 0.0000, 0.0000]]])
         self.assertTrue((tri_indices == ans_tri_indices).all())
+        self.assertTrue((ans_bary - bary).norm() < 1e-6)
+        self.assertTrue((ans_z_buffer - z_buffer).norm() < 1e-6)
 
 
 if __name__ == '__main__':
