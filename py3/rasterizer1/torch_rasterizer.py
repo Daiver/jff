@@ -95,7 +95,9 @@ def warp_grid_torch(torch_mask, torch_grid, torch_texture):
 def mk_rasterizer(
     triangle_vertex_indices,
     triangle_texture_vertex_indices,
-    canvas_size):
+    texture_vertices,
+    canvas_size
+):
 
     class Rasterizer(torch.autograd.Function):
         def __init__(self):
@@ -117,7 +119,16 @@ def mk_rasterizer(
                 barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
 
             ctx.mark_non_differentiable(z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices)
-            return z_buffer.clone(), z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices
+            torch_mask = (barycentrics_triangle_indices != -1).float()
+            # torch_mask = torch_mask.transpose(0, 1)
+
+            torch_grid = grid_for_texture_warp(
+                barycentrics_l1l2l3, barycentrics_triangle_indices,
+                texture_vertices, triangle_texture_vertex_indices)
+
+            torch_warped = warp_grid_torch(torch_mask, torch_grid, texture)
+
+            return torch_warped, z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices
 
         @staticmethod
         def backward(ctx, *grad_outputs):
