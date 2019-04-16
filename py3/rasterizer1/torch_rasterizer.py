@@ -120,7 +120,7 @@ def mk_rasterizer(
 
             ctx.mark_non_differentiable(z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices)
             torch_mask = (barycentrics_triangle_indices != -1).float()
-            # torch_mask = torch_mask.transpose(0, 1)
+            torch_mask = torch_mask.transpose(0, 1)
 
             torch_grid = grid_for_texture_warp(
                 barycentrics_l1l2l3, barycentrics_triangle_indices,
@@ -132,6 +132,7 @@ def mk_rasterizer(
 
         @staticmethod
         def backward(ctx, *grad_outputs):
+            print(len(grad_outputs))
             assert False
 
     return Rasterizer.apply

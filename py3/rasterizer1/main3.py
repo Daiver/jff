@@ -4,42 +4,38 @@ import torch
 
 import geom_tools
 import torch_rasterizer
+from utils import fit_to_view_transform, transform_vertices
 
 
 def main():
     canvas_size = (128, 128)
-    model = geom_tools.Mesh(
-        vertices=np.array([
-            [10, 10, 1],
-            [50, 10, 1],
-            [10, 50, 0],
-        ], dtype=np.float32),
-        polygon_vertex_indices=[
-            [0, 1, 2]
-        ],
-        texture_vertices=np.array([
-            [0, 1],
-            [1, 0],
-            [0, 1]
-        ], dtype=np.float32),
-        texture_polygon_vertex_indices=[
-            [0, 1, 2]
-        ],
-        triangle_vertex_indices=[
-            [0, 1, 2]
-        ],
-        triangle_texture_vertex_indices=[
-            [0, 1, 2]
-        ],
-    )
+    path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
+    path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
+
+    # path_to_obj = "models/Alex1.obj"
+    # path_to_texture = "models/Alex1.png"
+
+    model = geom_tools.from_obj_file(path_to_obj)
+    mat, vec, z_min = fit_to_view_transform(model.vertices, (canvas_size[1], canvas_size[0]))
+    model.vertices = transform_vertices(mat, vec, model.vertices)
+
+    texture = cv2.imread(path_to_texture)
+    texture = cv2.pyrDown(texture)
+    texture = cv2.pyrDown(texture)
+
+    torch_texture = torch.FloatTensor(texture)
 
     rasterizer = torch_rasterizer.mk_rasterizer(
         model.triangle_vertex_indices,
         model.triangle_texture_vertex_indices,
+        torch.FloatTensor(model.texture_vertices),
         canvas_size)
     vertices = torch.FloatTensor(model.vertices)
-    texture = torch.zeros(canvas_size)
-    _, z_buffer, _, _ = rasterizer(vertices, texture)
+
+    rendered, z_buffer, _, _ = rasterizer(vertices, torch_texture)
+
+    rendered = rendered.transpose(0, 2).detach().numpy() / 255
+    print(rendered.shape)
 
     z_buffer = z_buffer.detach().numpy()
 
@@ -47,6 +43,7 @@ def main():
     print(z_diff)
     z_buffer = (z_buffer - z_buffer.min()) / z_diff
     cv2.imshow("", z_buffer)
+    cv2.imshow("rendered", rendered)
     cv2.waitKey()
 
 
