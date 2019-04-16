@@ -101,13 +101,14 @@ def warp_grid_torch(torch_mask, grid, torch_image):
     torch_grid = torch_grid.transpose(0, 1)
     # torch_mask = torch_mask.transpose(0, 1)
 
-    torch_grid[:, :, 1] = 1.0 - torch_grid[:, :, 1]
+    # torch_grid[:, :, 1] = 1.0 - torch_grid[:, :, 1]
+    # with torch.no_grad():
+    #     torch_grid.data[:, :, 1] = 1.0 - torch_grid.data[:, :, 1]
+    torch_grid = torch.stack((torch_grid[:, :, 0], 1.0 - torch_grid[:, :, 1]), dim=2)
     torch_grid = torch_grid * 2 - 1
 
     torch_grid = torch_grid.unsqueeze(0)
-    res = F.grid_sample(torch_image, torch_grid).squeeze()
+    res = F.grid_sample(torch_image, torch_grid, mode="bilinear").squeeze()
 
     res = res * torch_mask
-    # res = res.transpose(0, 2)
-    # res = res.numpy() / 255
     return res

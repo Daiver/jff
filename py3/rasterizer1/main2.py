@@ -24,12 +24,13 @@ def main():
     texture = cv2.imread(path_to_texture)
     texture = cv2.pyrDown(texture)
     texture = cv2.pyrDown(texture)
+    # texture = cv2.pyrDown(texture)
 
-    target = cv2.imread("render1.png")
+    target = cv2.imread("render1_512.png")
 
     # canvas_size = (64, 64)
-    canvas_size = (256, 256)
-    # canvas_size = (512, 512)
+    # canvas_size = (256, 256)
+    canvas_size = (512, 512)
     # canvas_size = (1024, 1024)
     # canvas_size = (2048, 2048)
 
@@ -56,7 +57,8 @@ def main():
 
     torch_texture = torch.FloatTensor(texture).float()
     torch_texture.requires_grad_(True)
-    torch_texture.data.zero_()
+    # torch_texture.data.zero_()
+    torch_texture.data.div_(2.0)
 
     torch_mask = torch.FloatTensor((barycentrics_triangle_indices != -1).astype(np.float32))
     torch_mask = torch_mask.transpose(0, 1)
@@ -65,12 +67,13 @@ def main():
     target2 = torch_target.transpose(2, 0).detach().numpy().astype(np.uint8)
     cv2.imshow("t2", target2)
 
+    lr = 0.05
     for i in range(1000):
         torch_warped = warp_grid_torch(torch_mask, grid, torch_texture)
         loss = ((torch_warped - torch_target) * torch_mask).pow(2).sum()
         print(i, loss)
         loss.backward()
-        torch_texture.data.sub_(0.5 * torch_texture.grad.data)
+        torch_texture.data.sub_(lr * torch_texture.grad.data)
         torch_texture.grad.data.zero_()
 
         texture2 = torch_texture.detach().numpy().astype(np.uint8)

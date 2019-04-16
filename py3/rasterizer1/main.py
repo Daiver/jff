@@ -20,8 +20,8 @@ def main():
     img = cv2.imread(path_to_texture)
 
     # canvas_size = (64, 64)
-    canvas_size = (256, 256)
-    # canvas_size = (512, 512)
+    # canvas_size = (256, 256)
+    canvas_size = (512, 512)
     # canvas_size = (1024, 1024)
     # canvas_size = (2048, 2048)
 
@@ -58,7 +58,7 @@ def main():
     z_buffer = (z_buffer - z_buffer.min()) / z_buffer_diff
     z_buffer = (255 * z_buffer).astype(np.uint8)
 
-    cv2.imwrite("render1.png", warped)
+    cv2.imwrite("render1_512.png", warped)
 
     cv2.imshow("", z_buffer)
     cv2.waitKey()
