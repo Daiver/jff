@@ -8,7 +8,8 @@ from utils import fit_to_view_transform, transform_vertices
 
 
 def main():
-    canvas_size = (128, 128)
+    # canvas_size = (128, 128)
+    canvas_size = (64, 64)
     path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
     path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
 
@@ -30,9 +31,13 @@ def main():
         model.triangle_texture_vertex_indices,
         torch.FloatTensor(model.texture_vertices),
         canvas_size)
-    vertices = torch.FloatTensor(model.vertices)
+
+    vertices = torch.FloatTensor(model.vertices).requires_grad_(True)
 
     rendered, z_buffer, _, _ = rasterizer(vertices, torch_texture)
+    loss = rendered.sum()
+    print(loss)
+    loss.backward()
 
     rendered = rendered.transpose(0, 2).detach().numpy() / 255
     print(rendered.shape)
