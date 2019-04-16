@@ -39,7 +39,7 @@ def main():
         canvas_size)
     vertices = torch.FloatTensor(model.vertices)
     texture = torch.zeros(canvas_size)
-    z_buffer, _, _ = rasterizer(vertices, texture)
+    _, z_buffer, _, _ = rasterizer(vertices, texture)
 
     z_buffer = z_buffer.detach().numpy()
 
