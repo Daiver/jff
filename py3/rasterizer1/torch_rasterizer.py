@@ -40,7 +40,7 @@ def rasterize_barycentrics_and_z_buffer_by_triangles(
         triangle_vertex_indices, vertices,
         barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer):
     for tri_index, face in enumerate(triangle_vertex_indices):
-        
+
         tri_coords_3d = torch.stack((
             vertices[face[0]],
             vertices[face[1]],
