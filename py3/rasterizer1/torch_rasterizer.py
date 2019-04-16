@@ -109,7 +109,7 @@ def mk_rasterizer(
             z_buffer = torch.zeros((canvas_size[0], canvas_size[1]))
 
             z_min = vertices[:, 2].min()
-            z_buffer[:] = z_min
+            z_buffer[:] = z_min  # - 1e-3 * abs(z_min)
 
             rasterize_barycentrics_and_z_buffer_by_triangles(
                 triangle_vertex_indices,

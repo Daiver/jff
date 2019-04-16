@@ -85,7 +85,7 @@ class TestTorchRasterizer(unittest.TestCase):
         model = geom_tools.Mesh(
             vertices=np.array([
                 [0, 0, 1],
-                [4, 0, 1],
+                [4, 0, 0],
                 [0, 4, 0],
                 [4, 4, -1],
             ], dtype=np.float32),
@@ -129,16 +129,14 @@ class TestTorchRasterizer(unittest.TestCase):
             [1, 1, 1, 1, 1],
         ]).int()
         ans_z_buffer = torch.FloatTensor([
-            [1.0000, 1.0000, 1.0000, 1.0000, 1.0000],
-            [0.7500, 0.7500, 0.7500, 0.7500, 0.0000],
-            [0.5000, 0.5000, 0.5000, 0.0000, 0.0000],
-            [0.2500, 0.2500, 0.0000, 0.0000, 0.0000],
-            [0.0000, 0.0000, 0.0000, 0.0000, 0.0000]])
+            [1.0000, 0.7500, 0.5000, 0.2500, 0.0000],
+            [0.7500, 0.5000, 0.2500, 0.0000, -0.2500],
+            [0.5000, 0.2500, 0.0000, -0.2500, -0.5000],
+            [0.2500, 0.0000, -0.2500, -0.5000, -0.7500],
+            [0.0000, -0.2500, -0.5000, -0.7500, -1.0000]])
 
-        print(tri_indices)
-        print(ans_tri_indices)
         self.assertTrue((tri_indices == ans_tri_indices).all())
-        # self.assertTrue((ans_z_buffer - z_buffer).norm() < 1e-6)
+        self.assertTrue((ans_z_buffer - z_buffer).norm() < 1e-6)
 
 
 if __name__ == '__main__':
