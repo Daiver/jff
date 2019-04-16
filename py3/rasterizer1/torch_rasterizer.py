@@ -119,10 +119,7 @@ def mk_rasterizer(
                 vertices,
                 barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
 
-            ctx.mark_non_differentiable(z_buffer)
-            ctx.mark_non_differentiable(barycentrics_l1l2l3)
-            ctx.mark_non_differentiable(barycentrics_triangle_indices)
-            # ctx.mark_non_differentiable((z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices))
+            ctx.mark_non_differentiable(z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices)
             return z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices
 
         @staticmethod
