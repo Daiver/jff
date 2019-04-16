@@ -13,11 +13,11 @@ def main():
     # path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
     # path_to_texture = "/home/daiver/chess.jpg"
 
-    # path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
-    # path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
+    path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
+    path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
 
-    path_to_obj = "models/Alex1.obj"
-    path_to_texture = "models/Alex1.png"
+    # path_to_obj = "models/Alex1.obj"
+    # path_to_texture = "models/Alex1.png"
 
     model = geom_tools.from_obj_file(path_to_obj)
 
@@ -58,18 +58,27 @@ def main():
     torch_texture.requires_grad_(True)
     torch_texture.data.zero_()
 
+    torch_mask = torch.FloatTensor((barycentrics_triangle_indices != -1).astype(np.float32))
+    torch_mask = torch_mask.transpose(0, 1)
+    torch_target = torch.FloatTensor(target).transpose(2, 0)
+
+    target2 = torch_target.transpose(2, 0).detach().numpy().astype(np.uint8)
+    cv2.imshow("t2", target2)
+
     for i in range(1000):
-        torch_warped = warp_grid_torch(barycentrics_triangle_indices, grid, torch_texture)
-        torch_target = torch.FloatTensor(target).transpose(2, 0)
-        print(torch_warped.requires_grad, torch_warped.shape, torch_target.shape)
-        loss = (torch_warped - torch_target).pow(2).sum()
-        print(loss)
+        torch_warped = warp_grid_torch(torch_mask, grid, torch_texture)
+        loss = ((torch_warped - torch_target) * torch_mask).pow(2).sum()
+        print(i, loss)
         loss.backward()
-        torch_texture.data.sub_(0.01 * torch_texture.grad.data)
+        torch_texture.data.sub_(0.5 * torch_texture.grad.data)
         torch_texture.grad.data.zero_()
 
         texture2 = torch_texture.detach().numpy().astype(np.uint8)
         cv2.imshow("tex2", texture2)
+        warped = (torch_warped.transpose(0, 2) / 255).detach().numpy()
+
+        warped = (warped * 255).astype(np.uint8)
+        cv2.imshow("warped", warped)
         cv2.waitKey(100)
 
     warped = (torch_warped.transpose(0, 2) / 255).detach().numpy()
@@ -77,9 +86,6 @@ def main():
     print(warped.shape, warped.dtype)
     warped = (warped * 255).astype(np.uint8)
     cv2.imshow("warped", warped)
-
-    target2 = torch_target.transpose(2, 0).detach().numpy().astype(np.uint8)
-    cv2.imshow("t2", target2)
 
     texture2 = torch_texture.detach().numpy().astype(np.uint8)
     cv2.imshow("tex2", texture2)

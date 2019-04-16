@@ -9,14 +9,11 @@ from rasterization import rasterize_barycentrics_and_z_buffer_by_triangles, grid
 
 
 def main():
-    # path_to_obj = "/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj"
-    # path_to_texture = "/home/daiver/chess.jpg"
+    path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
+    path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
 
-    # path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
-    # path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
-
-    path_to_obj = "models/Alex1.obj"
-    path_to_texture = "models/Alex1.png"
+    # path_to_obj = "models/Alex1.obj"
+    # path_to_texture = "models/Alex1.png"
 
     model = geom_tools.from_obj_file(path_to_obj)
 

@@ -90,17 +90,16 @@ def warp_grid_numpy(barycentrics_triangle_indices, grid, image):
     return res
 
 
-def warp_grid_torch(barycentrics_triangle_indices, grid, torch_image):
+def warp_grid_torch(torch_mask, grid, torch_image):
     # torch_image = torch.FloatTensor(image).float()
     torch_grid = torch.FloatTensor(grid)
-    torch_mask = torch.FloatTensor((barycentrics_triangle_indices != -1).astype(np.float32))
 
     torch_image = torch_image.transpose(2, 0)
     torch_image = torch_image.unsqueeze(0)
     torch_image = torch_image.transpose(2, 3)
 
     torch_grid = torch_grid.transpose(0, 1)
-    torch_mask = torch_mask.transpose(0, 1)
+    # torch_mask = torch_mask.transpose(0, 1)
 
     torch_grid[:, :, 1] = 1.0 - torch_grid[:, :, 1]
     torch_grid = torch_grid * 2 - 1
