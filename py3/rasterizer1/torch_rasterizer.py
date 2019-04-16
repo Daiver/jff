@@ -29,7 +29,9 @@ def rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buf
             z_val = tri_coords_3d[0, 2] * l1 + tri_coords_3d[1, 2] * l2 + tri_coords_3d[2, 2] * l3
             if z_buffer[y, x] > z_val:
                 continue
-            barycentrics_l1l2l3[y, x] = [l1, l2, l3]
+            barycentrics_l1l2l3[y, x, 0] = l1
+            barycentrics_l1l2l3[y, x, 1] = l2
+            barycentrics_l1l2l3[y, x, 2] = l3
             barycentrics_triangle_indices[y, x] = tri_index
             z_buffer[y, x] = z_val
 
@@ -38,11 +40,15 @@ def rasterize_barycentrics_and_z_buffer_by_triangles(
         triangle_vertex_indices, vertices,
         barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer):
     for tri_index, face in enumerate(triangle_vertex_indices):
-        tri_coords_3d = torch.FloatTensor([
+        print(triangle_vertex_indices)
+        print(face)
+        print(face[2])
+        print(vertices[face[2]])
+        tri_coords_3d = torch.stack((
             vertices[face[0]],
             vertices[face[1]],
             vertices[face[2]],
-        ])
+        ))
         rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer, tri_index, tri_coords_3d)
 
 
@@ -89,16 +95,41 @@ def warp_grid_torch(torch_mask, torch_grid, torch_texture):
     return res
 
 
-class Rasterizer(torch.autograd.Function):
-    def __init__(self, canvas_size):
-        super().__init__()
-        self.canvas_size = canvas_size
+def mk_rasterizer(
+    triangle_vertex_indices,
+    triangle_texture_vertex_indices,
+    canvas_size):
 
-    def forward(self, ctx, vertices, texture):
-        pass
+    class Rasterizer(torch.autograd.Function):
+        def __init__(self):
+            super().__init__()
 
-    def backward(self, ctx, *grad_outputs):
-        assert False
+        @staticmethod
+        def forward(ctx, vertices, texture):
+            barycentrics_l1l2l3 = torch.zeros((canvas_size[0], canvas_size[1], 3))
+            barycentrics_triangle_indices = torch.zeros((canvas_size[0], canvas_size[1])).int()
+            barycentrics_triangle_indices[:] = -1
+            z_buffer = torch.zeros((canvas_size[0], canvas_size[1]))
+
+            z_min = vertices[:, 2].min()
+            z_buffer[:] = z_min
+
+            rasterize_barycentrics_and_z_buffer_by_triangles(
+                triangle_vertex_indices,
+                vertices,
+                barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
+
+            ctx.mark_non_differentiable(z_buffer)
+            ctx.mark_non_differentiable(barycentrics_l1l2l3)
+            ctx.mark_non_differentiable(barycentrics_triangle_indices)
+            # ctx.mark_non_differentiable((z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices))
+            return z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices
+
+        @staticmethod
+        def backward(ctx, *grad_outputs):
+            assert False
+
+    return Rasterizer.apply
 
 
 """
