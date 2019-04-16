@@ -11,7 +11,7 @@ class MyMul(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x, y):
         ctx.save_for_backward(x, y)
-        
+
         index = torch.tensor(13)
         ctx.mark_non_differentiable(index)
         return x * y, index
