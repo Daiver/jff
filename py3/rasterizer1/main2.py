@@ -55,10 +55,12 @@ def main():
         barycentrics_l1l2l3, barycentrics_triangle_indices,
         model.texture_vertices, model.triangle_texture_vertex_indices)
 
+    torch_grid = torch.FloatTensor(grid)
+
     torch_texture = torch.FloatTensor(texture).float()
     torch_texture.requires_grad_(True)
-    # torch_texture.data.zero_()
-    torch_texture.data.div_(2.0)
+    torch_texture.data.zero_()
+    # torch_texture.data.div_(2.0)
 
     torch_mask = torch.FloatTensor((barycentrics_triangle_indices != -1).astype(np.float32))
     torch_mask = torch_mask.transpose(0, 1)
@@ -69,7 +71,7 @@ def main():
 
     lr = 0.05
     for i in range(1000):
-        torch_warped = warp_grid_torch(torch_mask, grid, torch_texture)
+        torch_warped = warp_grid_torch(torch_mask, torch_grid, torch_texture)
         loss = ((torch_warped - torch_target) * torch_mask).pow(2).sum()
         print(i, loss)
         loss.backward()

@@ -66,6 +66,12 @@ def grid_for_texture_warp(
     return res
 
 
+def normalize_grid_for_grid_sample(torch_grid):
+    torch_grid = torch.stack((torch_grid[:, :, 0], 1.0 - torch_grid[:, :, 1]), dim=2)
+    torch_grid = torch_grid * 2 - 1
+    return torch_grid
+
+
 def warp_grid_numpy(barycentrics_triangle_indices, grid, image):
     torch_image = torch.FloatTensor(image).float()
     torch_grid = torch.FloatTensor(grid)
@@ -90,25 +96,17 @@ def warp_grid_numpy(barycentrics_triangle_indices, grid, image):
     return res
 
 
-def warp_grid_torch(torch_mask, grid, torch_image):
-    # torch_image = torch.FloatTensor(image).float()
-    torch_grid = torch.FloatTensor(grid)
-
-    torch_image = torch_image.transpose(2, 0)
-    torch_image = torch_image.unsqueeze(0)
-    torch_image = torch_image.transpose(2, 3)
-
+def warp_grid_torch(torch_mask, torch_grid, torch_texture):
     torch_grid = torch_grid.transpose(0, 1)
-    # torch_mask = torch_mask.transpose(0, 1)
 
-    # torch_grid[:, :, 1] = 1.0 - torch_grid[:, :, 1]
-    # with torch.no_grad():
-    #     torch_grid.data[:, :, 1] = 1.0 - torch_grid.data[:, :, 1]
-    torch_grid = torch.stack((torch_grid[:, :, 0], 1.0 - torch_grid[:, :, 1]), dim=2)
-    torch_grid = torch_grid * 2 - 1
+    torch_texture = torch_texture.transpose(2, 0)
+    torch_texture = torch_texture.transpose(1, 2)
+    torch_texture = torch_texture.unsqueeze(0)
+
+    torch_grid = normalize_grid_for_grid_sample(torch_grid)
 
     torch_grid = torch_grid.unsqueeze(0)
-    res = F.grid_sample(torch_image, torch_grid, mode="bilinear").squeeze()
+    res = F.grid_sample(torch_texture, torch_grid, mode="bilinear").squeeze()
 
     res = res * torch_mask
     return res
