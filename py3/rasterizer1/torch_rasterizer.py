@@ -1,5 +1,6 @@
 import torch
 import torch.autograd
+# import torch.nn as nn
 import torch.nn.functional as F
 
 from barycentric import barycoords_from_2d_triangle
@@ -127,14 +128,14 @@ def mk_rasterizer(
 
             torch_warped = warp_grid_torch(torch_mask, torch_grid, texture)
 
-            ctx.mark_non_differentiable(z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices, vertices)
-            ctx.save_for_backward(torch_warped)
+            ctx.mark_non_differentiable(z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices, texture)
+            ctx.save_for_backward(torch_warped, barycentrics_l1l2l3, barycentrics_triangle_indices)
             return torch_warped, z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices
 
         @staticmethod
         def backward(ctx, *grad_outputs):
             print(len(grad_outputs))
-            torch_warped, = ctx.saved_tensors
-            return torch_warped.backward(grad_outputs[0]), None
+            torch_warped, barycentrics_l1l2l3, barycentrics_triangle_indices = ctx.saved_tensors
+            return None, None
 
     return Rasterizer.apply
