@@ -1,8 +1,8 @@
 import unittest
 
 import numpy as np
-import geom_tools
 import torch
+import geom_tools
 
 from torch_rasterizer import mk_rasterizer
 
