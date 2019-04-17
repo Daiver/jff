@@ -17,9 +17,10 @@ def mk_channelwise_conv_operator(kernel):
 
 def channelwise_conv(torch_img, kernel):
     assert len(torch_img.shape) == 4
+    conv_op = mk_channelwise_conv_operator(kernel=kernel)
+
     n_samples, n_channels, n_rows, n_cols = torch_img.shape
     torch_img_reshaped = torch_img.view(n_samples * n_channels, 1, n_rows, n_cols)
-    conv_op = mk_channelwise_conv_operator(kernel=kernel)
     res = conv_op(torch_img_reshaped)
     res = res.view(n_samples, n_channels, n_rows, n_cols)
     return res
@@ -28,5 +29,18 @@ def channelwise_conv(torch_img, kernel):
 def img_grad_dx(torch_img):
     assert len(torch_img.shape) == 3
     torch_img = torch_img.unsqueeze(0)
-    assert False
-    # kernel =
+    kernel = torch.FloatTensor([-1, 0, 1]).view(1, 3)
+
+    res = channelwise_conv(torch_img, kernel)
+    assert res.shape[0] == 1
+    return res[0]
+
+
+def img_grad_dy(torch_img):
+    assert len(torch_img.shape) == 3
+    torch_img = torch_img.unsqueeze(0)
+    kernel = torch.FloatTensor([-1, 0, 1]).view(3, 1)
+
+    res = channelwise_conv(torch_img, kernel)
+    assert res.shape[0] == 1
+    return res[0]
