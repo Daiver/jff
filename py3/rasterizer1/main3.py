@@ -65,9 +65,9 @@ def main():
     texture = cv2.pyrDown(texture)
 
     # target_translation = torch.FloatTensor([5, 0, 0])
-    target_translation = torch.FloatTensor([0, 0, 0])
-    # target_translation = torch.FloatTensor([-6.5, -3.75, 0])
-    target_y_rotation = torch.tensor(0.5)
+    # target_translation = torch.FloatTensor([0, 0, 0])
+    target_translation = torch.FloatTensor([0, -3.75, 0])
+    target_y_rotation = torch.tensor(0.6)
     torch_target_render = render_with_shift(model, texture, canvas_size, target_translation, target_y_rotation)
     cv2.imshow("target", torch_target_render.permute(1, 2, 0).detach().numpy() / 255)
     cv2.waitKey(100)
@@ -85,7 +85,7 @@ def main():
     y_rotation = torch.tensor(0.0).requires_grad_(True)
 
     # lr_translation = 0.001
-    lr_translation = 0.0001
+    lr_translation = 0.0005
     # lr_rotation = 0.000001
     lr_rotation = lr_translation / 32
     for i in range(100):
