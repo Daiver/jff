@@ -62,7 +62,7 @@ class TorchImgGradient(unittest.TestCase):
             [
                 [0, 0, 0, 0],
                 [0, 0, 0, 0],
-                [0, 0, 0, 0],
+                [5, 1, 2, 3],
             ],
         ])
         res = torch_img_gradient.img_grad_dx(img)
@@ -75,7 +75,7 @@ class TorchImgGradient(unittest.TestCase):
             [
                 [0, 0, 0, 0],
                 [0, 0, 0, 0],
-                [0, 0, 0, 0],
+                [1, -3, 2, -2],
             ],
         ])
         self.assertTrue((res - ans).norm() < 1e-6)
