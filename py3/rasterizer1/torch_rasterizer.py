@@ -93,19 +93,17 @@ def warp_grid_torch(torch_mask, torch_grid, torch_texture):
 
 def vertices_grad(
         inp_grad,
-        torch_warped, torch_warped_dx, torch_warped_dy,
+        torch_warped_dx, torch_warped_dy,
         triangle_vertex_indices,
         barycentrics_l1l2l3, barycentrics_triangle_indices,
         n_vertices
 ):
     # grad with respect to z direction is always zero
     res = torch.zeros((n_vertices, 3))
-    assert len(torch_warped.shape)
-    assert torch_warped.shape == inp_grad.shape
-    n_channels, n_rows, n_cols = torch_warped.shape
+    assert torch_warped_dx.shape == inp_grad.shape
+    n_channels, n_rows, n_cols = torch_warped_dx.shape
 
     inp_grad = inp_grad.permute(1, 2, 0)  # c, h, w -> h, w, c
-    torch_warped = torch_warped.permute(1, 2, 0)
     torch_warped_dx = torch_warped_dx.permute(1, 2, 0)
     torch_warped_dy = torch_warped_dy.permute(1, 2, 0)
 
@@ -115,8 +113,6 @@ def vertices_grad(
             if tri_ind == -1:
                 continue
 
-            # l1, l2, l3 = barycentrics_l1l2l3[row, col]
-            # v_index1, v_index2, v_index3 = triangle_vertex_indices[tri_ind]
             for v_index, l in zip(triangle_vertex_indices[tri_ind], barycentrics_l1l2l3[row, col]):
                 res[v_index, 0] += l * torch_warped_dx[row, col].dot(inp_grad[row, col])
                 res[v_index, 1] += l * torch_warped_dy[row, col].dot(inp_grad[row, col])
@@ -176,7 +172,7 @@ def mk_rasterizer(
             n_vertices = 1 + max(max(x) for x in triangle_vertex_indices)
             vertices_res_grad = vertices_grad(
                 inp_render_grad,
-                torch_warped, torch_warped_dx, torch_warped_dy,
+                torch_warped_dx, torch_warped_dy,
                 triangle_vertex_indices, barycentrics_l1l2l3, barycentrics_triangle_indices,
                 n_vertices
             )
