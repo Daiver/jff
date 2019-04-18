@@ -55,8 +55,8 @@ class TorchImgGradient(unittest.TestCase):
     def test_img_dx03(self):
         img = torch.FloatTensor([
             [
-                [0, 0, 0, 0],
-                [0, 0, 0, 0],
+                [0, 6, 0, 0],
+                [0, -2, 3, 0],
                 [0, 0, 0, 0],
             ],
             [
@@ -68,8 +68,8 @@ class TorchImgGradient(unittest.TestCase):
         res = torch_img_gradient.img_grad_dx(img)
         ans = torch.FloatTensor([
             [
-                [0, 0, 0, 0],
-                [0, 0, 0, 0],
+                [6, 0, -6, 0],
+                [-2, 3, 2, -3],
                 [0, 0, 0, 0],
             ],
             [
