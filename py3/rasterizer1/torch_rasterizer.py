@@ -79,10 +79,7 @@ def normalize_grid_for_grid_sample(torch_grid):
 
 
 def warp_grid_torch(torch_mask, torch_grid, torch_texture):
-    torch_grid = torch_grid.transpose(0, 1)
-
-    torch_texture = torch_texture.transpose(2, 0)
-    torch_texture = torch_texture.transpose(1, 2)
+    torch_texture = torch_texture.permute(2, 0, 1)
     torch_texture = torch_texture.unsqueeze(0)
 
     torch_grid = normalize_grid_for_grid_sample(torch_grid)
@@ -145,7 +142,6 @@ def mk_rasterizer(
                 barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
 
             torch_mask = (barycentrics_triangle_indices != -1).float()
-            torch_mask = torch_mask.transpose(0, 1)
 
             torch_grid = grid_for_texture_warp(
                 barycentrics_l1l2l3, barycentrics_triangle_indices,

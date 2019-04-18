@@ -39,7 +39,7 @@ def main():
     print(loss)
     loss.backward()
 
-    rendered = rendered.transpose(0, 2).detach().numpy() / 255
+    rendered = rendered.permute(1, 2, 0).detach().numpy() / 255
     print(rendered.shape)
 
     z_buffer = z_buffer.detach().numpy()
