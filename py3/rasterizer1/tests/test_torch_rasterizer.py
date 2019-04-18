@@ -39,7 +39,10 @@ class TestTorchRasterizer(unittest.TestCase):
             model.triangle_vertex_indices,
             model.triangle_texture_vertex_indices,
             torch.FloatTensor(model.texture_vertices),
-            canvas_size)
+            canvas_size,
+            return_z_buffer=True,
+            return_barycentrics=True,
+        )
         vertices = torch.FloatTensor(model.vertices)
         texture = torch.zeros((canvas_size[0], canvas_size[1], 3))
         _, z_buffer, bary, tri_indices = rasterizer(vertices, texture)
@@ -118,7 +121,10 @@ class TestTorchRasterizer(unittest.TestCase):
             model.triangle_vertex_indices,
             model.triangle_texture_vertex_indices,
             torch.FloatTensor(model.texture_vertices),
-            canvas_size)
+            canvas_size,
+            return_z_buffer=True,
+            return_barycentrics=True,
+        )
         vertices = torch.FloatTensor(model.vertices)
         texture = torch.zeros((canvas_size[0], canvas_size[1], 3))
         _, z_buffer, _, tri_indices = rasterizer(vertices, texture)

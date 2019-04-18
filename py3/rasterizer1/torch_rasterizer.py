@@ -124,7 +124,9 @@ def mk_rasterizer(
         triangle_vertex_indices,
         triangle_texture_vertex_indices,
         texture_vertices,
-        canvas_size
+        canvas_size,
+        return_z_buffer=False,
+        return_barycentrics=False
 ):
 
     class Rasterizer(torch.autograd.Function):
@@ -160,13 +162,25 @@ def mk_rasterizer(
             ctx.save_for_backward(
                 torch_warped, torch_warped_dx, torch_warped_dy,
                 barycentrics_l1l2l3, barycentrics_triangle_indices)
-            return torch_warped, z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices
+
+            if not return_z_buffer and not return_barycentrics:
+                return torch_warped
+            res_list = [torch_warped]
+            if return_z_buffer:
+                res_list.append(z_buffer)
+            if return_barycentrics:
+                res_list.append(barycentrics_l1l2l3)
+                res_list.append(barycentrics_triangle_indices)
+            return tuple(res_list)
 
         @staticmethod
         def backward(ctx, *grad_outputs):
             torch_warped, torch_warped_dx, torch_warped_dy, barycentrics_l1l2l3, barycentrics_triangle_indices = \
                 ctx.saved_tensors
-            inp_render_grad = grad_outputs[0]
+            if not return_z_buffer and not return_barycentrics:
+                inp_render_grad = grad_outputs
+            else:
+                inp_render_grad = grad_outputs[0]
 
             # TODO: MAKE IT EXPLICIT!
             n_vertices = 1 + max(max(x) for x in triangle_vertex_indices)
