@@ -49,7 +49,7 @@ def main():
     texture = cv2.pyrDown(texture)
 
     # target_shift = torch.FloatTensor([5, 0, 0])
-    target_shift = torch.FloatTensor([0, 4, 0])
+    target_shift = torch.FloatTensor([-6, 4, 0])
     # target_shift = torch.FloatTensor([0, 0, 0])
     torch_target_render = render_with_shift(model, texture, canvas_size, target_shift)
     cv2.imshow("target", torch_target_render.permute(1, 2, 0).detach().numpy() / 255)
