@@ -43,8 +43,8 @@ def render_with_shift(model, texture, canvas_size, translation, y_rot):
 
 def main():
     # canvas_size = (256, 256)
-    canvas_size = (128, 128)
-    # canvas_size = (64, 64)
+    # canvas_size = (128, 128)
+    canvas_size = (64, 64)
     # canvas_size = (32, 32)
     # canvas_size = (16, 16)
     # path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
@@ -67,7 +67,7 @@ def main():
     # target_translation = torch.FloatTensor([5, 0, 0])
     # target_translation = torch.FloatTensor([0, 0, 0])
     target_translation = torch.FloatTensor([0, -3.75, 0])
-    target_y_rotation = torch.tensor(0.6)
+    target_y_rotation = torch.tensor(0.7)
     torch_target_render = render_with_shift(model, texture, canvas_size, target_translation, target_y_rotation)
     cv2.imshow("target", torch_target_render.permute(1, 2, 0).detach().numpy() / 255)
     cv2.waitKey(100)
@@ -100,9 +100,9 @@ def main():
             rendered = rasterizer(vertices, torch_texture)
 
         loss = (rendered - torch_target_render).pow(2).mean()
-        print(i, loss)
         with Timer(print_line="Backward elapsed: {}"):
             loss.backward()
+        print(f"iter = {i}, loss = {loss}, ||dt|| = {translation.grad.norm()}, ||drx|| = {y_rotation.grad.norm()}")
 
         translation.data.add_(lr_translation * translation.grad)
         translation.grad.zero_()
