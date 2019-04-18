@@ -7,10 +7,26 @@ import torch_rasterizer
 from utils import fit_to_view_transform, transform_vertices
 
 
+def render_with_shift(model, texture, canvas_size, shift):
+    torch_texture = torch.FloatTensor(texture)
+
+    rasterizer = torch_rasterizer.mk_rasterizer(
+        model.triangle_vertex_indices,
+        model.triangle_texture_vertex_indices,
+        torch.FloatTensor(model.texture_vertices),
+        canvas_size)
+
+    vertices = torch.FloatTensor(model.vertices)
+    vertices = vertices + shift
+
+    rendered, z_buffer, _, _ = rasterizer(vertices, torch_texture)
+    return rendered
+
+
 def main():
-    canvas_size = (256, 256)
+    # canvas_size = (256, 256)
     # canvas_size = (128, 128)
-    # canvas_size = (64, 64)
+    canvas_size = (64, 64)
     path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
     path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
 
@@ -25,6 +41,11 @@ def main():
     texture = cv2.pyrDown(texture)
     texture = cv2.pyrDown(texture)
 
+    # target_shift = torch.FloatTensor([5, 0, 0])
+    target_shift = torch.FloatTensor([0, 0, 0])
+    torch_target_render = render_with_shift(model, texture, canvas_size, target_shift)
+    cv2.imshow("target", torch_target_render.permute(1, 2, 0).detach().numpy() / 255)
+
     torch_texture = torch.FloatTensor(texture)
 
     rasterizer = torch_rasterizer.mk_rasterizer(
@@ -34,11 +55,13 @@ def main():
         canvas_size)
 
     vertices = torch.FloatTensor(model.vertices).requires_grad_(True)
+    vertices = vertices
 
     rendered, z_buffer, _, _ = rasterizer(vertices, torch_texture)
-    loss = rendered.sum()
+    loss = (rendered - torch_target_render).pow(2).sum()
     print(loss)
     loss.backward()
+    print(vertices.grad)
 
     rendered = rendered.permute(1, 2, 0).detach().numpy() / 255
     print(rendered.shape)
