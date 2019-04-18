@@ -8,8 +8,9 @@ from utils import fit_to_view_transform, transform_vertices
 
 
 def main():
+    canvas_size = (256, 256)
     # canvas_size = (128, 128)
-    canvas_size = (64, 64)
+    # canvas_size = (64, 64)
     path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
     path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
 
