@@ -4,6 +4,7 @@ import torch.autograd
 import torch.nn.functional as F
 
 from barycentric import barycoords_from_2d_triangle
+import torch_img_gradient
 
 
 def rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer, tri_index, tri_coords_3d):
@@ -93,11 +94,33 @@ def warp_grid_torch(torch_mask, torch_grid, torch_texture):
     return res
 
 
+def vertices_grad(
+        inp_grad,
+        torch_warped, torch_warped_dx, torch_warped_dy,
+        triangle_vertex_indices,
+        barycentrics_l1l2l3, barycentrics_triangle_indices,
+        n_vertices
+):
+    # grad with respect to z direction is always zero
+    res = torch.zeros((n_vertices, 3))
+    assert len(torch_warped.shape)
+    assert torch_warped.shape == inp_grad.shape
+    n_channels, n_rows, n_cols = torch_warped.shape
+
+    inp_grad = inp_grad.transpose(0, 2).transpose(0, 1)
+
+    for row in range(n_rows):
+        for col in range(n_cols):
+            pass
+
+    return res
+
+
 def mk_rasterizer(
-    triangle_vertex_indices,
-    triangle_texture_vertex_indices,
-    texture_vertices,
-    canvas_size
+        triangle_vertex_indices,
+        triangle_texture_vertex_indices,
+        texture_vertices,
+        canvas_size
 ):
 
     class Rasterizer(torch.autograd.Function):
@@ -127,15 +150,19 @@ def mk_rasterizer(
                 texture_vertices, triangle_texture_vertex_indices)
 
             torch_warped = warp_grid_torch(torch_mask, torch_grid, texture)
+            torch_warped_dx = torch_img_gradient.img_grad_dx(torch_warped)
+            torch_warped_dy = torch_img_gradient.img_grad_dy(torch_warped)
 
             ctx.mark_non_differentiable(z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices, texture)
-            ctx.save_for_backward(torch_warped, barycentrics_l1l2l3, barycentrics_triangle_indices)
+            ctx.save_for_backward(
+                torch_warped, torch_warped_dx, torch_warped_dy,
+                barycentrics_l1l2l3, barycentrics_triangle_indices)
             return torch_warped, z_buffer, barycentrics_l1l2l3, barycentrics_triangle_indices
 
         @staticmethod
         def backward(ctx, *grad_outputs):
             print(len(grad_outputs))
-            torch_warped, barycentrics_l1l2l3, barycentrics_triangle_indices = ctx.saved_tensors
+            torch_warped, torch_warped_dx, torch_warped_dy, barycentrics_l1l2l3, barycentrics_triangle_indices = ctx.saved_tensors
             return None, None
 
     return Rasterizer.apply
