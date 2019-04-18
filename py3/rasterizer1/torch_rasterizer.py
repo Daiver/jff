@@ -113,6 +113,8 @@ def vertices_grad(
         for col in range(n_cols):
             pass
 
+    assert False
+
     return res
 
 
