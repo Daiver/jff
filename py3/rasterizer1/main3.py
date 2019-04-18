@@ -9,7 +9,21 @@ from utils import fit_to_view_transform, transform_vertices
 from timer import Timer
 
 
-def render_with_shift(model, texture, canvas_size, shift):
+def rigid_transform(translation, y_rot, vertices):
+    y_cos = y_rot.cos()
+    y_sin = y_rot.sin()
+    rot_mat = torch.stack((
+        y_cos, torch.tensor(0.0), -y_sin,
+        torch.tensor(0.0), torch.tensor(1.0), torch.tensor(0.0),
+        y_sin, torch.tensor(0.0), y_cos
+    )).view(3, 3)
+    res = vertices
+    res = res @ rot_mat.transpose(0, 1)
+    res = res + translation
+    return res
+
+
+def render_with_shift(model, texture, canvas_size, translation, y_rot):
     torch_texture = torch.FloatTensor(texture)
 
     rasterizer = torch_rasterizer.mk_rasterizer(
@@ -19,7 +33,7 @@ def render_with_shift(model, texture, canvas_size, shift):
         canvas_size)
 
     vertices = torch.FloatTensor(model.vertices)
-    vertices = vertices + shift
+    vertices = rigid_transform(translation, y_rot, vertices)
 
     rendered = rasterizer(vertices, torch_texture)
     return rendered
@@ -48,11 +62,13 @@ def main():
     texture = cv2.pyrDown(texture)
     texture = cv2.pyrDown(texture)
 
-    # target_shift = torch.FloatTensor([5, 0, 0])
-    target_shift = torch.FloatTensor([-6.5, -4, 0])
-    # target_shift = torch.FloatTensor([0, 0, 0])
-    torch_target_render = render_with_shift(model, texture, canvas_size, target_shift)
+    # target_translation = torch.FloatTensor([5, 0, 0])
+    # target_translation = torch.FloatTensor([0, 0, 0])
+    target_translation = torch.FloatTensor([-6.5, -3.75, 0])
+    target_y_rotation = torch.tensor(0.5)
+    torch_target_render = render_with_shift(model, texture, canvas_size, target_translation, target_y_rotation)
     cv2.imshow("target", torch_target_render.permute(1, 2, 0).detach().numpy() / 255)
+    cv2.waitKey(100)
 
     torch_texture = torch.FloatTensor(texture)
 
@@ -64,10 +80,12 @@ def main():
 
     vertices_orig = torch.FloatTensor(model.vertices)
     translation = torch.FloatTensor([0, 0, 0]).requires_grad_(True)
+    y_rotation = torch.tensor(0.0).requires_grad_(True)
 
-    lr = 0.001
+    lr_translation = 0.001
+    lr_rotation = 0.000001
     for i in range(100):
-        vertices = vertices_orig + translation
+        vertices = rigid_transform(translation, y_rotation, vertices_orig)
         with Timer(print_line="Rasterization elapsed: {}"):
             rendered = rasterizer(vertices, torch_texture)
 
@@ -75,11 +93,14 @@ def main():
         print(i, loss)
         with Timer(print_line="Backward elapsed: {}"):
             loss.backward()
-        # print(translation.grad.max())
-        # translation.data.sub_(lr * translation.grad)
-        translation.data.add_(lr * translation.grad)
+
+        translation.data.add_(lr_translation * translation.grad)
         translation.grad.zero_()
-        print(f"translation = {translation}")
+
+        y_rotation.data.add_(lr_rotation * y_rotation.grad)
+        y_rotation.grad.zero_()
+
+        print(f"translation = {translation} y_rot = {y_rotation}")
 
         rendered = rendered.permute(1, 2, 0).detach().numpy() / 255
         cv2.imshow("rendered", rendered)
@@ -89,3 +110,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
