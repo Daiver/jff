@@ -49,7 +49,7 @@ def main():
     texture = cv2.pyrDown(texture)
 
     # target_shift = torch.FloatTensor([5, 0, 0])
-    target_shift = torch.FloatTensor([-6, -4, 0])
+    target_shift = torch.FloatTensor([-6.5, -4, 0])
     # target_shift = torch.FloatTensor([0, 0, 0])
     torch_target_render = render_with_shift(model, texture, canvas_size, target_shift)
     cv2.imshow("target", torch_target_render.permute(1, 2, 0).detach().numpy() / 255)
@@ -65,11 +65,12 @@ def main():
     vertices_orig = torch.FloatTensor(model.vertices)
     translation = torch.FloatTensor([0, 0, 0]).requires_grad_(True)
 
-    lr = 0.0005
+    lr = 0.001
     for i in range(100):
         vertices = vertices_orig + translation
         with Timer(print_line="Rasterization elapsed: {}"):
             rendered = rasterizer(vertices, torch_texture)
+
         loss = (rendered - torch_target_render).pow(2).mean()
         print(i, loss)
         with Timer(print_line="Backward elapsed: {}"):

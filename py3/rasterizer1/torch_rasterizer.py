@@ -177,13 +177,11 @@ def mk_rasterizer(
         def backward(ctx, *grad_outputs):
             torch_warped, torch_warped_dx, torch_warped_dy, barycentrics_l1l2l3, barycentrics_triangle_indices = \
                 ctx.saved_tensors
-            # if not return_z_buffer and not return_barycentrics:
-            #     inp_render_grad = grad_outputs
-            # else:
             inp_render_grad = grad_outputs[0]
 
             # TODO: MAKE IT EXPLICIT!
             n_vertices = 1 + max(max(x) for x in triangle_vertex_indices)
+
             vertices_res_grad = vertices_grad(
                 inp_render_grad,
                 torch_warped_dx, torch_warped_dy,
