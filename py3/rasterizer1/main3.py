@@ -21,7 +21,7 @@ def render_with_shift(model, texture, canvas_size, shift):
     vertices = torch.FloatTensor(model.vertices)
     vertices = vertices + shift
 
-    rendered, z_buffer, _, _ = rasterizer(vertices, torch_texture)
+    rendered = rasterizer(vertices, torch_texture)
     return rendered
 
 
@@ -69,7 +69,7 @@ def main():
     for i in range(100):
         vertices = vertices_orig + translation
         with Timer(print_line="Rasterization elapsed: {}"):
-            rendered, z_buffer, _, _ = rasterizer(vertices, torch_texture)
+            rendered = rasterizer(vertices, torch_texture)
         loss = (rendered - torch_target_render).pow(2).mean()
         print(i, loss)
         with Timer(print_line="Backward elapsed: {}"):
