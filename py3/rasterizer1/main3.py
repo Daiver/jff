@@ -6,6 +6,8 @@ import geom_tools
 import torch_rasterizer
 from utils import fit_to_view_transform, transform_vertices
 
+from timer import Timer
+
 
 def render_with_shift(model, texture, canvas_size, shift):
     torch_texture = torch.FloatTensor(texture)
@@ -27,7 +29,12 @@ def main():
     # canvas_size = (256, 256)
     # canvas_size = (128, 128)
     canvas_size = (64, 64)
-    path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
+    # canvas_size = (16, 16)
+    # canvas_size = (32, 32)
+    # path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
+
+    # path_to_obj = "/home/daiver/res.obj"
+    path_to_obj = "/home/daiver/res2.obj"
     path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
 
     # path_to_obj = "models/Alex1.obj"
@@ -42,7 +49,8 @@ def main():
     texture = cv2.pyrDown(texture)
 
     # target_shift = torch.FloatTensor([5, 0, 0])
-    target_shift = torch.FloatTensor([0, 0, 0])
+    target_shift = torch.FloatTensor([0, 4, 0])
+    # target_shift = torch.FloatTensor([0, 0, 0])
     torch_target_render = render_with_shift(model, texture, canvas_size, target_shift)
     cv2.imshow("target", torch_target_render.permute(1, 2, 0).detach().numpy() / 255)
 
@@ -54,25 +62,27 @@ def main():
         torch.FloatTensor(model.texture_vertices),
         canvas_size)
 
-    vertices = torch.FloatTensor(model.vertices).requires_grad_(True)
-    vertices = vertices
+    vertices_orig = torch.FloatTensor(model.vertices)
+    translation = torch.FloatTensor([0, 0, 0]).requires_grad_(True)
 
-    rendered, z_buffer, _, _ = rasterizer(vertices, torch_texture)
-    loss = (rendered - torch_target_render).pow(2).sum()
-    print(loss)
-    loss.backward()
-    print(vertices.grad)
+    lr = 0.0005
+    for i in range(100):
+        vertices = vertices_orig + translation
+        with Timer(print_line="Rasterization elapsed: {}"):
+            rendered, z_buffer, _, _ = rasterizer(vertices, torch_texture)
+        loss = (rendered - torch_target_render).pow(2).mean()
+        print(i, loss)
+        with Timer(print_line="Backward elapsed: {}"):
+            loss.backward()
+        # print(translation.grad.max())
+        # translation.data.sub_(lr * translation.grad)
+        translation.data.add_(lr * translation.grad)
+        translation.grad.zero_()
+        print(f"translation = {translation}")
 
-    rendered = rendered.permute(1, 2, 0).detach().numpy() / 255
-    print(rendered.shape)
-
-    z_buffer = z_buffer.detach().numpy()
-
-    z_diff = (z_buffer.max() - z_buffer.min())
-    print(z_diff)
-    z_buffer = (z_buffer - z_buffer.min()) / z_diff
-    cv2.imshow("", z_buffer)
-    cv2.imshow("rendered", rendered)
+        rendered = rendered.permute(1, 2, 0).detach().numpy() / 255
+        cv2.imshow("rendered", rendered)
+        cv2.waitKey(10)
     cv2.waitKey()
 
 
