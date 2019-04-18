@@ -105,12 +105,21 @@ def vertices_grad(
     n_channels, n_rows, n_cols = torch_warped.shape
 
     inp_grad = inp_grad.permute(1, 2, 0)  # c, h, w -> h, w, c
+    torch_warped = torch_warped.permute(1, 2, 0)
+    torch_warped_dx = torch_warped_dx.permute(1, 2, 0)
+    torch_warped_dy = torch_warped_dy.permute(1, 2, 0)
 
     for row in range(n_rows):
         for col in range(n_cols):
-            pass
+            tri_ind = barycentrics_triangle_indices[row, col]
+            if tri_ind == -1:
+                continue
 
-    assert False
+            # l1, l2, l3 = barycentrics_l1l2l3[row, col]
+            # v_index1, v_index2, v_index3 = triangle_vertex_indices[tri_ind]
+            for v_index, l in zip(triangle_vertex_indices[tri_ind], barycentrics_l1l2l3[row, col]):
+                res[v_index, 0] += l * torch_warped_dx[row, col].dot(inp_grad[row, col])
+                res[v_index, 1] += l * torch_warped_dy[row, col].dot(inp_grad[row, col])
 
     return res
 
@@ -159,8 +168,18 @@ def mk_rasterizer(
 
         @staticmethod
         def backward(ctx, *grad_outputs):
-            print(len(grad_outputs))
-            torch_warped, torch_warped_dx, torch_warped_dy, barycentrics_l1l2l3, barycentrics_triangle_indices = ctx.saved_tensors
-            return None, None
+            torch_warped, torch_warped_dx, torch_warped_dy, barycentrics_l1l2l3, barycentrics_triangle_indices = \
+                ctx.saved_tensors
+            inp_render_grad = grad_outputs[0]
+
+            # TODO: MAKE IT EXPLICIT!
+            n_vertices = 1 + max(max(x) for x in triangle_vertex_indices)
+            vertices_res_grad = vertices_grad(
+                inp_render_grad,
+                torch_warped, torch_warped_dx, torch_warped_dy,
+                triangle_vertex_indices, barycentrics_l1l2l3, barycentrics_triangle_indices,
+                n_vertices
+            )
+            return vertices_res_grad, None
 
     return Rasterizer.apply
