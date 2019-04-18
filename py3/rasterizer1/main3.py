@@ -43,8 +43,8 @@ def render_with_shift(model, texture, canvas_size, translation, y_rot):
 
 def main():
     # canvas_size = (256, 256)
-    # canvas_size = (128, 128)
-    canvas_size = (64, 64)
+    canvas_size = (128, 128)
+    # canvas_size = (64, 64)
     # canvas_size = (32, 32)
     # canvas_size = (16, 16)
     # path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
@@ -83,6 +83,12 @@ def main():
     vertices_orig = torch.FloatTensor(model.vertices)
     translation = torch.FloatTensor([0, 0, 0]).requires_grad_(True)
     y_rotation = torch.tensor(0.0).requires_grad_(True)
+
+    vertices = rigid_transform(translation, y_rotation, vertices_orig)
+    rendered = rasterizer(vertices, torch_texture)
+    rendered = rendered.permute(1, 2, 0).detach().numpy() / 255
+    cv2.imshow("rendered", rendered)
+    cv2.waitKey(10)
 
     # lr_translation = 0.001
     lr_translation = 0.0005
