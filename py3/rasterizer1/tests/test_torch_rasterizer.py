@@ -279,6 +279,68 @@ class TestTorchRasterizer(unittest.TestCase):
         render = render.permute(1, 2, 0)
         self.assertTrue((render - ans_render).norm() < 1e-6)
 
+    def test_forward05(self):
+        canvas_size = (5, 5)
+        model = geom_tools.Mesh(
+            vertices=np.array([
+                [0, 0, 1],
+                [4, 0, 0],
+                [0, 4, 0],
+                [4, 4, -1],
+            ], dtype=np.float32),
+            texture_vertices=np.array([
+                [0, 1],
+                [1, 1],
+                [0, 0],
+                [1, 0],
+            ], dtype=np.float32),
+            polygon_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+            texture_polygon_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+            triangle_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+            triangle_texture_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+        )
+
+        rasterizer = mk_rasterizer(
+            model.triangle_vertex_indices,
+            model.triangle_texture_vertex_indices,
+            torch.FloatTensor(model.texture_vertices),
+            canvas_size,
+            return_z_buffer=False,
+            return_barycentrics=False,
+        )
+        vertices = torch.FloatTensor(model.vertices)
+        texture = torch.FloatTensor([
+            [16, 5, -9, 11, 12],
+            [0, 0, 4, 0, 0],
+            [10, 0, 8, 5, 0],
+            [0, 0, 2, 0, 0],
+            [0, 0, 1, 7, 0],
+        ]).view(5, 5, 1)
+        texture = texture.permute(2, 0, 1)
+        render = rasterizer(vertices, texture)
+
+        ans_render = torch.FloatTensor([
+            [16, 5, -9, 11, 12],
+            [0, 0, 4, 0, 0],
+            [10, 0, 8, 5, 0],
+            [0, 0, 2, 0, 0],
+            [0, 0, 1, 7, 0],
+        ]).view(5, 5, 1)
+        render = render.permute(1, 2, 0)
+        self.assertTrue((render - ans_render).norm() < 1e-6)
+
 
 if __name__ == '__main__':
     unittest.main()
