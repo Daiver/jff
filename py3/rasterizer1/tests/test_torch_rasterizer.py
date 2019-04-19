@@ -341,6 +341,233 @@ class TestTorchRasterizer(unittest.TestCase):
         render = render.permute(1, 2, 0)
         self.assertTrue((render - ans_render).norm() < 1e-6)
 
+    def test_backward_vertices01(self):
+        canvas_size = (2, 2)
+        model = geom_tools.Mesh(
+            vertices=np.array([
+                [0, 0, 1],
+                [1, 0, 0],
+                [0, 1, 0],
+                [1, 1, -1],
+            ], dtype=np.float32),
+            texture_vertices=np.array([
+                [0, 1],
+                [1, 1],
+                [0, 0],
+                [1, 0],
+            ], dtype=np.float32),
+            polygon_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+            texture_polygon_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+            triangle_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+            triangle_texture_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+        )
+
+        rasterizer = mk_rasterizer(
+            model.triangle_vertex_indices,
+            model.triangle_texture_vertex_indices,
+            torch.FloatTensor(model.texture_vertices),
+            canvas_size,
+            return_z_buffer=False,
+            return_barycentrics=False,
+        )
+        texture = torch.FloatTensor([
+            [1, 2],
+            [3, 4],
+        ]).view(2, 2, 1)
+        texture = texture.permute(2, 0, 1)
+
+        vertices = torch.FloatTensor(model.vertices).requires_grad_(True)
+        render = rasterizer(vertices, texture)
+        render = render.permute(1, 2, 0).view(2, 2)
+
+        target = torch.FloatTensor([
+            [1, 2],
+            [3, 4]
+        ])
+
+        diff = render - target
+        loss = diff.norm()
+        loss.backward()
+
+        ans_vertices_grad = torch.FloatTensor([
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+        ])
+        self.assertTrue((vertices.grad - ans_vertices_grad).norm() < 1e-6)
+
+        ans_render = torch.FloatTensor([
+            [1, 2],
+            [3, 4],
+        ])
+
+        self.assertTrue((render - ans_render).norm() < 1e-6)
+
+    def test_backward_vertices02(self):
+        canvas_size = (2, 2)
+        model = geom_tools.Mesh(
+            vertices=np.array([
+                [0, 0, 1],
+                [1, 0, 0],
+                [0, 1, 0],
+                [1, 1, -1],
+            ], dtype=np.float32),
+            texture_vertices=np.array([
+                [0, 1],
+                [1, 1],
+                [0, 0],
+                [1, 0],
+            ], dtype=np.float32),
+            polygon_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+            texture_polygon_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+            triangle_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+            triangle_texture_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+        )
+
+        rasterizer = mk_rasterizer(
+            model.triangle_vertex_indices,
+            model.triangle_texture_vertex_indices,
+            torch.FloatTensor(model.texture_vertices),
+            canvas_size,
+            return_z_buffer=False,
+            return_barycentrics=True,
+        )
+        texture = torch.FloatTensor([
+            [2, 2],
+            [3, 3],
+        ]).view(2, 2, 1)
+        texture = texture.permute(2, 0, 1)
+
+        vertices = torch.FloatTensor(model.vertices).requires_grad_(True)
+        render, l1l2l3, tri_indices = rasterizer(vertices, texture)
+        render = render.permute(1, 2, 0).view(2, 2)
+
+        target = torch.FloatTensor([
+            [0, 0],
+            [2, 2]
+        ])
+
+        diff = render - target
+        loss = diff.norm()
+        loss.backward()
+
+        ans_vertices_grad = torch.FloatTensor([
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0],
+        ])
+        self.assertTrue((vertices.grad - ans_vertices_grad).norm() < 1e-6)
+
+        ans_render = torch.FloatTensor([
+            [2, 2],
+            [3, 3],
+        ])
+
+        self.assertTrue((render - ans_render).norm() < 1e-6)
+
+    def test_backward_vertices02(self):
+        canvas_size = (2, 2)
+        model = geom_tools.Mesh(
+            vertices=np.array([
+                [0, 0, 1],
+                [1, 0, 0],
+                [0, 1, 0],
+                [1, 1, -1],
+            ], dtype=np.float32),
+            texture_vertices=np.array([
+                [0, 1],
+                [1, 1],
+                [0, 0],
+                [1, 0],
+            ], dtype=np.float32),
+            polygon_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+            texture_polygon_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+            triangle_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+            triangle_texture_vertex_indices=[
+                [2, 1, 0],
+                [2, 3, 1],
+            ],
+        )
+
+        rasterizer = mk_rasterizer(
+            model.triangle_vertex_indices,
+            model.triangle_texture_vertex_indices,
+            torch.FloatTensor(model.texture_vertices),
+            canvas_size,
+            return_z_buffer=False,
+            return_barycentrics=True,
+        )
+        texture = torch.FloatTensor([
+            [2, 2],
+            [3, 3],
+        ]).view(2, 2, 1)
+        texture = texture.permute(2, 0, 1)
+
+        vertices = torch.FloatTensor(model.vertices).requires_grad_(True)
+        render, l1l2l3, tri_indices = rasterizer(vertices, texture)
+        render = render.permute(1, 2, 0).view(2, 2)
+
+        target = torch.FloatTensor([
+            [0, 0],
+            [2, 2]
+        ])
+
+        diff = render - target
+        loss = diff.abs().sum()
+        loss.backward()
+
+        # print("vertices.grad", vertices.grad)
+
+        ans_vertices_grad = torch.FloatTensor([
+            [2, 3, 0],
+            [-2, 3, 0],
+            [3, -2, 0],
+            [-3, -2, 0],
+        ])
+        self.assertTrue((vertices.grad - ans_vertices_grad).norm() < 1e-6)
+
+        ans_render = torch.FloatTensor([
+            [2, 2],
+            [3, 3],
+        ])
+
+        self.assertTrue((render - ans_render).norm() < 1e-6)
+
 
 if __name__ == '__main__':
     unittest.main()
