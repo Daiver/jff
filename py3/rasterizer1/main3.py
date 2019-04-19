@@ -27,6 +27,7 @@ def rigid_transform(translation, y_rot, vertices):
 
 def render_with_shift(model, texture, canvas_size, translation, y_rot):
     torch_texture = torch.FloatTensor(texture)
+    torch_texture = torch_texture.permute(2, 0, 1)
 
     rasterizer = torch_rasterizer.mk_rasterizer(
         model.triangle_vertex_indices,
@@ -39,6 +40,15 @@ def render_with_shift(model, texture, canvas_size, translation, y_rot):
 
     rendered = rasterizer(vertices, torch_texture)
     return rendered
+
+
+def draw_uv(model, canvas_size):
+    res = np.zeros(canvas_size)
+    for v in model.texture_vertices:
+        x = int(round(canvas_size[1] * v[0]))
+        y = int(round(canvas_size[1] * v[1]))
+        cv2.circle(res, (x, y), 1, 255)
+    return res
 
 
 def main():
@@ -73,6 +83,7 @@ def main():
     cv2.waitKey(100)
 
     torch_texture = torch.FloatTensor(texture)
+    torch_texture = torch_texture.permute(2, 0, 1)
 
     rasterizer = torch_rasterizer.mk_rasterizer(
         model.triangle_vertex_indices,

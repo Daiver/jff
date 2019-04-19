@@ -79,13 +79,20 @@ def normalize_grid_for_grid_sample(torch_grid):
 
 
 def warp_grid_torch(torch_mask, torch_grid, torch_texture):
-    torch_texture = torch_texture.permute(2, 0, 1)
+    """
+
+    :param torch_mask:
+    :param torch_grid:
+    :param torch_texture: CxHxW tensor
+    :return:
+    """
+    assert len(torch_texture.shape) == 3
     torch_texture = torch_texture.unsqueeze(0)
 
     torch_grid = normalize_grid_for_grid_sample(torch_grid)
 
     torch_grid = torch_grid.unsqueeze(0)
-    res = F.grid_sample(torch_texture, torch_grid, mode="bilinear").squeeze()
+    res = F.grid_sample(torch_texture, torch_grid, mode="bilinear").squeeze(0)
 
     res = res * torch_mask
     return res
