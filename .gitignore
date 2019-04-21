@@ -7,7 +7,7 @@
 *.egg-info/*
 *.egg*
 
-#*.png
+*.png
 *.dat
 *.h5
 *.proto
