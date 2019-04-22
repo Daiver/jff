@@ -473,23 +473,25 @@ class TestTorchRasterizer(unittest.TestCase):
         ])
 
         diff = render - target
-        loss = diff.norm()
+        loss = diff.abs().sum()
         loss.backward()
 
         ans_vertices_grad = torch.FloatTensor([
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
+            [-2, -3, 0],
+            [2, -3, 0],
+            [-3, 2, 0],
+            [3, 2, 0],
         ])
-        self.assertTrue((vertices.grad - ans_vertices_grad).norm() < 1e-6)
+        # print(vertices.grad)
+        # print(ans_vertices_grad.dtype)
+        self.assertTrue((vertices.grad - ans_vertices_grad).norm().item() < 1e-6)
 
         ans_render = torch.FloatTensor([
             [2, 2],
             [3, 3],
         ])
 
-        self.assertTrue((render - ans_render).norm() < 1e-6)
+        self.assertTrue((render - ans_render).abs().sum().item() < 1e-6)
 
     def test_backward_vertices03(self):
         canvas_size = (2, 2)
