@@ -60,8 +60,11 @@ def main():
     # path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
 
     # path_to_obj = "/home/daiver/res.obj"
-    path_to_obj = "/home/daiver/res2.obj"
-    path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
+    # path_to_obj = "/home/daiver/res2.obj"
+    # path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
+
+    path_to_obj = "models/Alex1.obj"
+    path_to_texture = "models/Alex1.png"
 
     # path_to_obj = "models/Alex1.obj"
     # path_to_texture = "models/Alex1.png"
@@ -79,7 +82,7 @@ def main():
     target_translation = torch.FloatTensor([0, -3.75, 0])
     target_y_rotation = torch.tensor(0.7)
     torch_target_render = render_with_shift(model, texture, canvas_size, target_translation, target_y_rotation)
-    cv2.imshow("target", torch_target_render.permute(1, 2, 0).detach().numpy() / 255)
+    cv2.imshow("target", torch_target_render.permute(1, 2, 0).detach().numpy().astype(np.uint8))
     cv2.waitKey(100)
 
     torch_texture = torch.FloatTensor(texture)
@@ -97,7 +100,7 @@ def main():
 
     vertices = rigid_transform(translation, y_rotation, vertices_orig)
     rendered = rasterizer(vertices, torch_texture)
-    rendered = rendered.permute(1, 2, 0).detach().numpy() / 255
+    rendered = rendered.permute(1, 2, 0).detach().numpy().astype(np.uint8)
     cv2.imshow("rendered", rendered)
     cv2.waitKey(10)
 
@@ -123,7 +126,7 @@ def main():
 
         print(f"translation = {translation} y_rot = {y_rotation}")
 
-        rendered = rendered.permute(1, 2, 0).detach().numpy() / 255
+        rendered = rendered.permute(1, 2, 0).detach().numpy().astype(np.uint8)
         cv2.imshow("rendered", rendered)
         cv2.waitKey(10)
     cv2.waitKey()
