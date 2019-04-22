@@ -110,6 +110,8 @@ def vertices_grad(
     assert torch_warped_dx.shape == inp_grad.shape
     n_channels, n_rows, n_cols = torch_warped_dx.shape
 
+    # print(torch_warped_dx)
+
     inp_grad = inp_grad.permute(1, 2, 0)  # c, h, w -> h, w, c
     torch_warped_dx = torch_warped_dx.permute(1, 2, 0)
     torch_warped_dy = torch_warped_dy.permute(1, 2, 0)
