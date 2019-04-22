@@ -130,6 +130,8 @@ def vertices_grad(
                 # TODO: bake it into grad kernel
                 res[v_index, 0] += -l * torch_warped_dx[row, col].dot(inp_grad[row, col])
                 res[v_index, 1] += -l * torch_warped_dy[row, col].dot(inp_grad[row, col])
+                # if v_index == 0:
+                #     print(">", row, col, l, inp_grad[row, col], torch_warped_dx[row, col], res[0])
 
     return res
 

@@ -711,8 +711,8 @@ class TestTorchRasterizer(unittest.TestCase):
         render, l1l2l3, tri_indices = rasterizer(vertices, texture)
         render = render.permute(1, 2, 0).squeeze()
 
-        print(l1l2l3.permute(2, 0, 1))
-        print(tri_indices)
+        # print(l1l2l3.permute(2, 0, 1))
+        # print(tri_indices)
 
         target = torch.FloatTensor([
             [0, 0, 0, 0, 0],
@@ -730,12 +730,12 @@ class TestTorchRasterizer(unittest.TestCase):
         loss.backward()
 
         ans_vertices_grad = torch.FloatTensor([
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
+            [-3.5, -5.75, 0],
+            [3.5, -6.75, 0],
+            [-1.5, -1.75, 0],
+            [1.5, -0.75, 0],
         ])
-        print(vertices.grad)
+        # print(vertices.grad)
         # print(ans_vertices_grad.dtype)
         self.assertTrue((vertices.grad - ans_vertices_grad).norm().item() < 1e-6)
 
