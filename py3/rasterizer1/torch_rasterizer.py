@@ -121,8 +121,13 @@ def vertices_grad(
                 continue
 
             for v_index, l in zip(triangle_vertex_indices[tri_ind], barycentrics_l1l2l3[row, col]):
-                res[v_index, 0] += l * torch_warped_dx[row, col].dot(inp_grad[row, col])
-                res[v_index, 1] += l * torch_warped_dy[row, col].dot(inp_grad[row, col])
+                # - because if you move your vertex v to v' = (v + 1),
+                # your current pixel value I(u) will be equal I(u - 1)
+                # if you move vertex v to v' = (v - 1)
+                # your current pixel value I(u) will be equal I(u + 1)
+                # TODO: bake it into grad kernel
+                res[v_index, 0] += -l * torch_warped_dx[row, col].dot(inp_grad[row, col])
+                res[v_index, 1] += -l * torch_warped_dy[row, col].dot(inp_grad[row, col])
 
     return res
 

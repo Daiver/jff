@@ -115,10 +115,10 @@ def main():
             loss.backward()
         print(f"iter = {i}, loss = {loss}, ||dt|| = {translation.grad.norm()}, ||drx|| = {y_rotation.grad.norm()}")
 
-        translation.data.add_(lr_translation * translation.grad)
+        translation.data.sub_(lr_translation * translation.grad)
         translation.grad.zero_()
 
-        y_rotation.data.add_(lr_rotation * y_rotation.grad)
+        y_rotation.data.sub_(lr_rotation * y_rotation.grad)
         y_rotation.grad.zero_()
 
         print(f"translation = {translation} y_rot = {y_rotation}")
