@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+import torch
 import rasterizer_cpp
 
 

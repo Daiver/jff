@@ -8,8 +8,8 @@
 class Vector3f
 {
 public:
-    Vector3f(const float x, const float y, const float z):
-    m_values({x, y, z}) {}
+//    Vector3f(const float x, const float y, const float z):
+//    m_values({x, y, z}) {}
 
     float operator[](const int index) const { return m_values[index]; }
     float &operator[](const int index) { return m_values[index]; }
