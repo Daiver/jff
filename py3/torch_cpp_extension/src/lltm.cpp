@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 
+#include "barycentric.h"
 #include "some.h"
 
 torch::Tensor d_sigmoid(torch::Tensor z) {
