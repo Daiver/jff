@@ -17,6 +17,6 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ),
-    ext_modules=[CppExtension('rasterizer_cpp', ['csrc/rasterizer.cpp'], include_dirs=[include_path])],
+    ext_modules=[CppExtension('rasterizer_cpp', ['csrc/rasterizer.cpp'])],
     cmdclass={'build_ext': BuildExtension}
 )
