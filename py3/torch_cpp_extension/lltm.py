@@ -44,6 +44,7 @@ class LLTM(torch.nn.Module):
         return LLTMFunction.apply(input, self.weights, self.bias, *state)
 
 
+print("Before call")
 lltm_cpp.foo()
 #
 # batch_size = 16

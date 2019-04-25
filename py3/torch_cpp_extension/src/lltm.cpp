@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 
+#include "some.h"
+
 torch::Tensor d_sigmoid(torch::Tensor z) {
   auto s = torch::sigmoid(z);
   return (1 - s) * s;
@@ -84,11 +86,11 @@ std::vector<torch::Tensor> lltm_backward(
 
   return {d_old_h, d_input, d_weights, d_bias, d_old_cell};
 }
-
-void foo()
-{
-    std::cout << "HI!" << std::endl;
-}
+//
+//void foo()
+//{
+//    std::cout << "HI!" << std::endl;
+//}
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("forward", &lltm_forward, "LLTM forward");
