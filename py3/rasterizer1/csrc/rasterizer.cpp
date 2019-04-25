@@ -11,6 +11,9 @@ public:
     Vector3f(const float x, const float y, const float z):
     m_values({x, y, z}) {}
 
+    float operator[](const int index) const { return m_values[index]; }
+    float &operator[](const int index) { return m_values[index]; }
+
 private:
     float m_values[3];
 };
@@ -50,7 +53,31 @@ def rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buf
 
 void rasterize_triangle(
     const int tri_index,
-//    tri_coords_3d,
+    const Vector3f &v1,
+    const Vector3f &v2,
+    const Vector3f &v3,
+    torch::Tensor barycentrics_l1l2l3,
+    torch::Tensor barycentrics_triangle_indices,
+    torch::Tensor z_buffer)
+{
+
+}
+
+//def rasterize_barycentrics_and_z_buffer_by_triangles(
+//        triangle_vertex_indices, vertices,
+//        barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer):
+//    for tri_index, face in enumerate(triangle_vertex_indices):
+//
+//        tri_coords_3d = torch.stack((
+//            vertices[face[0]],
+//            vertices[face[1]],
+//            vertices[face[2]],
+//        ))
+//        rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer, tri_index, tri_coords_3d)
+
+void rasterize_triangles(
+    torch::Tensor triangle_vertex_indices,
+    torch::Tensor vertices,
     torch::Tensor barycentrics_l1l2l3,
     torch::Tensor barycentrics_triangle_indices,
     torch::Tensor z_buffer)
@@ -63,5 +90,5 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
 //  m.def("backward", &lltm_backward, "LLTM backward");
 //  m.def("foo", &foo, "Foo?");
   m.def("barycoords_from_2d_trianglef", &Barycentric::barycoords_from_2d_trianglef, "Foo?");
-  m.def("rasterize_triangle", &rasterize_triangle, "");
+  m.def("rasterize_triangles", &rasterize_triangles, "");
 }
