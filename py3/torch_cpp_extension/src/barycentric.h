@@ -1,3 +1,5 @@
+#include <vector>
+
 /*
 
 def barycoords_from_2d_triangle(tri_points, p):
@@ -27,4 +29,19 @@ void barycoords_from_2d_triangle(
     out_l1 = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / denominator;
     out_l2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / denominator;
     out_l3 = Scalar(1.0) - out_l1 - out_l2;
+}
+
+inline std::vector<float> barycoords_from_2d_trianglef(
+    const float x1, const float y1,
+    const float x2, const float y2,
+    const float x3, const float y3,
+    const float x, const float y)
+{
+    float out_l1;
+    float out_l2;
+    float out_l3;
+    barycoords_from_2d_triangle(
+        x1, y1, x2, y2, x3, y3,
+        x, y, out_l1, out_l2, out_l3);
+    return {out_l1, out_l2, out_l3};
 }
