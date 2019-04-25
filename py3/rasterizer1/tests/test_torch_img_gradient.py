@@ -5,7 +5,7 @@ import torch
 import torch_img_gradient
 
 
-class TorchImgGradient(unittest.TestCase):
+class TestTorchImgGradient(unittest.TestCase):
     def test_img_dx01(self):
         img = torch.FloatTensor([
             [
