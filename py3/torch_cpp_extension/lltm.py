@@ -51,7 +51,7 @@ print(lltm_cpp.barycoords_from_2d_trianglef(
     1, 0,
     0, 1,
     0.5, 0.5))
-#
+
 # batch_size = 16
 # input_features = 32
 # state_size = 128
