@@ -5,6 +5,16 @@
 
 #include "barycentric.h"
 
+class Vector3f
+{
+public:
+    Vector3f(const float x, const float y, const float z):
+    m_values({x, y, z}) {}
+
+private:
+    float m_values[3];
+};
+
 /*
 
 def rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer, tri_index, tri_coords_3d):
