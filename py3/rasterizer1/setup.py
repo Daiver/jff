@@ -1,4 +1,6 @@
 import setuptools
+from torch.utils.cpp_extension import CppExtension, BuildExtension
+
 
 setuptools.setup(
     name="rasterizer",
@@ -14,4 +16,6 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ),
+    ext_modules=[CppExtension('rasterizer_cpp', ['csrc/rasterizer.cpp'])],
+    cmdclass={'build_ext': BuildExtension}
 )
