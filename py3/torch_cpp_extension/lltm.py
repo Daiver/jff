@@ -4,6 +4,7 @@ import torch
 
 # Our module!
 import lltm_cpp
+print(lltm_cpp)
 
 
 class LLTMFunction(torch.autograd.Function):
