@@ -90,7 +90,7 @@ def rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buf
 */
 
 void rasterize_triangle(
-    const int tri_index,
+    const int64_t tri_index,
     const Vector3f &v1,
     const Vector3f &v2,
     const Vector3f &v3,
@@ -123,8 +123,17 @@ void rasterize_triangles(
     assert(vertices.dim() == 2);
     assert(triangle_vertex_indices.dim() == 2);
     const int64_t n_triangles = triangle_vertex_indices.size(0);
+
+    const auto triangle_vertex_indices_acc = triangle_vertex_indices.accessor<int, 2>();
+    const auto vertices_acc = vertices.accessor<float, 2>();
     for(int64_t tri_index = 0; tri_index <n_triangles; ++tri_index){
-        
+        const int i1 = triangle_vertex_indices_acc[tri_index][0];
+        const int i2 = triangle_vertex_indices_acc[tri_index][1];
+        const int i3 = triangle_vertex_indices_acc[tri_index][2];
+        const Vector3f v1(vertices_acc[i1][0], vertices_acc[i1][1], vertices_acc[i1][2]);
+        const Vector3f v2(vertices_acc[i2][0], vertices_acc[i2][1], vertices_acc[i2][2]);
+        const Vector3f v3(vertices_acc[i3][0], vertices_acc[i3][1], vertices_acc[i3][2]);
+        rasterize_triangle(tri_index, v1, v2, v3, barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer);
     }
 }
 
