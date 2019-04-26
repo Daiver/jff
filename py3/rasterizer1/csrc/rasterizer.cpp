@@ -158,9 +158,9 @@ void rasterize_triangle(
                 x, y,
                 l1, l2, l3
             );
-            const bool is_l1_ok = (1e-7 <= l1) && (l1 <= 1 + 1e-7);
-            const bool is_l2_ok = (1e-7 <= l2) && (l2 <= 1 + 1e-7);
-            const bool is_l3_ok = (1e-7 <= l3) && (l3 <= 1 + 1e-7);
+            const bool is_l1_ok = (-1e-7 <= l1) && (l1 <= 1 + 1e-7);
+            const bool is_l2_ok = (-1e-7 <= l2) && (l2 <= 1 + 1e-7);
+            const bool is_l3_ok = (-1e-7 <= l3) && (l3 <= 1 + 1e-7);
             if(!(is_l1_ok && is_l2_ok && is_l3_ok))
                 continue;
             const float z_val = v1[2] * l1 + v2[2] * l2 + v3[2] * l3;
