@@ -6,6 +6,8 @@ import torch.nn.functional as F
 from barycentric import barycoords_from_2d_triangle
 import torch_img_gradient
 
+import rasterizer_cpp
+
 
 def rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer, tri_index, tri_coords_3d):
     n_rows = z_buffer.shape[0]
@@ -159,9 +161,15 @@ def mk_rasterizer(
             z_min = vertices[:, 2].min()
             z_buffer[:] = z_min  # - 1e-3 * abs(z_min)
 
-            rasterize_barycentrics_and_z_buffer_by_triangles(
-                triangle_vertex_indices,
-                vertices,
+            # rasterize_barycentrics_and_z_buffer_by_triangles(
+            #     triangle_vertex_indices,
+            #     vertices,
+            #     barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
+            torch_triangle_vertex_indices = torch.IntTensor(triangle_vertex_indices)
+            torch_vertices = torch.FloatTensor(vertices)
+            rasterizer_cpp.rasterize_triangles(
+                torch_triangle_vertex_indices,
+                torch_vertices,
                 barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
 
             torch_mask = (barycentrics_triangle_indices != -1).float()
