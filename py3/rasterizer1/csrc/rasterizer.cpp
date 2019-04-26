@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <assert.h>
+//#include <cmath>
+#include <math.h>
 
 #include "barycentric.h"
 
@@ -10,6 +12,7 @@ template<typename Scalar>
 class Vector2
 {
 public:
+    Vector2() = default;
     Vector2(const Scalar x, const Scalar y)
     {
         m_values[0] = x;
@@ -25,6 +28,11 @@ public:
         return Vector2<Scalar2>(Scalar2(m_values[0]), Scalar2(m_values[1]))
     }
 
+    Vector2<Scalar> round() const
+    {
+        return Vector2<Scalar>(round(m_values[0]), round(m_values[1]));
+    }
+
 private:
     Scalar m_values[2];
 };
@@ -33,6 +41,7 @@ template<typename Scalar>
 class Vector3
 {
 public:
+    Vector3() = default;
     Vector3(const Scalar x, const Scalar y, const Scalar z)
     {
         m_values[0] = x;
@@ -114,7 +123,12 @@ void rasterize_triangle(
     const int64_t n_rows = z_buffer.size(0);
     const int64_t n_cols = z_buffer.size(1);
 
-//    const auto v1_xy = v1.xy();
+    const auto v1_xy = v1.xy();
+    const auto v1_xy_int = v1_xy.round().cast<int>();
+    const auto v2_xy = v2.xy();
+    const auto v2_xy_int = v2_xy.round().cast<int>();
+    const auto v3_xy = v3.xy();
+    const auto v3_xy_int = v3_xy.round().cast<int>();
 }
 
 //def rasterize_barycentrics_and_z_buffer_by_triangles(
