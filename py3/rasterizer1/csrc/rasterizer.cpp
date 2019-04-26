@@ -5,18 +5,32 @@
 
 #include "barycentric.h"
 
-class Vector3f
+template<typename Scalar>
+class Vector3
 {
 public:
-//    Vector3f(const float x, const float y, const float z):
-//    m_values({x, y, z}) {}
+    Vector3(const Scalar x, const Scalar y, const Scalar z)
+    {
+        m_values[0] = x;
+        m_values[1] = y;
+        m_values[2] = z;
+    }
 
-    float operator[](const int index) const { return m_values[index]; }
-    float &operator[](const int index) { return m_values[index]; }
+    const Scalar operator[](const int index) const { return m_values[index]; }
+    Scalar &operator[](const int index) { return m_values[index]; }
+
+    template<typename Scalar2>
+    Vector3<Scalar2> cast() const
+    {
+        return Vector3<Scalar2>(Scalar2(m_values[0]), Scalar2(m_values[1]), Scalar2(m_values[2]))
+    }
 
 private:
-    float m_values[3];
+    Scalar m_values[3];
 };
+
+using Vector3f = Vector3<float>;
+using Vector3i = Vector3<int>;
 
 /*
 
