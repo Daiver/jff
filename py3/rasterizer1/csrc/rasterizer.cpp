@@ -56,7 +56,7 @@ public:
 
     Vector2<Scalar> xy() const
     {
-        return Vector2<Scalar>(round(m_values[0]), round(m_values[1]));
+        return Vector2<Scalar>(m_values[0], m_values[1]);
     }
 
 private:
@@ -114,7 +114,7 @@ void rasterize_triangle(
     const int64_t n_rows = z_buffer.size(0);
     const int64_t n_cols = z_buffer.size(1);
 
-    const auto v1_xy = v1.xy();
+//    const auto v1_xy = v1.xy();
 }
 
 //def rasterize_barycentrics_and_z_buffer_by_triangles(
