@@ -3,8 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <assert.h>
-//#include <cmath>
-#include <math.h>
+#include <cmath>
+//#include <math.h>
 
 #include "barycentric.h"
 
@@ -25,12 +25,12 @@ public:
     template<typename Scalar2>
     Vector2<Scalar2> cast() const
     {
-        return Vector2<Scalar2>(Scalar2(m_values[0]), Scalar2(m_values[1]))
+        return Vector2<Scalar2>(Scalar2(m_values[0]), Scalar2(m_values[1]));
     }
 
     Vector2<Scalar> round() const
     {
-        return Vector2<Scalar>(round(m_values[0]), round(m_values[1]));
+        return Vector2<Scalar>(std::round(m_values[0]), std::round(m_values[1]));
     }
 
 private:
@@ -60,7 +60,7 @@ public:
 
     Vector3<Scalar> round() const
     {
-        return Vector3<Scalar>(round(m_values[0]), round(m_values[1]), round(m_values[2]));
+        return Vector3<Scalar>(std::round(m_values[0]), std::round(m_values[1]), std::round(m_values[2]));
     }
 
     Vector2<Scalar> xy() const

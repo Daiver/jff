@@ -5,7 +5,7 @@ from torch.utils.cpp_extension import CppExtension, BuildExtension
 include_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "csrc")
 setuptools.setup(
     name="rasterizer",
-    version="0.0.5",
+    version="0.0.6",
     author="Daiver",
     author_email="",
     description="",
