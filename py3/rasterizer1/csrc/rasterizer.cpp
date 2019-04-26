@@ -2,8 +2,32 @@
 
 #include <iostream>
 #include <vector>
+#include <assert.h>
 
 #include "barycentric.h"
+
+template<typename Scalar>
+class Vector2
+{
+public:
+    Vector2(const Scalar x, const Scalar y)
+    {
+        m_values[0] = x;
+        m_values[1] = y;
+    }
+
+    const Scalar operator[](const int index) const { return m_values[index]; }
+    Scalar &operator[](const int index) { return m_values[index]; }
+
+    template<typename Scalar2>
+    Vector2<Scalar2> cast() const
+    {
+        return Vector2<Scalar2>(Scalar2(m_values[0]), Scalar2(m_values[1]))
+    }
+
+private:
+    Scalar m_values[2];
+};
 
 template<typename Scalar>
 class Vector3
@@ -96,7 +120,12 @@ void rasterize_triangles(
     torch::Tensor barycentrics_triangle_indices,
     torch::Tensor z_buffer)
 {
-
+    assert(vertices.dim() == 2);
+    assert(triangle_vertex_indices.dim() == 2);
+    const int64_t n_triangles = triangle_vertex_indices.size(0);
+    for(int64_t tri_index = 0; tri_index <n_triangles; ++tri_index){
+        
+    }
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
