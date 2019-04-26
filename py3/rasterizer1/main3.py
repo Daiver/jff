@@ -52,19 +52,19 @@ def draw_uv(model, canvas_size):
 
 
 def main():
-    # canvas_size = (256, 256)
+    canvas_size = (256, 256)
     # canvas_size = (128, 128)
-    canvas_size = (64, 64)
+    # canvas_size = (64, 64)
     # canvas_size = (32, 32)
     # canvas_size = (16, 16)
     # path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
 
     # path_to_obj = "/home/daiver/res.obj"
-    # path_to_obj = "/home/daiver/res2.obj"
-    # path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
+    path_to_obj = "/home/daiver/res2.obj"
+    path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
 
-    path_to_obj = "models/Alex1.obj"
-    path_to_texture = "models/Alex1.png"
+    # path_to_obj = "models/Alex1.obj"
+    # path_to_texture = "models/Alex1.png"
 
     # path_to_obj = "models/Alex1.obj"
     # path_to_texture = "models/Alex1.png"

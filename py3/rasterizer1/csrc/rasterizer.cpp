@@ -173,7 +173,6 @@ void rasterize_triangle(
             bary_tri_ind_acc[y][x] = tri_index;
         }
     }
-
 }
 
 //def rasterize_barycentrics_and_z_buffer_by_triangles(
