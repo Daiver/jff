@@ -146,7 +146,19 @@ void rasterize_triangle(
             float l1 = 0;
             float l2 = 0;
             float l3 = 0;
-//            barycoords_from_2d_trianglef()
+            Barycentric::barycoords_from_2d_triangle<float>(
+                v1_xy[0], v1_xy[1],
+                v2_xy[0], v2_xy[1],
+                v3_xy[0], v3_xy[1],
+                x, y,
+                l1, l2, l3
+            );
+            const bool is_l1_ok = (1e-7 <= l1) && (l1 <= 1 + 1e-7);
+            const bool is_l2_ok = (1e-7 <= l2) && (l2 <= 1 + 1e-7);
+            const bool is_l3_ok = (1e-7 <= l3) && (l3 <= 1 + 1e-7);
+            if(!(is_l1_ok && is_l2_ok && is_l3_ok))
+                continue;
+            //z_val =
         }
     }
 
