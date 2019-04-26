@@ -46,7 +46,17 @@ public:
     template<typename Scalar2>
     Vector3<Scalar2> cast() const
     {
-        return Vector3<Scalar2>(Scalar2(m_values[0]), Scalar2(m_values[1]), Scalar2(m_values[2]))
+        return Vector3<Scalar2>(Scalar2(m_values[0]), Scalar2(m_values[1]), Scalar2(m_values[2]));
+    }
+
+    Vector3<Scalar> round() const
+    {
+        return Vector3<Scalar>(round(m_values[0]), round(m_values[1]), round(m_values[2]));
+    }
+
+    Vector2<Scalar> xy() const
+    {
+        return Vector2<Scalar>(round(m_values[0]), round(m_values[1]));
     }
 
 private:
@@ -103,6 +113,8 @@ void rasterize_triangle(
     assert(barycentrics_triangle_indices.dim() == 2);
     const int64_t n_rows = z_buffer.size(0);
     const int64_t n_cols = z_buffer.size(1);
+
+    const auto v1_xy = v1.xy();
 }
 
 //def rasterize_barycentrics_and_z_buffer_by_triangles(
