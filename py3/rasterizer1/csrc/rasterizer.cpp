@@ -120,6 +120,11 @@ void rasterize_triangle(
     assert(z_buffer.dim() == 2);
     assert(barycentrics_l1l2l3.dim() == 3);
     assert(barycentrics_triangle_indices.dim() == 2);
+
+    auto z_buffer_acc = z_buffer.accessor<float, 2>();
+    auto bary_l1l2l3_acc = barycentrics_l1l2l3.accessor<float, 3>();
+    auto bary_tri_ind_acc = barycentrics_triangle_indices.accessor<int, 2>();
+
     const int64_t n_rows = z_buffer.size(0);
     const int64_t n_cols = z_buffer.size(1);
 
@@ -158,7 +163,14 @@ void rasterize_triangle(
             const bool is_l3_ok = (1e-7 <= l3) && (l3 <= 1 + 1e-7);
             if(!(is_l1_ok && is_l2_ok && is_l3_ok))
                 continue;
-            //z_val =
+            const float z_val = v1[2] * l1 + v2[2] * l2 + v3[2] * l3;
+            if(z_buffer_acc[y][x] > z_val)
+                continue;
+            z_buffer_acc[y][x] = z_val;
+            bary_l1l2l3_acc[y][x][0] = l1;
+            bary_l1l2l3_acc[y][x][1] = l2;
+            bary_l1l2l3_acc[y][x][2] = l3;
+            bary_tri_ind_acc[y][x] = tri_index;
         }
     }
 
