@@ -129,6 +129,27 @@ void rasterize_triangle(
     const auto v2_xy_int = v2_xy.round().cast<int>();
     const auto v3_xy = v3.xy();
     const auto v3_xy_int = v3_xy.round().cast<int>();
+
+    const int64_t x_start  = std::min({v1_xy_int[0], v2_xy_int[0], v3_xy_int[0]});
+    const int64_t x_finish = std::max({v1_xy_int[0], v2_xy_int[0], v3_xy_int[0]});
+
+    const int64_t y_start  = std::min({v1_xy_int[1], v2_xy_int[1], v3_xy_int[1]});
+    const int64_t y_finish = std::max({v1_xy_int[1], v2_xy_int[1], v3_xy_int[1]});
+
+    // TODO: it's possible to walk through not all triangle
+    for(int64_t x = x_start; x < x_finish + 1; ++x){
+        if(x < 0 || x >= n_cols)
+            continue;
+        for(int64_t y = y_start; y < y_finish + 1; ++y){
+            if(y < 0 || y >= n_rows)
+                continue;
+            float l1 = 0;
+            float l2 = 0;
+            float l3 = 0;
+//            barycoords_from_2d_trianglef()
+        }
+    }
+
 }
 
 //def rasterize_barycentrics_and_z_buffer_by_triangles(
