@@ -98,7 +98,11 @@ void rasterize_triangle(
     torch::Tensor barycentrics_triangle_indices,
     torch::Tensor z_buffer)
 {
-
+    assert(z_buffer.dim() == 2);
+    assert(barycentrics_l1l2l3.dim() == 3);
+    assert(barycentrics_triangle_indices.dim() == 2);
+    const int64_t n_rows = z_buffer.size(0);
+    const int64_t n_cols = z_buffer.size(1);
 }
 
 //def rasterize_barycentrics_and_z_buffer_by_triangles(
