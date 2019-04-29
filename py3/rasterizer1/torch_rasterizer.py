@@ -138,6 +138,33 @@ def vertices_grad(
     return res
 
 
+def vertices_grad_cpp(
+        inp_grad,
+        torch_warped_dx, torch_warped_dy,
+        triangle_vertex_indices,
+        barycentrics_l1l2l3, barycentrics_triangle_indices,
+        n_vertices
+):
+    # grad with respect to z direction is always zero
+    res = torch.zeros((n_vertices, 3))
+    assert torch_warped_dx.shape == inp_grad.shape
+    n_channels, n_rows, n_cols = torch_warped_dx.shape
+
+    # print(torch_warped_dx)
+
+    inp_grad = inp_grad.permute(1, 2, 0)  # c, h, w -> h, w, c
+    torch_warped_dx = torch_warped_dx.permute(1, 2, 0)
+    torch_warped_dy = torch_warped_dy.permute(1, 2, 0)
+
+    rasterizer_cpp.vertices_grad(
+        inp_grad, torch_warped_dx, torch_warped_dy,
+        torch.IntTensor(triangle_vertex_indices),
+        barycentrics_l1l2l3, barycentrics_triangle_indices,
+        res
+    )
+    return res
+
+
 def mk_rasterizer(
         triangle_vertex_indices,
         triangle_texture_vertex_indices,
@@ -213,7 +240,13 @@ def mk_rasterizer(
 
             # TODO: MAKE IT EXPLICIT!
             n_vertices = 1 + max(max(x) for x in triangle_vertex_indices)
-            vertices_res_grad = vertices_grad(
+            # vertices_res_grad = vertices_grad(
+            #     inp_render_grad,
+            #     torch_warped_dx, torch_warped_dy,
+            #     triangle_vertex_indices, barycentrics_l1l2l3, barycentrics_triangle_indices,
+            #     n_vertices
+            # )
+            vertices_res_grad = vertices_grad_cpp(
                 inp_render_grad,
                 torch_warped_dx, torch_warped_dy,
                 triangle_vertex_indices, barycentrics_l1l2l3, barycentrics_triangle_indices,

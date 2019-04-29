@@ -161,6 +161,7 @@ void rasterize_triangles(
 
     const auto triangle_vertex_indices_acc = triangle_vertex_indices.accessor<int, 2>();
     const auto vertices_acc = vertices.accessor<float, 2>();
+
     for(int64_t tri_index = 0; tri_index <n_triangles; ++tri_index){
         const int i1 = triangle_vertex_indices_acc[tri_index][0];
         const int i2 = triangle_vertex_indices_acc[tri_index][1];
@@ -171,27 +172,6 @@ void rasterize_triangles(
         rasterize_triangle(tri_index, v1, v2, v3, barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer);
     }
 }
-
-//def grid_for_texture_warp(
-//        barycentrics_l1l2l3,
-//        barycentrics_triangle_indices,
-//        texture_vertices,
-//        triangle_texture_vertex_indices):
-//    res = torch.zeros((barycentrics_l1l2l3.shape[0], barycentrics_l1l2l3.shape[1], 2))
-//
-//    for x in range(res.shape[1]):
-//        for y in range(res.shape[0]):
-//            tri_ind = barycentrics_triangle_indices[y, x]
-//            if tri_ind == -1:
-//                continue
-//            l1, l2, l3 = barycentrics_l1l2l3[y, x]
-//            i1, i2, i3 = triangle_texture_vertex_indices[tri_ind]
-//            vt1, vt2, vt3 = texture_vertices[i1], texture_vertices[i2], texture_vertices[i3]
-//            final_coord = vt1 * l1 + vt2 * l2 + vt3 * l3
-//            res[y, x] = final_coord
-//
-//    return res
-
 
 void grid_for_texture_warp(
     torch::Tensor triangle_vertex_indices,
@@ -212,8 +192,8 @@ void grid_for_texture_warp(
     const auto triangle_vertex_indices_acc = triangle_vertex_indices.accessor<int, 2>();
     const auto texture_vertices_acc = texture_vertices.accessor<float, 2>();
 
-    auto bary_l1l2l3_acc = barycentrics_l1l2l3.accessor<float, 3>();
-    auto bary_tri_ind_acc = barycentrics_triangle_indices.accessor<int, 2>();
+    const auto bary_l1l2l3_acc = barycentrics_l1l2l3.accessor<float, 3>();
+    const auto bary_tri_ind_acc = barycentrics_triangle_indices.accessor<int, 2>();
 
     const int64_t n_rows = barycentrics_triangle_indices.size(0);
     const int64_t n_cols = barycentrics_triangle_indices.size(1);
@@ -245,9 +225,120 @@ void grid_for_texture_warp(
     }
 }
 
+//def vertices_grad(
+//        inp_grad,
+//        torch_warped_dx, torch_warped_dy,
+//        triangle_vertex_indices,
+//        barycentrics_l1l2l3, barycentrics_triangle_indices,
+//        n_vertices
+//):
+//    # grad with respect to z direction is always zero
+//    res = torch.zeros((n_vertices, 3))
+//    assert torch_warped_dx.shape == inp_grad.shape
+//    n_channels, n_rows, n_cols = torch_warped_dx.shape
+//
+//    # print(torch_warped_dx)
+//
+//    inp_grad = inp_grad.permute(1, 2, 0)  # c, h, w -> h, w, c
+//    torch_warped_dx = torch_warped_dx.permute(1, 2, 0)
+//    torch_warped_dy = torch_warped_dy.permute(1, 2, 0)
+//
+//    for row in range(n_rows):
+//        for col in range(n_cols):
+//            tri_ind = barycentrics_triangle_indices[row, col]
+//            if tri_ind == -1:
+//                continue
+//
+//            for v_index, l in zip(triangle_vertex_indices[tri_ind], barycentrics_l1l2l3[row, col]):
+//                # - because if you move your vertex v to v' = (v + 1),
+//                # your current pixel value I(u) will be equal I(u - 1)
+//                # if you move vertex v to v' = (v - 1)
+//                # your current pixel value I(u) will be equal I(u + 1)
+//                # TODO: bake it into grad kernel
+//                res[v_index, 0] += -l * torch_warped_dx[row, col].dot(inp_grad[row, col])
+//                res[v_index, 1] += -l * torch_warped_dy[row, col].dot(inp_grad[row, col])
+//                # if v_index == 0:
+//                #     print(">", row, col, l, inp_grad[row, col], torch_warped_dx[row, col], res[0])
+//
+//    return res
+
+void vertices_grad(
+        torch::Tensor inp_grad,
+        torch::Tensor torch_warped_dx,
+        torch::Tensor torch_warped_dy,
+        torch::Tensor triangle_vertex_indices,
+        torch::Tensor barycentrics_l1l2l3,
+        torch::Tensor barycentrics_triangle_indices,
+        torch::Tensor res_out)
+{
+    assert(inp_grad.dim() == 3);
+    assert(torch_warped_dx.dim() == 3);
+    assert(torch_warped_dy.dim() == 3);
+
+    assert(barycentrics_l1l2l3.dim() == 3);
+    assert(barycentrics_l1l2l3.size(2) == 3);
+    assert(barycentrics_triangle_indices.dim() == 2);
+
+    assert(res_out.dim() == 2);
+    assert(res_out.size(1) == 3);
+
+    const auto triangle_vertex_indices_acc = triangle_vertex_indices.accessor<int, 2>();
+
+    const auto bary_l1l2l3_acc = barycentrics_l1l2l3.accessor<float, 3>();
+    const auto bary_tri_ind_acc = barycentrics_triangle_indices.accessor<int, 2>();
+
+    const auto torch_warped_dx_acc = torch_warped_dx.accessor<float, 3>();
+    const auto torch_warped_dy_acc = torch_warped_dy.accessor<float, 3>();
+    const auto inp_grad_acc = inp_grad.accessor<float, 3>();
+
+    auto res_out_acc = res_out.accessor<float, 2>();
+
+    const int64_t n_rows = inp_grad.size(0);
+    const int64_t n_cols = inp_grad.size(1);
+    const int64_t n_channels = inp_grad.size(2);
+
+    for(int64_t row = 0; row < n_rows; ++row){
+        for(int64_t col = 0; col < n_cols; ++col){
+            const int tri_ind = bary_tri_ind_acc[row][col];
+            if(tri_ind == -1)
+                continue;
+
+            const int v_inds[] = {
+                triangle_vertex_indices_acc[tri_ind][0],
+                triangle_vertex_indices_acc[tri_ind][1],
+                triangle_vertex_indices_acc[tri_ind][2]
+            };
+            const float bary_coords[] = {
+                bary_l1l2l3_acc[row][col][0],
+                bary_l1l2l3_acc[row][col][1],
+                bary_l1l2l3_acc[row][col][2],
+            };
+
+            for(int bary_index = 0; bary_index < 3; ++bary_index){
+                //res[v_index, 0] += -l * torch_warped_dx[row, col].dot(inp_grad[row, col])
+                //res[v_index, 1] += -l * torch_warped_dy[row, col].dot(inp_grad[row, col])
+                const int v_index = v_inds[bary_index];
+                const float l = bary_coords[bary_index];
+
+//                std::cout << row << " " << col << " " << v_index << " " << l << std::endl;
+
+                float dx = 0;
+                float dy = 0;
+                // TODO: can be accelerated/specified for some number of channels
+                for(int channel_ind = 0; channel_ind < n_channels; ++channel_ind){
+                    dx += torch_warped_dx_acc[row][col][channel_ind] * inp_grad_acc[row][col][channel_ind];
+                    dy += torch_warped_dy_acc[row][col][channel_ind] * inp_grad_acc[row][col][channel_ind];
+                }
+                res_out_acc[v_index][0] += -l * dx;
+                res_out_acc[v_index][1] += -l * dy;
+            }
+        }
+    }
+}
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("barycoords_from_2d_trianglef", &Barycentric::barycoords_from_2d_trianglef, "");
   m.def("rasterize_triangles", &rasterize_triangles, "");
   m.def("grid_for_texture_warp", &grid_for_texture_warp, "");
+  m.def("vertices_grad", &vertices_grad, "");
 }
