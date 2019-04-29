@@ -153,7 +153,7 @@ def main():
     optimizer = optim.Adam(params=[weights, translation], lr=lr, betas=(0.75, 0.99))
     # optimizer = optim.Adam(params=[vertices], lr=lr, betas=(0.75, 0.99))
 
-    for iteration in range(200):
+    for iteration in range(100):
 
         vertices = blend_vertices_torch(vertices_orig, blends_vertices_torch, weights) + translation
         with Timer(print_line="Rasterization elapsed: {}"):
@@ -187,9 +187,6 @@ def main():
         cv2.waitKey(10)
 
     cv2.waitKey()
-
-    cv2.imwrite("/home/daiver/tmp1.png", rendered)
-    cv2.imwrite("/home/daiver/tmp2.png", torch_target_render.permute(1, 2, 0).detach().numpy().astype(np.uint8))
 
 
 if __name__ == '__main__':
