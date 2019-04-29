@@ -67,20 +67,51 @@ def draw_uv(model, canvas_size):
 
 
 def main():
-    canvas_size = (1024, 1024)
+    # canvas_size = (1024, 1024)
     # canvas_size = (512, 512)
     # canvas_size = (256, 256)
-    # canvas_size = (128, 128)
+    canvas_size = (128, 128)
     # canvas_size = (64, 64)
     # canvas_size = (32, 32)
     # canvas_size = (16, 16)
 
     path_to_base = "/home/daiver/girl_base.obj"
     paths_to_blends = [
-        "/home/daiver/girl_smile.obj",
-        "/home/daiver/girl_scream.obj",
-        "/home/daiver/girl_snarl.obj",
-        "/home/daiver/girl_surprise.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes00.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes01.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes02.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes03.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes04.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes05.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes06.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes07.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes08.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes09.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes10.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes11.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes12.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes13.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes14.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes15.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes16.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes17.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes18.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes19.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes20.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes21.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes22.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes23.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes24.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes25.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes26.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes27.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes28.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes29.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes30.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes31.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes32.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes33.obj",
+        "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/Blendshapes34.obj",
     ]
     path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
 
@@ -89,6 +120,12 @@ def main():
 
     # path_to_scan = "/home/daiver/Girl/Scans/Object002.obj"
     # path_to_scan_texture = "/home/daiver/Girl/Scans/Image002.jpg"
+
+    # path_to_scan = "/home/daiver/Girl/Scans/Object008.obj"
+    # path_to_scan_texture = "/home/daiver/Girl/Scans/Image008.jpg"
+
+    # path_to_scan = "/home/daiver/Girl/Scans/Object010.obj"
+    # path_to_scan_texture = "/home/daiver/Girl/Scans/Image010.jpg"
 
     scan = geom_tools.from_obj_file(path_to_scan)
     scan_texture = cv2.imread(path_to_scan_texture)
@@ -134,7 +171,7 @@ def main():
     vertices_orig = torch.FloatTensor(model.vertices)
     blends_vertices_torch = torch.FloatTensor(blends_vertices)
 
-    weights = torch.tensor([0.0, 0.0, 0.0, 0.0]).requires_grad_(True)
+    weights = torch.tensor([0.0] * len(paths_to_blends)).requires_grad_(True)
     translation = torch.tensor([0.0, 0.0, 0.0]).requires_grad_(True)
 
     # vertices = torch.FloatTensor(vertices_orig).requires_grad_(True)
@@ -145,36 +182,36 @@ def main():
     # cv2.waitKey(10)
     cv2.waitKey(1000)
 
-    # lr = 0.05
-    # lr = 0.02
-    # lr = 0.01
-    lr = 0.1
+    lr = 0.01
+    # lr = 0.1
 
     optimizer = optim.Adam(params=[weights, translation], lr=lr, betas=(0.75, 0.99))
     # optimizer = optim.Adam(params=[vertices], lr=lr, betas=(0.75, 0.99))
 
-    for iteration in range(100):
+    for iteration in range(500):
 
         vertices = blend_vertices_torch(vertices_orig, blends_vertices_torch, weights) + translation
         with Timer(print_line="Rasterization elapsed: {}"):
             rendered = rasterizer(vertices, torch_texture)
 
-        loss = (rendered - torch_target_render).pow(2).mean()
-        # loss = (rendered - torch_target_render).abs().mean()
+        data_loss = ((rendered - torch_target_render) / 255.0).pow(2).mean()
+        reg_loss = weights.clamp(max=0).abs().sum()
+        loss = data_loss + reg_loss
+
         with Timer(print_line="Backward elapsed: {}"):
             loss.backward()
-        print(f"iter = {iteration}, loss = {loss}")
+        print(f"iter = {iteration}, loss = {loss}, data_loss = {data_loss}, reg_loss = {reg_loss}")
 
         optimizer.step()
         optimizer.zero_grad()
 
-        if iteration == 50:
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = lr * 0.2
-
-        if iteration == 100:
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = lr * 0.2
+        # if iteration == 50:
+        #     for param_group in optimizer.param_groups:
+        #         param_group['lr'] = lr * 0.2
+        #
+        # if iteration == 100:
+        #     for param_group in optimizer.param_groups:
+        #         param_group['lr'] = lr * 0.2
 
         print(f"weights = {weights}, translation = {translation}")
 
