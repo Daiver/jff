@@ -76,7 +76,10 @@ def main():
 
     path_to_base = "/home/daiver/girl_base.obj"
     paths_to_blends = [
-        "/home/daiver/girl_smile.obj"
+        "/home/daiver/girl_smile.obj",
+        "/home/daiver/girl_scream.obj",
+        "/home/daiver/girl_snarl.obj",
+        "/home/daiver/girl_surprise.obj",
     ]
     path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
 
@@ -99,7 +102,7 @@ def main():
     # target_translation = torch.FloatTensor([0, 0, 0])
     # target_translation = torch.FloatTensor([0, -3.75, 0])
     # target_y_rotation = torch.tensor(0.7)
-    target_weights = np.array([1], dtype=np.float32)
+    target_weights = np.array([1.0, 0, 0.0, 1.0], dtype=np.float32)
     target_vertices = blend_vertices_torch(model.vertices, blends_vertices, target_weights)
     torch_target_render = render_with_shift(model, texture, canvas_size, torch.FloatTensor([0, 0, 0]), torch.tensor(0.0), vertices_custom=target_vertices)
     cv2.imshow("target", torch_target_render.permute(1, 2, 0).detach().numpy().astype(np.uint8))
@@ -117,7 +120,7 @@ def main():
     vertices_orig = torch.FloatTensor(model.vertices)
     blends_vertices_torch = torch.FloatTensor(blends_vertices)
 
-    weights = torch.tensor([0.0]).requires_grad_(True)
+    weights = torch.tensor([0.0, 0.0, 0.0, 0.0]).requires_grad_(True)
 
     vertices = blend_vertices_torch(vertices_orig, blends_vertices_torch, weights)
     rendered = rasterizer(vertices, torch_texture)
@@ -128,7 +131,7 @@ def main():
 
     lr = 0.0002
 
-    for i in range(100):
+    for i in range(200):
 
         vertices = blend_vertices_torch(vertices_orig, blends_vertices_torch, weights)
         with Timer(print_line="Rasterization elapsed: {}"):
@@ -151,6 +154,8 @@ def main():
 
         if i == 50:
             lr /= 4
+        if i == 90:
+            lr /= 2
         if i == 120:
             lr /= 4
 
