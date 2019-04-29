@@ -281,12 +281,8 @@ void vertices_grad(
             };
 
             for(int bary_index = 0; bary_index < 3; ++bary_index){
-                //res[v_index, 0] += -l * torch_warped_dx[row, col].dot(inp_grad[row, col])
-                //res[v_index, 1] += -l * torch_warped_dy[row, col].dot(inp_grad[row, col])
                 const int v_index = v_inds[bary_index];
                 const float l = bary_coords[bary_index];
-
-//                std::cout << row << " " << col << " " << v_index << " " << l << std::endl;
 
                 float dx = 0;
                 float dy = 0;
