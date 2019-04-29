@@ -103,11 +103,10 @@ def main():
     # target_translation = torch.FloatTensor([0, 0, 0])
     # target_translation = torch.FloatTensor([0, -3.75, 0])
     # target_y_rotation = torch.tensor(0.7)
-    target_weights = np.array([1.0, 0, 0.0, 1.0], dtype=np.float32)
+    target_weights = np.array([1.5, 0.1, 0.0, 0.5], dtype=np.float32)
     target_vertices = blend_vertices_torch(model.vertices, blends_vertices, target_weights)
     torch_target_render = render_with_shift(model, texture, canvas_size, torch.FloatTensor([0, 0, 0]), torch.tensor(0.0), vertices_custom=target_vertices)
     cv2.imshow("target", torch_target_render.permute(1, 2, 0).detach().numpy().astype(np.uint8))
-    cv2.waitKey(100)
 
     torch_texture = torch.FloatTensor(texture)
     torch_texture = torch_texture.permute(2, 0, 1)
@@ -128,13 +127,13 @@ def main():
     rendered = rendered.permute(1, 2, 0).detach().numpy().astype(np.uint8)
     cv2.imshow("rendered", rendered)
     # cv2.waitKey(10)
-    cv2.waitKey()
+    cv2.waitKey(1000)
 
     lr = 0.1
 
-    optimizer = optim.Adam(params=[weights], lr=lr)
+    optimizer = optim.Adam(params=[weights], lr=lr, betas=(0.5, 0.99))
 
-    for i in range(200):
+    for i in range(100):
 
         vertices = blend_vertices_torch(vertices_orig, blends_vertices_torch, weights)
         with Timer(print_line="Rasterization elapsed: {}"):
