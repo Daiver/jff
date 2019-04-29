@@ -133,7 +133,7 @@ def main():
         rendered = rendered.permute(1, 2, 0).detach().numpy().astype(np.uint8)
         cv2.imshow("rendered", rendered)
         cv2.waitKey(10)
-    cv2.waitKey()
+    # cv2.waitKey()
 
 
 if __name__ == '__main__':

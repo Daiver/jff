@@ -148,9 +148,6 @@ def vertices_grad_cpp(
     # grad with respect to z direction is always zero
     res = torch.zeros((n_vertices, 3))
     assert torch_warped_dx.shape == inp_grad.shape
-    n_channels, n_rows, n_cols = torch_warped_dx.shape
-
-    # print(torch_warped_dx)
 
     inp_grad = inp_grad.permute(1, 2, 0)  # c, h, w -> h, w, c
     torch_warped_dx = torch_warped_dx.permute(1, 2, 0)
@@ -188,10 +185,6 @@ def mk_rasterizer(
             z_min = vertices[:, 2].min()
             z_buffer[:] = z_min  # - 1e-3 * abs(z_min)
 
-            # rasterize_barycentrics_and_z_buffer_by_triangles(
-            #     triangle_vertex_indices,
-            #     vertices,
-            #     barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer)
             torch_triangle_vertex_indices = torch.IntTensor(triangle_vertex_indices)
             torch_vertices = torch.FloatTensor(vertices)
             rasterizer_cpp.rasterize_triangles(
@@ -201,9 +194,6 @@ def mk_rasterizer(
 
             torch_mask = (barycentrics_triangle_indices != -1).float()
 
-            # torch_grid = grid_for_texture_warp(
-            #     barycentrics_l1l2l3, barycentrics_triangle_indices,
-            #     texture_vertices, triangle_texture_vertex_indices)
             torch_grid = torch.zeros((barycentrics_l1l2l3.shape[0], barycentrics_l1l2l3.shape[1], 2))
             rasterizer_cpp.grid_for_texture_warp(
                 torch.IntTensor(triangle_texture_vertex_indices),
@@ -240,12 +230,6 @@ def mk_rasterizer(
 
             # TODO: MAKE IT EXPLICIT!
             n_vertices = 1 + max(max(x) for x in triangle_vertex_indices)
-            # vertices_res_grad = vertices_grad(
-            #     inp_render_grad,
-            #     torch_warped_dx, torch_warped_dy,
-            #     triangle_vertex_indices, barycentrics_l1l2l3, barycentrics_triangle_indices,
-            #     n_vertices
-            # )
             vertices_res_grad = vertices_grad_cpp(
                 inp_render_grad,
                 torch_warped_dx, torch_warped_dy,
