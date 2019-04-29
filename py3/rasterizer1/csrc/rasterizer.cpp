@@ -213,11 +213,11 @@ void grid_for_texture_warp(
             const Vector2f v1 = Vector2f(texture_vertices_acc[i1][0], texture_vertices_acc[i1][1]);
             const Vector2f v2 = Vector2f(texture_vertices_acc[i2][0], texture_vertices_acc[i2][1]);
             const Vector2f v3 = Vector2f(texture_vertices_acc[i3][0], texture_vertices_acc[i3][1]);
-//
+
             const float l1 = bary_l1l2l3_acc[row][col][0];
             const float l2 = bary_l1l2l3_acc[row][col][1];
             const float l3 = bary_l1l2l3_acc[row][col][2];
-//
+
             const float final_x = v1[0] * l1 + v2[0] * l2 + v3[0] * l3;
             const float final_y = v1[1] * l1 + v2[1] * l2 + v3[1] * l3;
 
