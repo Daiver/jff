@@ -67,8 +67,8 @@ def draw_uv(model, canvas_size):
 
 
 def main():
-    # canvas_size = (1024, 1024)
-    canvas_size = (512, 512)
+    canvas_size = (1024, 1024)
+    # canvas_size = (512, 512)
     # canvas_size = (256, 256)
     # canvas_size = (128, 128)
     # canvas_size = (64, 64)
@@ -84,6 +84,15 @@ def main():
     ]
     path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
 
+    path_to_scan = "/home/daiver/Girl/Scans/Object014.obj"
+    path_to_scan_texture = "/home/daiver/Girl/Scans/Image014.jpg"
+
+    # path_to_scan = "/home/daiver/Girl/Scans/Object002.obj"
+    # path_to_scan_texture = "/home/daiver/Girl/Scans/Image002.jpg"
+
+    scan = geom_tools.from_obj_file(path_to_scan)
+    scan_texture = cv2.imread(path_to_scan_texture)
+
     # path_to_base = "models/Alex1.obj"
     # path_to_texture = "models/Alex1.png"
 
@@ -95,6 +104,8 @@ def main():
     model.vertices = transform_vertices(mat, vec, model.vertices)
     blends_vertices = np.array([transform_vertices(mat, vec, b) for b in blends_vertices], dtype=np.float32)
 
+    scan.vertices = transform_vertices(mat, vec, scan.vertices)
+
     texture = cv2.imread(path_to_texture)
     # texture = cv2.pyrDown(texture)
     # texture = cv2.pyrDown(texture)
@@ -103,9 +114,12 @@ def main():
     # target_translation = torch.FloatTensor([0, 0, 0])
     # target_translation = torch.FloatTensor([0, -3.75, 0])
     # target_y_rotation = torch.tensor(0.7)
-    target_weights = np.array([1.5, 0.1, 0.2, 0.5], dtype=np.float32)
-    target_vertices = blend_vertices_torch(model.vertices, blends_vertices, target_weights)
-    torch_target_render = render_with_shift(model, texture, canvas_size, torch.FloatTensor([0, 0, 0]), torch.tensor(0.0), vertices_custom=target_vertices)
+    # target_weights = np.array([1.5, 0.1, 0.2, 0.5], dtype=np.float32)
+    # target_vertices = blend_vertices_torch(model.vertices, blends_vertices, target_weights)
+    # torch_target_render = render_with_shift(model, texture, canvas_size, torch.FloatTensor([0, 0, 0]), torch.tensor(0.0), vertices_custom=target_vertices)
+
+    torch_target_render = render_with_shift(scan, scan_texture, canvas_size, torch.FloatTensor([0, 0, 0]), torch.tensor(0.0))
+
     cv2.imshow("target", torch_target_render.permute(1, 2, 0).detach().numpy().astype(np.uint8))
 
     torch_texture = torch.FloatTensor(texture)
@@ -123,6 +137,7 @@ def main():
     weights = torch.tensor([0.0, 0.0, 0.0, 0.0]).requires_grad_(True)
     translation = torch.tensor([0.0, 0.0, 0.0]).requires_grad_(True)
 
+    # vertices = torch.FloatTensor(vertices_orig).requires_grad_(True)
     vertices = blend_vertices_torch(vertices_orig, blends_vertices_torch, weights) + translation
     rendered = rasterizer(vertices, torch_texture)
     rendered = rendered.permute(1, 2, 0).detach().numpy().astype(np.uint8)
@@ -131,12 +146,14 @@ def main():
     cv2.waitKey(1000)
 
     # lr = 0.05
-    lr = 0.02
+    # lr = 0.02
+    # lr = 0.01
+    lr = 0.1
 
-    # optimizer = optim.Adam(params=[weights], lr=lr, betas=(0.75, 0.99))
     optimizer = optim.Adam(params=[weights, translation], lr=lr, betas=(0.75, 0.99))
+    # optimizer = optim.Adam(params=[vertices], lr=lr, betas=(0.75, 0.99))
 
-    for i in range(200):
+    for iteration in range(200):
 
         vertices = blend_vertices_torch(vertices_orig, blends_vertices_torch, weights) + translation
         with Timer(print_line="Rasterization elapsed: {}"):
@@ -146,18 +163,33 @@ def main():
         # loss = (rendered - torch_target_render).abs().mean()
         with Timer(print_line="Backward elapsed: {}"):
             loss.backward()
-        print(f"iter = {i}, loss = {loss}")
+        print(f"iter = {iteration}, loss = {loss}")
 
         optimizer.step()
         optimizer.zero_grad()
 
+        if iteration == 50:
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = lr * 0.2
+
+        if iteration == 100:
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = lr * 0.2
+
         print(f"weights = {weights}, translation = {translation}")
+
+        diff = (rendered - torch_target_render).abs()
+        diff = diff.permute(1, 2, 0).detach().numpy().astype(np.uint8)
 
         rendered = rendered.permute(1, 2, 0).detach().numpy().astype(np.uint8)
         cv2.imshow("rendered", rendered)
+        cv2.imshow("diff", diff)
         cv2.waitKey(10)
 
     cv2.waitKey()
+
+    cv2.imwrite("/home/daiver/tmp1.png", rendered)
+    cv2.imwrite("/home/daiver/tmp2.png", torch_target_render.permute(1, 2, 0).detach().numpy().astype(np.uint8))
 
 
 if __name__ == '__main__':
