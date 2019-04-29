@@ -53,20 +53,17 @@ def draw_uv(model, canvas_size):
 
 def main():
     # canvas_size = (1024, 1024)
-    # canvas_size = (512, 512)
-    canvas_size = (256, 256)
+    canvas_size = (512, 512)
+    # canvas_size = (256, 256)
     # canvas_size = (128, 128)
     # canvas_size = (64, 64)
     # canvas_size = (32, 32)
     # canvas_size = (16, 16)
     # path_to_obj = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlWrappedNeutral.obj"
 
-    # path_to_obj = "/home/daiver/res.obj"
-    path_to_obj = "/home/daiver/res2.obj"
+    # path_to_obj = "/home/daiver/girl_base.obj"
+    path_to_obj = "/home/daiver/girl_smile.obj"
     path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
-
-    # path_to_obj = "models/Alex1.obj"
-    # path_to_texture = "models/Alex1.png"
 
     # path_to_obj = "models/Alex1.obj"
     # path_to_texture = "models/Alex1.png"
@@ -108,10 +105,13 @@ def main():
 
     # lr_translation = 0.1
     # lr_translation = 0.0005
-    lr_translation = 0.00075
+    # lr_translation = 0.00075
+    lr_translation = 0.002
     # lr_rotation = 0.000001
-    lr_rotation = lr_translation / canvas_size[0] * 2
+
     for i in range(100):
+        lr_rotation = lr_translation / canvas_size[0] * 2
+
         vertices = rigid_transform(translation, y_rotation, vertices_orig)
         with Timer(print_line="Rasterization elapsed: {}"):
             rendered = rasterizer(vertices, torch_texture)
@@ -133,7 +133,13 @@ def main():
         rendered = rendered.permute(1, 2, 0).detach().numpy().astype(np.uint8)
         cv2.imshow("rendered", rendered)
         cv2.waitKey(10)
-    # cv2.waitKey()
+
+        if i == 50:
+            lr_translation /= 4
+        if i == 120:
+            lr_translation /= 4
+
+    cv2.waitKey()
 
 
 if __name__ == '__main__':
