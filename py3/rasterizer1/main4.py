@@ -121,8 +121,9 @@ def main():
     blends_vertices_torch = torch.FloatTensor(blends_vertices)
 
     weights = torch.tensor([0.0, 0.0, 0.0, 0.0]).requires_grad_(True)
+    translation = torch.tensor([0.0, 0.0, 0.0]).requires_grad_(True)
 
-    vertices = blend_vertices_torch(vertices_orig, blends_vertices_torch, weights)
+    vertices = blend_vertices_torch(vertices_orig, blends_vertices_torch, weights) + translation
     rendered = rasterizer(vertices, torch_texture)
     rendered = rendered.permute(1, 2, 0).detach().numpy().astype(np.uint8)
     cv2.imshow("rendered", rendered)
@@ -130,14 +131,14 @@ def main():
     cv2.waitKey(1000)
 
     # lr = 0.05
-    lr = 0.03
+    lr = 0.02
 
-    # optimizer = optim.Adam(params=[weights], lr=lr, betas=(0.5, 0.99))
-    optimizer = optim.Adam(params=[weights], lr=lr, betas=(0.75, 0.99))
+    # optimizer = optim.Adam(params=[weights], lr=lr, betas=(0.75, 0.99))
+    optimizer = optim.Adam(params=[weights, translation], lr=lr, betas=(0.75, 0.99))
 
     for i in range(200):
 
-        vertices = blend_vertices_torch(vertices_orig, blends_vertices_torch, weights)
+        vertices = blend_vertices_torch(vertices_orig, blends_vertices_torch, weights) + translation
         with Timer(print_line="Rasterization elapsed: {}"):
             rendered = rasterizer(vertices, torch_texture)
 
@@ -150,7 +151,7 @@ def main():
         optimizer.step()
         optimizer.zero_grad()
 
-        print(f"weights = {weights}")
+        print(f"weights = {weights}, translation = {translation}")
 
         rendered = rendered.permute(1, 2, 0).detach().numpy().astype(np.uint8)
         cv2.imshow("rendered", rendered)
