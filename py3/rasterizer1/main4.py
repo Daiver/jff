@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import torch
+from torch import optim
 
 import geom_tools
 import torch_rasterizer
@@ -129,7 +130,9 @@ def main():
     # cv2.waitKey(10)
     cv2.waitKey()
 
-    lr = 0.0002
+    lr = 0.1
+
+    optimizer = optim.Adam(params=[weights], lr=lr)
 
     for i in range(200):
 
@@ -143,8 +146,10 @@ def main():
             loss.backward()
         print(f"iter = {i}, loss = {loss}")
 
-        weights.data.sub_(lr * weights.grad)
-        weights.grad.zero_()
+        # weights.data.sub_(lr * weights.grad)
+        # weights.grad.zero_()
+        optimizer.step()
+        optimizer.zero_grad()
 
         print(f"weights = {weights}")
 
@@ -153,11 +158,11 @@ def main():
         cv2.waitKey(10)
 
         if i == 50:
-            lr /= 4
+            lr /= 2
         if i == 90:
             lr /= 2
         if i == 120:
-            lr /= 4
+            lr /= 2
 
     cv2.waitKey()
 
