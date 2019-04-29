@@ -174,9 +174,16 @@ def mk_rasterizer(
 
             torch_mask = (barycentrics_triangle_indices != -1).float()
 
-            torch_grid = grid_for_texture_warp(
+            # torch_grid = grid_for_texture_warp(
+            #     barycentrics_l1l2l3, barycentrics_triangle_indices,
+            #     texture_vertices, triangle_texture_vertex_indices)
+            torch_grid = torch.zeros((barycentrics_l1l2l3.shape[0], barycentrics_l1l2l3.shape[1], 2))
+            rasterizer_cpp.grid_for_texture_warp(
+                torch.IntTensor(triangle_texture_vertex_indices),
+                torch.FloatTensor(texture_vertices),
                 barycentrics_l1l2l3, barycentrics_triangle_indices,
-                texture_vertices, triangle_texture_vertex_indices)
+                torch_grid
+            )
 
             torch_warped = warp_grid_torch(torch_mask, torch_grid, texture)
             torch_warped_dx = torch_img_gradient.img_grad_dx(torch_warped)

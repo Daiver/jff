@@ -74,6 +74,7 @@ private:
 
 using Vector3f = Vector3<float>;
 using Vector3i = Vector3<int>;
+using Vector2f = Vector2<float>;
 
 
 void rasterize_triangle(
@@ -85,9 +86,6 @@ void rasterize_triangle(
     torch::Tensor barycentrics_triangle_indices,
     torch::Tensor z_buffer)
 {
-    assert(z_buffer.dim() == 2);
-    assert(barycentrics_l1l2l3.dim() == 3);
-    assert(barycentrics_triangle_indices.dim() == 2);
 
     auto z_buffer_acc = z_buffer.accessor<float, 2>();
     auto bary_l1l2l3_acc = barycentrics_l1l2l3.accessor<float, 3>();
@@ -153,6 +151,12 @@ void rasterize_triangles(
 {
     assert(vertices.dim() == 2);
     assert(triangle_vertex_indices.dim() == 2);
+
+    assert(z_buffer.dim() == 2);
+    assert(barycentrics_l1l2l3.dim() == 3);
+    assert(barycentrics_l1l2l3.size(2) == 3);
+    assert(barycentrics_triangle_indices.dim() == 2);
+
     const int64_t n_triangles = triangle_vertex_indices.size(0);
 
     const auto triangle_vertex_indices_acc = triangle_vertex_indices.accessor<int, 2>();
@@ -194,16 +198,51 @@ void grid_for_texture_warp(
     torch::Tensor texture_vertices,
     torch::Tensor barycentrics_l1l2l3,
     torch::Tensor barycentrics_triangle_indices,
-    torch::Tensor resOut)
+    torch::Tensor res_out)
 {
     assert(barycentrics_l1l2l3.dim() == 3);
+    assert(barycentrics_l1l2l3.size(2) == 3);
     assert(barycentrics_triangle_indices.dim() == 2);
+    assert(texture_vertices.dim() == 2);
+    assert(texture_vertices.size(1) == 2);
+
+    assert(res_out.dim() == 3);
+    assert(res_out.size(2) == 2);
 
     const auto triangle_vertex_indices_acc = triangle_vertex_indices.accessor<int, 2>();
     const auto texture_vertices_acc = texture_vertices.accessor<float, 2>();
 
     auto bary_l1l2l3_acc = barycentrics_l1l2l3.accessor<float, 3>();
     auto bary_tri_ind_acc = barycentrics_triangle_indices.accessor<int, 2>();
+
+    const int64_t n_rows = barycentrics_triangle_indices.size(0);
+    const int64_t n_cols = barycentrics_triangle_indices.size(1);
+
+    for(int64_t row = 0; row < n_rows; ++row){
+        for(int64_t col = 0; col < n_cols; ++col){
+            const int tri_ind = bary_tri_ind_acc[row][col];
+            if(tri_ind == -1)
+                continue;
+            // TODO: can be vectorized
+            const int i1 = triangle_vertex_indices_acc[tri_ind][0];
+            const int i2 = triangle_vertex_indices_acc[tri_ind][1];
+            const int i3 = triangle_vertex_indices_acc[tri_ind][2];
+
+            const Vector2f v1 = Vector2f(texture_vertices_acc[i1][0], texture_vertices_acc[i1][1]);
+            const Vector2f v2 = Vector2f(texture_vertices_acc[i2][0], texture_vertices_acc[i2][1]);
+            const Vector2f v3 = Vector2f(texture_vertices_acc[i3][0], texture_vertices_acc[i3][1]);
+
+            const float l1 = bary_l1l2l3_acc[row][col][0];
+            const float l2 = bary_l1l2l3_acc[row][col][1];
+            const float l3 = bary_l1l2l3_acc[row][col][2];
+
+            const float final_x = v1[0] * l1 + v2[0] * l2 + v3[0] * l3;
+            const float final_y = v1[1] * l1 + v2[1] * l2 + v3[1] * l3;
+
+            res_out[row][col][0] = final_x;
+            res_out[row][col][1] = final_y;
+        }
+    }
 }
 
 
