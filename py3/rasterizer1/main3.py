@@ -52,8 +52,8 @@ def draw_uv(model, canvas_size):
 
 
 def main():
-    canvas_size = (256, 256)
-    # canvas_size = (128, 128)
+    # canvas_size = (256, 256)
+    canvas_size = (128, 128)
     # canvas_size = (64, 64)
     # canvas_size = (32, 32)
     # canvas_size = (16, 16)
@@ -74,8 +74,8 @@ def main():
     model.vertices = transform_vertices(mat, vec, model.vertices)
 
     texture = cv2.imread(path_to_texture)
-    texture = cv2.pyrDown(texture)
-    texture = cv2.pyrDown(texture)
+    # texture = cv2.pyrDown(texture)
+    # texture = cv2.pyrDown(texture)
 
     # target_translation = torch.FloatTensor([5, 0, 0])
     # target_translation = torch.FloatTensor([0, 0, 0])

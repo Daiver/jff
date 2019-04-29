@@ -75,38 +75,6 @@ private:
 using Vector3f = Vector3<float>;
 using Vector3i = Vector3<int>;
 
-/*
-
-def rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer, tri_index, tri_coords_3d):
-    n_rows = z_buffer.shape[0]
-    n_cols = z_buffer.shape[1]
-    tri_coords_xy = tri_coords_3d[:, :2]
-    tri_coords_xy_int = tri_coords_xy.round().int()
-    x_start = tri_coords_xy_int[:, 0].min()
-    x_finish = tri_coords_xy_int[:, 0].max()
-    y_start = tri_coords_xy_int[:, 1].min()
-    y_finish = tri_coords_xy_int[:, 1].max()
-    for x in range(x_start, x_finish + 1):
-        if not (0 <= x < n_cols):
-            continue
-        for y in range(y_start, y_finish + 1):
-            if not (0 <= y < n_rows):
-                continue
-            l1, l2, l3 = barycoords_from_2d_triangle(tri_coords_xy, (float(x), float(y)))
-            is_l1_ok = 0.0 - 1e-7 <= l1 <= 1.0 + 1e-7
-            is_l2_ok = 0.0 - 1e-7 <= l2 <= 1.0 + 1e-7
-            is_l3_ok = 0.0 - 1e-7 <= l3 <= 1.0 + 1e-7
-            if not (is_l1_ok and is_l2_ok and is_l3_ok):
-                continue
-            z_val = tri_coords_3d[0, 2] * l1 + tri_coords_3d[1, 2] * l2 + tri_coords_3d[2, 2] * l3
-            if z_buffer[y, x] > z_val:
-                continue
-            barycentrics_l1l2l3[y, x, 0] = l1
-            barycentrics_l1l2l3[y, x, 1] = l2
-            barycentrics_l1l2l3[y, x, 2] = l3
-            barycentrics_triangle_indices[y, x] = tri_index
-            z_buffer[y, x] = z_val
-*/
 
 void rasterize_triangle(
     const int64_t tri_index,
@@ -175,17 +143,6 @@ void rasterize_triangle(
     }
 }
 
-//def rasterize_barycentrics_and_z_buffer_by_triangles(
-//        triangle_vertex_indices, vertices,
-//        barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer):
-//    for tri_index, face in enumerate(triangle_vertex_indices):
-//
-//        tri_coords_3d = torch.stack((
-//            vertices[face[0]],
-//            vertices[face[1]],
-//            vertices[face[2]],
-//        ))
-//        rasterize_triangle(barycentrics_l1l2l3, barycentrics_triangle_indices, z_buffer, tri_index, tri_coords_3d)
 
 void rasterize_triangles(
     torch::Tensor triangle_vertex_indices,
@@ -211,10 +168,47 @@ void rasterize_triangles(
     }
 }
 
+//def grid_for_texture_warp(
+//        barycentrics_l1l2l3,
+//        barycentrics_triangle_indices,
+//        texture_vertices,
+//        triangle_texture_vertex_indices):
+//    res = torch.zeros((barycentrics_l1l2l3.shape[0], barycentrics_l1l2l3.shape[1], 2))
+//
+//    for x in range(res.shape[1]):
+//        for y in range(res.shape[0]):
+//            tri_ind = barycentrics_triangle_indices[y, x]
+//            if tri_ind == -1:
+//                continue
+//            l1, l2, l3 = barycentrics_l1l2l3[y, x]
+//            i1, i2, i3 = triangle_texture_vertex_indices[tri_ind]
+//            vt1, vt2, vt3 = texture_vertices[i1], texture_vertices[i2], texture_vertices[i3]
+//            final_coord = vt1 * l1 + vt2 * l2 + vt3 * l3
+//            res[y, x] = final_coord
+//
+//    return res
+
+
+void grid_for_texture_warp(
+    torch::Tensor triangle_vertex_indices,
+    torch::Tensor texture_vertices,
+    torch::Tensor barycentrics_l1l2l3,
+    torch::Tensor barycentrics_triangle_indices,
+    torch::Tensor resOut)
+{
+    assert(barycentrics_l1l2l3.dim() == 3);
+    assert(barycentrics_triangle_indices.dim() == 2);
+
+    const auto triangle_vertex_indices_acc = triangle_vertex_indices.accessor<int, 2>();
+    const auto texture_vertices_acc = texture_vertices.accessor<float, 2>();
+
+    auto bary_l1l2l3_acc = barycentrics_l1l2l3.accessor<float, 3>();
+    auto bary_tri_ind_acc = barycentrics_triangle_indices.accessor<int, 2>();
+}
+
+
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-//  m.def("forward", &lltm_forward, "LLTM forward");
-//  m.def("backward", &lltm_backward, "LLTM backward");
-//  m.def("foo", &foo, "Foo?");
-  m.def("barycoords_from_2d_trianglef", &Barycentric::barycoords_from_2d_trianglef, "Foo?");
+  m.def("barycoords_from_2d_trianglef", &Barycentric::barycoords_from_2d_trianglef, "");
   m.def("rasterize_triangles", &rasterize_triangles, "");
+  m.def("grid_for_texture_warp", &grid_for_texture_warp, "");
 }
