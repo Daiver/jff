@@ -52,8 +52,10 @@ def draw_uv(model, canvas_size):
 
 
 def main():
-    # canvas_size = (256, 256)
-    canvas_size = (128, 128)
+    # canvas_size = (1024, 1024)
+    # canvas_size = (512, 512)
+    canvas_size = (256, 256)
+    # canvas_size = (128, 128)
     # canvas_size = (64, 64)
     # canvas_size = (32, 32)
     # canvas_size = (16, 16)
@@ -104,16 +106,18 @@ def main():
     cv2.imshow("rendered", rendered)
     cv2.waitKey(10)
 
-    # lr_translation = 0.001
-    lr_translation = 0.0005
+    # lr_translation = 0.1
+    # lr_translation = 0.0005
+    lr_translation = 0.00075
     # lr_rotation = 0.000001
-    lr_rotation = lr_translation / 32
+    lr_rotation = lr_translation / canvas_size[0] * 2
     for i in range(100):
         vertices = rigid_transform(translation, y_rotation, vertices_orig)
         with Timer(print_line="Rasterization elapsed: {}"):
             rendered = rasterizer(vertices, torch_texture)
 
         loss = (rendered - torch_target_render).pow(2).mean()
+        # loss = (rendered - torch_target_render).abs().mean()
         with Timer(print_line="Backward elapsed: {}"):
             loss.backward()
         print(f"iter = {i}, loss = {loss}, ||dt|| = {translation.grad.norm()}, ||drx|| = {y_rotation.grad.norm()}")
