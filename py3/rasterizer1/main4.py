@@ -68,9 +68,9 @@ def draw_uv(model, canvas_size):
 
 def main():
     # canvas_size = (1024, 1024)
-    # canvas_size = (512, 512)
+    canvas_size = (512, 512)
     # canvas_size = (256, 256)
-    canvas_size = (128, 128)
+    # canvas_size = (128, 128)
     # canvas_size = (64, 64)
     # canvas_size = (32, 32)
     # canvas_size = (16, 16)
@@ -115,8 +115,8 @@ def main():
     ]
     path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
 
-    path_to_scan = "/home/daiver/Girl/Scans/Object014.obj"
-    path_to_scan_texture = "/home/daiver/Girl/Scans/Image014.jpg"
+    # path_to_scan = "/home/daiver/Girl/Scans/Object014.obj"
+    # path_to_scan_texture = "/home/daiver/Girl/Scans/Image014.jpg"
 
     # path_to_scan = "/home/daiver/Girl/Scans/Object002.obj"
     # path_to_scan_texture = "/home/daiver/Girl/Scans/Image002.jpg"
@@ -124,8 +124,8 @@ def main():
     # path_to_scan = "/home/daiver/Girl/Scans/Object008.obj"
     # path_to_scan_texture = "/home/daiver/Girl/Scans/Image008.jpg"
 
-    # path_to_scan = "/home/daiver/Girl/Scans/Object010.obj"
-    # path_to_scan_texture = "/home/daiver/Girl/Scans/Image010.jpg"
+    path_to_scan = "/home/daiver/Girl/Scans/Object034.obj"
+    path_to_scan_texture = "/home/daiver/Girl/Scans/Image034.jpg"
 
     scan = geom_tools.from_obj_file(path_to_scan)
     scan_texture = cv2.imread(path_to_scan_texture)
@@ -195,7 +195,7 @@ def main():
             rendered = rasterizer(vertices, torch_texture)
 
         data_loss = ((rendered - torch_target_render) / 255.0).pow(2).mean()
-        reg_loss = weights.clamp(max=0).abs().sum()
+        reg_loss = weights.clamp(max=0).abs().sum() + 0.01 * weights.abs().sum() / weights.shape[0]
         loss = data_loss + reg_loss
 
         with Timer(print_line="Backward elapsed: {}"):
