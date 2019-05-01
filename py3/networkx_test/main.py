@@ -19,12 +19,20 @@ def main():
     print(g[1])
 
     print("Start search")
-    bfs_edges = nx.bfs_edges(g, 0)
-    for x in bfs_edges:
+    bfs_res = nx.bfs_predecessors(g, 0)
+    for x in bfs_res:
+        print(x)
+    print("Start search")
+    bfs_res = nx.bfs_successors(g, 0)
+    for x in bfs_res:
+        print(x)
+    print("Start search")
+    bfs_res = nx.bfs_tree(g, 0)
+    for x in bfs_res:
         print(x)
 
-    nx.draw(g)
-    plt.show()
+    # nx.draw(g)
+    # plt.show()
 
 
 if __name__ == '__main__':
