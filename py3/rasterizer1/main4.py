@@ -115,8 +115,8 @@ def main():
     ]
     path_to_texture = "/home/daiver/Girl/GirlBlendshapesWithMouthSocket/GirlNeutralFilled.jpg"
 
-    # path_to_scan = "/home/daiver/Girl/Scans/Object014.obj"
-    # path_to_scan_texture = "/home/daiver/Girl/Scans/Image014.jpg"
+    path_to_scan = "/home/daiver/Girl/Scans/Object014.obj"
+    path_to_scan_texture = "/home/daiver/Girl/Scans/Image014.jpg"
 
     # path_to_scan = "/home/daiver/Girl/Scans/Object002.obj"
     # path_to_scan_texture = "/home/daiver/Girl/Scans/Image002.jpg"
@@ -124,8 +124,8 @@ def main():
     # path_to_scan = "/home/daiver/Girl/Scans/Object008.obj"
     # path_to_scan_texture = "/home/daiver/Girl/Scans/Image008.jpg"
 
-    path_to_scan = "/home/daiver/Girl/Scans/Object034.obj"
-    path_to_scan_texture = "/home/daiver/Girl/Scans/Image034.jpg"
+    # path_to_scan = "/home/daiver/Girl/Scans/Object034.obj"
+    # path_to_scan_texture = "/home/daiver/Girl/Scans/Image034.jpg"
 
     scan = geom_tools.from_obj_file(path_to_scan)
     scan_texture = cv2.imread(path_to_scan_texture)
@@ -209,9 +209,9 @@ def main():
         #     for param_group in optimizer.param_groups:
         #         param_group['lr'] = lr * 0.2
         #
-        # if iteration == 100:
-        #     for param_group in optimizer.param_groups:
-        #         param_group['lr'] = lr * 0.2
+        if iteration == 100:
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = lr * 0.2
 
         print(f"weights = {weights}, translation = {translation}")
 
@@ -222,6 +222,9 @@ def main():
         cv2.imshow("rendered", rendered)
         cv2.imshow("diff", diff)
         cv2.waitKey(10)
+
+    cv2.imwrite("/home/daiver/tmp1.png", rendered)
+    cv2.imwrite("/home/daiver/tmp2.png", torch_target_render.permute(1, 2, 0).detach().numpy().astype(np.uint8))
 
     cv2.waitKey()
 
