@@ -49,6 +49,26 @@ def make_rot_arap_residuals(adjacency, old_vertices_positions, new_vertices_rota
     return residuals
 
 
+def rigid_residual(rotation):
+    assert rotation.shape == (3, 3)
+    rtr = rotation.T @ rotation
+    eye = SX.eye(3)
+    return (rtr - eye).reshape((-1, 1))
+
+
+def make_rigid_residuals(rotations):
+    assert rotations.shape[0] == 3
+    assert rotations.shape[1] % 3 == 0
+    n_rots = rotations.shape[1] // 3
+    residuals = []
+    for v_ind in range(n_rots):
+        rotation = rotations[:, 3 * v_ind: 3 * (v_ind + 1)]
+        residuals.append(rigid_residual(rotation))
+
+    residuals = casadi.vertcat(*residuals)
+    return residuals
+
+
 def test01():
     vertex = SX.sym("vertex", 3)
     target = SX.sym("target", 3)
@@ -91,28 +111,58 @@ def test01():
 
 def main():
     # test01()
-    n_vertices = 3
+
+    vertices_val = np.array([
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 1, 0],
+    ], dtype=np.float32)
 
     adjacency = [
         [1, 2],
         [0, 2],
         [0, 1]
     ]
+
+    targets_val = np.array([
+        [0, 1, 0],
+        [1, 0, 0]
+    ], dtype=np.float32)
+
+    target_to_base_indices = [
+        1, 2
+    ]
+
+    n_vertices = vertices_val.shape[0]
+    n_targets = targets_val.shape[0]
     assert len(adjacency) == n_vertices
+    assert len(target_to_base_indices) == n_targets
 
     old_vertices = SX.sym("old_vertices", 3, n_vertices)
+    targets = SX.sym("targets", 3, n_targets)
+
     vertices = SX.sym("vertices", 3, n_vertices)
     rotations = SX.sym("rotations", 3, 3 * n_vertices)
 
-    arap = make_rot_arap_residuals(adjacency, old_vertices, rotations, vertices)
+    vertices_to_fit = vertices[:, target_to_base_indices]
 
-    residuals = arap
+    data = (vertices_to_fit - targets).reshape((-1, 1))
+    arap = make_rot_arap_residuals(adjacency, old_vertices, rotations, vertices)
+    rigid = make_rigid_residuals(rotations)
+
+    residuals = casadi.vertcat(
+        data,
+        arap,
+        rigid
+    )
 
     variables = casadi.vertcat(
-        # rotations.reshape((-1, 1)),
+        rotations.reshape((-1, 1)),
         vertices.reshape((-1, 1))
     )
     jac = casadi.jacobian(residuals, variables)
+
+    # print(residuals)
     print(jac)
 
 
