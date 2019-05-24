@@ -82,8 +82,9 @@ def deform(
         print(f"Residual elapsed {time.time() - start}")
 
         start = time.time()
-        jacobian_val = jac_func(x, vertices_val, targets_val).sparse()
+        jacobian_val = jac_func(x, vertices_val, targets_val)
         print(f"Jacobian elapsed {time.time() - start}")
+        jacobian_val = jacobian_val.sparse()
         return residuals_val, jacobian_val
 
     init_rot = np.hstack([np.eye(3)] * n_vertices)
