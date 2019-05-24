@@ -2,12 +2,26 @@ import numpy as np
 
 from scipy.spatial.transform import Rotation
 
-
 import casadi
 from casadi import SX, Function
 
+import networkx as nx
+import geom_tools
+
 import arap
 from gaussnewton import perform_gauss_newton
+
+
+def adjacency_table_from_topology(polygon_vertex_indices):
+    graph = nx.Graph()
+    for pol_indices in polygon_vertex_indices:
+        for i in range(len(pol_indices)):
+            graph.add_edge(pol_indices[i], pol_indices[(i + 1) % len(pol_indices)])
+    res = []
+    for node in graph.adjacency():
+        adj = node[1]
+        res.append([x for x in adj])
+    return res
 
 
 def deform(
@@ -74,7 +88,8 @@ def deform(
     return new_vertices
 
 
-def main():
+def test01():
+
     np.set_printoptions(threshold=np.inf, linewidth=500)
     vertices_val = np.array([
         [0, 0, 1],
@@ -98,25 +113,44 @@ def main():
     print(rot_mat)
     targets_val = targets_val @ rot_mat.T
 
-    # targets_val = np.array([
-    #     [0, 0, 2],
-    #     [0, 1, 1],
-    #     [-1, 0, 1],
-    #     # [-1, 0, 1],
-    #     # [0, -1, 1],
-    # ], dtype=np.float32)
-    #
-    # target_to_base_indices = [
-    #     0,
-    #     1,
-    #     2,
-    # ]
+    new_vertices = deform(
+        vertices_val.T, adjacency,
+        target_to_base_indices, targets_val.T
+    )
+    print(new_vertices)
+
+
+def test02():
+
+    geom = geom_tools.from_obj_file("/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj")
+
+    np.set_printoptions(threshold=np.inf, linewidth=500)
+    vertices_val = geom.vertices
+
+    adjacency = adjacency_table_from_topology(geom.triangle_vertex_indices)
+
+    target_to_base_indices = list(range(len(vertices_val)))
+    targets_val = vertices_val.copy()
+    rot_mat = Rotation.from_euler('z', 90, degrees=True).as_dcm()
+    print(rot_mat)
+    targets_val = targets_val @ rot_mat.T
 
     new_vertices = deform(
         vertices_val.T, adjacency,
         target_to_base_indices, targets_val.T
     )
     print(new_vertices)
+
+
+def main():
+    # test01()
+    test02()
+    # triangles = [
+    #     [0, 1, 2],
+    #     [2, 3, 1]
+    # ]
+    # res = adjacency_table_from_topology(triangles)
+    # print(res)
 
 
 if __name__ == '__main__':
