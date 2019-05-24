@@ -20,19 +20,19 @@ def perform_gauss_newton(x0, compute_res_and_jac, n_iters=10, dumping_factor=0.0
     x = x0.copy()
     residuals, jac = compute_res_and_jac(x)
     grad = jac.T @ residuals
-    grad_norm = np.abs(grad).sum()
+    grad_norm = np.linalg.norm(grad)
     err = 0.5 * (residuals ** 2).sum()
 
-    print(f"E(x0) = {err}, ||∇E(x0)|| = {grad_norm}")
+    print(f"E(x0) = {err}, ||∇E(x0)||_2 = {grad_norm}")
     for iter_num in range(n_iters):
         step = solve_least_squares(jac, residuals, dumping_factor)
         x += step
 
         residuals, jac = compute_res_and_jac(x)
         grad = jac.T @ residuals
-        grad_norm = np.abs(grad).sum()
+        grad_norm = np.linalg.norm(grad)
         err = 0.5 * (residuals ** 2).sum()
-        print(f"{iter_num + 1} / {n_iters} E(x) = {err}, ||∇E(x)|| = {grad_norm}")
+        print(f"{iter_num + 1} / {n_iters} E(x) = {err}, ||∇E(x)||_2 = {grad_norm}")
 
         if err < threshold_err:
             break
