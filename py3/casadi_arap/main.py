@@ -88,9 +88,9 @@ def main():
     ]
 
     targets_val = np.array([
-        [0, 0, 1],
-        [0, 1, 0],
-        [-1, 0, 0],
+        [0, 0, 2],
+        [0, 1, 1],
+        [-1, 0, 1],
         # [-1, 0, 1],
         # [0, -1, 1],
     ], dtype=np.float32)
@@ -130,7 +130,7 @@ def main():
     residuals = casadi.vertcat(
         data,
         arap,
-        rigid
+        10.0 * rigid
     )
 
     variables = casadi.vertcat(
@@ -139,9 +139,6 @@ def main():
     )
     jac = casadi.jacobian(residuals, variables)
     print("jac.shape", jac.shape, "jac.nnz()", jac.nnz())
-
-    # print(residuals)
-    # print(jac)
 
     fixed_values = [
         old_vertices,
