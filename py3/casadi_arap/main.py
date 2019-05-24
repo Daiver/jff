@@ -52,7 +52,8 @@ def rigid_residual(rotation):
     rtr = rotation.T @ rotation
     # print(rtr)
     eye = SX.eye(3)
-    return (rtr - eye).reshape((-1, 1))
+    res = rtr - eye
+    return res.reshape((-1, 1))
 
 
 def make_rigid_residuals(rotations):
@@ -69,8 +70,9 @@ def make_rigid_residuals(rotations):
 
 
 def main():
+    np.set_printoptions(threshold=np.inf, linewidth=500)
     vertices_val = np.array([
-        [0, 0, 0],
+        [0, 0, 1],
         [1, 0, 0],
         [0, 1, 0],
         [-1, 0, 0],
@@ -86,15 +88,19 @@ def main():
     ]
 
     targets_val = np.array([
-        [0, 1, 0],
-        [-1, 0, 0],
-        [1, 0, 0],
-        [0, -1, 0],
-        [0, 0, 0],
+        [0, 0, 2],
+        [1, 0, 1],
+        # [0, 1, 1],
+        # [-1, 0, 1],
+        # [0, -1, 1],
     ], dtype=np.float32)
 
     target_to_base_indices = [
-        1, 2, 4, 3, 0
+        0,
+        1,
+        # 2,
+        # 3,
+        # 4
     ]
 
     n_vertices = vertices_val.shape[0]
@@ -130,23 +136,28 @@ def main():
     # print(residuals)
     # print(jac)
 
-    residual_func = Function("res_func", [variables, old_vertices, targets], [residuals])
-    jac_func = Function("jac_func", [variables, old_vertices, targets], [jac])
+    fixed_values = [
+        old_vertices,
+        targets,
+    ]
+
+    residual_func = Function("res_func", [variables] + fixed_values, [residuals])
+    jac_func = Function("jac_func", [variables] + fixed_values, [jac])
 
     def compute_residuals_and_jac(x):
         residuals_val = residual_func(x, vertices_val.T, targets_val.T).toarray()
         jacobian_val = jac_func(x, vertices_val.T, targets_val.T).sparse()
-        # print(jacobian_val)
         return residuals_val, jacobian_val
 
     init_rot = np.hstack([np.eye(3)] * n_vertices)
     init_vertices = vertices_val.T
     init_vars = np.hstack((
-        init_rot.reshape(-1),
-        init_vertices.reshape(-1)
+        init_rot.T.reshape(-1),
+        init_vertices.T.reshape(-1)
     ))
-    print(init_vars)
-    print(perform_gauss_newton(init_vars, compute_residuals_and_jac, 1))
+
+    res = perform_gauss_newton(init_vars, compute_residuals_and_jac, 10)
+    print(res[9 * n_vertices:].reshape(-1, 3).T)
 
 
 if __name__ == '__main__':
