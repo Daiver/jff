@@ -1,3 +1,4 @@
+import time
 import numpy as np
 
 from scipy.spatial.transform import Rotation
@@ -38,6 +39,8 @@ def deform(
     assert len(adjacency) == n_vertices
     assert len(target_to_base_indices) == n_targets
 
+    start = time.time()
+
     old_vertices = SX.sym("old_vertices", 3, n_vertices)
     targets = SX.sym("targets", 3, n_targets)
 
@@ -71,9 +74,16 @@ def deform(
     residual_func = Function("res_func", [variables] + fixed_values, [residuals])
     jac_func = Function("jac_func", [variables] + fixed_values, [jac])
 
+    print(f"construction elapsed {time.time() - start}")
+
     def compute_residuals_and_jac(x):
+        start = time.time()
         residuals_val = residual_func(x, vertices_val, targets_val).toarray()
+        print(f"Residual elapsed {time.time() - start}")
+
+        start = time.time()
         jacobian_val = jac_func(x, vertices_val, targets_val).sparse()
+        print(f"Jacobian elapsed {time.time() - start}")
         return residuals_val, jacobian_val
 
     init_rot = np.hstack([np.eye(3)] * n_vertices)
@@ -122,7 +132,8 @@ def test01():
 
 def test02():
 
-    geom = geom_tools.from_obj_file("/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj")
+    # geom = geom_tools.from_obj_file("/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHand.obj")
+    geom = geom_tools.from_obj_file("/home/daiver/tmp.obj")
 
     np.set_printoptions(threshold=np.inf, linewidth=500)
     vertices_val = geom.vertices
