@@ -2,6 +2,8 @@ import numpy as np
 import casadi
 from casadi import SX, Function
 
+from gaussnewton import perform_gauss_newton
+
 
 def point_to_point_residual(vertex, target):
     return vertex - target
@@ -69,68 +71,31 @@ def make_rigid_residuals(rotations):
     return residuals
 
 
-def test01():
-    vertex = SX.sym("vertex", 3)
-    target = SX.sym("target", 3)
-    p2p_func = Function("point2point", [vertex, target], [point_to_point_residual(vertex, target)])
-
-    n_vertices = 2
-    vertices = SX.sym("vertices", 3, n_vertices)
-    targets = SX.sym("targets", 3, n_vertices)
-    residuals = []
-    for i in range(n_vertices):
-        residuals.append(p2p_func(vertices[:, i], targets[:, i]))
-    residuals = casadi.vertcat(*residuals)
-
-    print(p2p_func([0, 1, 2], [2, 3, 1]))
-
-    print(residuals)
-    print(vertices)
-    # print(Function("tmp", [vertices, targets], [residuals])(
-    #     np.array([[1, 0, 2], [4, -1, 5]], dtype=np.float32).T,
-    #     np.array([[0, 0, 0], [0, -1, 66]], dtype=np.float32).T,
-    # ))
-    variables = casadi.vertcat(casadi.reshape(vertices, -1, 1))
-    jac = casadi.jacobian(residuals, variables)
-    jac_f = Function("jac_f", [vertices, targets], [jac])
-
-    num_jac_val = jac_f(
-        np.array([[1, 0, 2], [4, -1, 5]], dtype=np.float32).T,
-        np.array([[0, 0, 0], [0, -1, 66]], dtype=np.float32).T)
-
-    print(variables)
-    print(jac)
-    print("jac.nnz()", jac.nnz())
-    print("jac.is_dense()", jac.is_dense())
-    print(jac_f)
-    print(num_jac_val)
-    print("num_jac_val.is_dense()", num_jac_val.is_dense())
-
-    print(type(num_jac_val.sparse()))
-
-
-def main():
-    # test01()
-
+def main():    
     vertices_val = np.array([
         [0, 0, 0],
         [1, 0, 0],
         [0, 1, 0],
+        [-1, 0, 0],
+        [0, -1, 0],
     ], dtype=np.float32)
 
     adjacency = [
-        [1, 2],
-        [0, 2],
-        [0, 1]
+        [1, 2, 3, 4],
+        [0, 2, 4],
+        [0, 1, 3],
+        [0, 2, 4],
+        [0, 1, 3]
     ]
 
     targets_val = np.array([
         [0, 1, 0],
+        [-1, 0, 0],
         [1, 0, 0]
     ], dtype=np.float32)
 
     target_to_base_indices = [
-        1, 2
+        1, 2, 4
     ]
 
     n_vertices = vertices_val.shape[0]
@@ -161,9 +126,28 @@ def main():
         vertices.reshape((-1, 1))
     )
     jac = casadi.jacobian(residuals, variables)
+    print("jac.shape", jac.shape, "jac.nnz()", jac.nnz())
 
     # print(residuals)
-    print(jac)
+    # print(jac)
+
+    residual_func = Function("res_func", [variables, old_vertices, targets], [residuals])
+    jac_func = Function("jac_func", [variables, old_vertices, targets], [jac])
+
+    def compute_residuals_and_jac(x):
+        residuals_val = residual_func(x, vertices_val.T, targets_val.T).toarray()
+        jacobian_val = jac_func(x, vertices_val.T, targets_val.T).sparse()
+        # print(jacobian_val)
+        return residuals_val, jacobian_val
+
+    init_rot = np.hstack([np.eye(3)] * n_vertices)
+    init_vertices = vertices_val.T
+    init_vars = np.hstack((
+        init_rot.reshape(-1),
+        init_vertices.reshape(-1)
+    ))
+    print(init_vars)
+    print(perform_gauss_newton(init_vars, compute_residuals_and_jac, 1))
 
 
 if __name__ == '__main__':
