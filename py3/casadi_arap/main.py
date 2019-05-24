@@ -41,10 +41,6 @@ def make_rot_arap_residuals(adjacency, old_vertices_positions, new_vertices_rota
 
         fan_rotation = new_vertices_rotation[:, 3 * v_ind: 3 * (v_ind + 1)]
 
-        # print(ring1_indices)
-        # print(old_vertices_positions.shape)
-        # print(old_fan_center.shape, old_fan_ring1.shape)
-
         residuals.append(
             fan_rot_arap_residual(fan_rotation, new_fan_center, new_fan_ring1, old_fan_center, old_fan_ring1))
     residuals = casadi.vertcat(*residuals)
@@ -54,6 +50,7 @@ def make_rot_arap_residuals(adjacency, old_vertices_positions, new_vertices_rota
 def rigid_residual(rotation):
     assert rotation.shape == (3, 3)
     rtr = rotation.T @ rotation
+    # print(rtr)
     eye = SX.eye(3)
     return (rtr - eye).reshape((-1, 1))
 
@@ -71,7 +68,7 @@ def make_rigid_residuals(rotations):
     return residuals
 
 
-def main():    
+def main():
     vertices_val = np.array([
         [0, 0, 0],
         [1, 0, 0],
@@ -91,11 +88,13 @@ def main():
     targets_val = np.array([
         [0, 1, 0],
         [-1, 0, 0],
-        [1, 0, 0]
+        [1, 0, 0],
+        [0, -1, 0],
+        [0, 0, 0],
     ], dtype=np.float32)
 
     target_to_base_indices = [
-        1, 2, 4
+        1, 2, 4, 3, 0
     ]
 
     n_vertices = vertices_val.shape[0]

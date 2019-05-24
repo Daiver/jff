@@ -9,6 +9,7 @@ def solve_least_squares(a_csc, residuals):
     np.set_printoptions(threshold=np.inf, linewidth=500)
     print(h.shape)
     print(h.toarray())
+    print(np.where(~h.toarray().any(axis=1))[0])
     return -scipy.sparse.linalg.spsolve(h, grad)
 
 
