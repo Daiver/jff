@@ -1,4 +1,8 @@
 import numpy as np
+
+from scipy.spatial.transform import Rotation
+
+
 import casadi
 from casadi import SX, Function
 
@@ -88,21 +92,25 @@ def main():
         [0, 1, 3]
     ]
 
-    targets_val = np.array([
-        [0, 0, 2],
-        [0, 1, 1],
-        [-1, 0, 1],
-        # [-1, 0, 1],
-        # [0, -1, 1],
-    ], dtype=np.float32)
+    target_to_base_indices = list(range(len(vertices_val)))
+    targets_val = vertices_val.copy()
+    rot_mat = Rotation.from_euler('z', 90, degrees=True).as_dcm()
+    print(rot_mat)
+    targets_val = targets_val @ rot_mat.T
 
-    target_to_base_indices = [
-        0,
-        1,
-        2,
-        # 3,
-        # 4
-    ]
+    # targets_val = np.array([
+    #     [0, 0, 2],
+    #     [0, 1, 1],
+    #     [-1, 0, 1],
+    #     # [-1, 0, 1],
+    #     # [0, -1, 1],
+    # ], dtype=np.float32)
+    #
+    # target_to_base_indices = [
+    #     0,
+    #     1,
+    #     2,
+    # ]
 
     new_vertices = deform(
         vertices_val.T, adjacency,
