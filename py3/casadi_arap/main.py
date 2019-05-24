@@ -6,47 +6,12 @@ import arap
 from gaussnewton import perform_gauss_newton
 
 
-def main():
-    np.set_printoptions(threshold=np.inf, linewidth=500)
-    vertices_val = np.array([
-        [0, 0, 1],
-        [1, 0, 0],
-        [0, 1, 0],
-        [-1, 0, 0],
-        [0, -1, 0],
-    ], dtype=np.float32)
-
-    adjacency = [
-        [1, 2, 3, 4],
-        [0, 2, 4],
-        [0, 1, 3],
-        [0, 2, 4],
-        [0, 1, 3]
-    ]
-
-    targets_val = np.array([
-        [0, 0, 2],
-        [0, 1, 1],
-        [-1, 0, 1],
-        # [-1, 0, 1],
-        # [0, -1, 1],
-    ], dtype=np.float32)
-    # targets_val = np.array([
-    #     [0, 0, 2],
-    #     [1, 0, 1],
-    #     # [0, 1, 1],
-    #     # [-1, 0, 1],
-    #     # [0, -1, 1],
-    # ], dtype=np.float32)
-
-    target_to_base_indices = [
-        0,
-        1,
-        2,
-        # 3,
-        # 4
-    ]
-
+def deform(
+    vertices_val,
+    adjacency,
+    target_to_base_indices,
+    targets_val,
+):
     n_vertices = vertices_val.shape[0]
     n_targets = targets_val.shape[0]
     assert len(adjacency) == n_vertices
@@ -98,7 +63,49 @@ def main():
     ))
 
     res = perform_gauss_newton(init_vars, compute_residuals_and_jac, 10)
-    print(res[9 * n_vertices:].reshape(-1, 3).T)
+    new_vertices = res[9 * n_vertices:].reshape(-1, 3).T
+    return new_vertices
+
+
+def main():
+    np.set_printoptions(threshold=np.inf, linewidth=500)
+    vertices_val = np.array([
+        [0, 0, 1],
+        [1, 0, 0],
+        [0, 1, 0],
+        [-1, 0, 0],
+        [0, -1, 0],
+    ], dtype=np.float32)
+
+    adjacency = [
+        [1, 2, 3, 4],
+        [0, 2, 4],
+        [0, 1, 3],
+        [0, 2, 4],
+        [0, 1, 3]
+    ]
+
+    targets_val = np.array([
+        [0, 0, 2],
+        [0, 1, 1],
+        [-1, 0, 1],
+        # [-1, 0, 1],
+        # [0, -1, 1],
+    ], dtype=np.float32)
+
+    target_to_base_indices = [
+        0,
+        1,
+        2,
+        # 3,
+        # 4
+    ]
+
+    new_vertices = deform(
+        vertices_val, adjacency,
+        target_to_base_indices, targets_val
+    )
+    print(new_vertices)
 
 
 if __name__ == '__main__':
