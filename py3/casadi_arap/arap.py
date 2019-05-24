@@ -2,8 +2,6 @@ import numpy as np
 import casadi
 from casadi import SX, Function
 
-from gaussnewton import perform_gauss_newton
-
 
 def point_to_point_residual(vertex, target):
     return vertex - target
@@ -67,3 +65,4 @@ def make_rigid_residuals(rotations):
 
     residuals = casadi.vertcat(*residuals)
     return residuals
+
