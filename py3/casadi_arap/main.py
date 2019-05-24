@@ -12,8 +12,11 @@ def deform(
     target_to_base_indices,
     targets_val,
 ):
-    n_vertices = vertices_val.shape[0]
-    n_targets = targets_val.shape[0]
+    n_vertices = vertices_val.shape[1]
+    n_targets = targets_val.shape[1]
+
+    assert vertices_val.shape[0] == 3
+    assert targets_val.shape[0] == 3
     assert len(adjacency) == n_vertices
     assert len(target_to_base_indices) == n_targets
 
@@ -51,15 +54,15 @@ def deform(
     jac_func = Function("jac_func", [variables] + fixed_values, [jac])
 
     def compute_residuals_and_jac(x):
-        residuals_val = residual_func(x, vertices_val.T, targets_val.T).toarray()
-        jacobian_val = jac_func(x, vertices_val.T, targets_val.T).sparse()
+        residuals_val = residual_func(x, vertices_val, targets_val).toarray()
+        jacobian_val = jac_func(x, vertices_val, targets_val).sparse()
         return residuals_val, jacobian_val
 
     init_rot = np.hstack([np.eye(3)] * n_vertices)
-    init_vertices = vertices_val.T
+    init_vertices = vertices_val
     init_vars = np.hstack((
         init_rot.T.reshape(-1),
-        init_vertices.T.reshape(-1)
+        init_vertices.reshape(-1)
     ))
 
     res = perform_gauss_newton(init_vars, compute_residuals_and_jac, 10)
@@ -102,8 +105,8 @@ def main():
     ]
 
     new_vertices = deform(
-        vertices_val, adjacency,
-        target_to_base_indices, targets_val
+        vertices_val.T, adjacency,
+        target_to_base_indices, targets_val.T
     )
     print(new_vertices)
 
