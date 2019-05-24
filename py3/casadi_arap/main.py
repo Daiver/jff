@@ -69,7 +69,7 @@ def deform(
         init_vertices.reshape(-1)
     ))
 
-    res = perform_gauss_newton(init_vars, compute_residuals_and_jac, 10)
+    res = perform_gauss_newton(init_vars, compute_residuals_and_jac, 50)
     new_vertices = res[9 * n_vertices:].reshape(-1, 3).T
     return new_vertices
 
