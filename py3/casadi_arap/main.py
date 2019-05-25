@@ -94,7 +94,7 @@ def deform(
         init_vertices.reshape(-1)
     ))
 
-    res = perform_gauss_newton(init_vars, compute_residuals_and_jac, 50)
+    res = perform_gauss_newton(init_vars, compute_residuals_and_jac, 50, dumping_factor=0.5)
     new_vertices = res[9 * n_vertices:].reshape(-1, 3).T
     return new_vertices
 
@@ -133,8 +133,13 @@ def test01():
 
 def test02():
 
-    # geom = geom_tools.from_obj_file("/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHand.obj")
-    geom = geom_tools.from_obj_file("/home/daiver/tmp.obj")
+    geom = geom_tools.from_obj_file("/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHand.obj")
+    # geom = geom_tools.from_obj_file("/home/daiver/tmp.obj")
+    print(f"Model loaded, "
+          f"n vertices: {geom.n_vertices()}, "
+          f"n vts: {geom.n_texture_vertices()}, "
+          f"n polygons: {geom.n_polygons()}, "
+          f"n triangles: {geom.n_triangles()}")
 
     np.set_printoptions(threshold=np.inf, linewidth=500)
     vertices_val = geom.vertices
@@ -157,12 +162,6 @@ def test02():
 def main():
     # test01()
     test02()
-    # triangles = [
-    #     [0, 1, 2],
-    #     [2, 3, 1]
-    # ]
-    # res = adjacency_table_from_topology(triangles)
-    # print(res)
 
 
 if __name__ == '__main__':

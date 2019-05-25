@@ -12,6 +12,8 @@ def solve_least_squares(a_csc, residuals, dumping_factor):
     # print(h.toarray())
     # print(np.where(~h.toarray().any(axis=1))[0])
     h += dumping_factor * scipy.sparse.eye(h.shape[0])
+    print(f"h shape {h.shape}, h nnz {h.nnz}")
+    print(type(h))
     print("Before solve")
     return -scipy.sparse.linalg.spsolve(h, grad)
 
