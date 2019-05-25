@@ -213,6 +213,15 @@ def main_train():
     test_loader = DataLoader(torch_fuze.data.InputOutputTransformsWrapper(test_set, inp_trans, out_trans),
                              batch_size=batch_size, shuffle=False, pin_memory=False, num_workers=4)
 
+<<<<<<< HEAD
+    model = Net()
+    # model = Net2()
+    model = nn.DataParallel(model)
+    model.to(device)
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=1e-2)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10, 30], gamma=0.2)
+=======
     if use_ordinary_model:
         model = Net()
     else:
@@ -235,6 +244,7 @@ def main_train():
     # print("cycle_len", cycle_len)
     # scheduler = torch_fuze.lr_scheduler.OneCycleLR(
     #     optimizer, 1e-6, best_lr * 0.1, 1e-6, cycle_len)
+>>>>>>> 0b907a33229c11fd54712c8bcf3c99d767245d4a
 
     metrics = OrderedDict([
         ("loss", criterion),
