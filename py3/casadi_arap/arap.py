@@ -59,9 +59,13 @@ def make_rigid_residuals(rotations):
     assert rotations.shape[1] % 3 == 0
     n_rots = rotations.shape[1] // 3
     residuals = []
+
+    rotation = SX.sym("rotation", 3, 3)
+    rigid_func = Function("rigid_func", [rotation], [rigid_residual(rotation)])
+
     for v_ind in range(n_rots):
         rotation = rotations[:, 3 * v_ind: 3 * (v_ind + 1)]
-        residuals.append(rigid_residual(rotation))
+        residuals.append(rigid_func(rotation))
 
     residuals = casadi.vertcat(*residuals)
     return residuals
