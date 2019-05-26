@@ -49,9 +49,15 @@ def deform(
 
     vertices_to_fit = vertices[:, target_to_base_indices]
 
+    start_data = time.time()
     data = (vertices_to_fit - targets).reshape((-1, 1))
+    print(f"data elapsed {time.time() - start_data}")
+    start_arap = time.time()
     arap_residual = arap.make_rot_arap_residuals(adjacency, old_vertices, rotations, vertices)
+    print(f"arap elapsed {time.time() - start_arap}")
+    start_rigid = time.time()
     rigid = arap.make_rigid_residuals(rotations)
+    print(f"rigid elapsed {time.time() - start_rigid}")
 
     residuals = casadi.vertcat(
         data,
@@ -63,7 +69,9 @@ def deform(
         rotations.reshape((-1, 1)),
         vertices.reshape((-1, 1))
     )
+    start_jac = time.time()
     jac = casadi.jacobian(residuals, variables)
+    print(f"jac elapsed {time.time() - start_jac}")
     print("jac.shape", jac.shape, "jac.nnz()", jac.nnz())
 
     fixed_values = [
@@ -71,11 +79,15 @@ def deform(
         targets,
     ]
 
+    start_res = time.time()
     residual_func = Function("res_func", [variables] + fixed_values, [residuals])
+    print(f"res elapsed {time.time() - start_res}")
+    start_jac_func = time.time()
     jac_func = Function("jac_func", [variables] + fixed_values, [jac])
+    print(f"jac_func elapsed {time.time() - start_jac_func}")
 
     print(f"construction elapsed {time.time() - start}")
-
+    exit(0)
     def compute_residuals_and_jac(x):
         start = time.time()
         residuals_val = residual_func(x, vertices_val, targets_val).toarray()
