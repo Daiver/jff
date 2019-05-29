@@ -13,24 +13,18 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     using namespace casadi;
 
-    const casadi::SX x = SX::sym("x", 2, 3);
-//    const casadi::SX y = SX::sym("y");
-    const auto xc1 = x(Slice(), 1);
-    const auto xc2 = x(Slice(), 2);
-    const auto res = SX::dot(xc1, xc2);
+    const SX vertices = SX::sym("vertices", 3, 2);
+    const SX targets = SX::sym("targets", 3, 2);
 
-    const auto resFunc = Function("resFunc", {x}, {res});
+    const auto res = vertices - targets;
+    const SX jacobian = SX::jacobian(res, vertices);
 
-//    const auto jac = SX::simplify(SX::jacobian(res, x));
-//    const auto jac = SX::simplify(SX::jacobian(res, y));
-    std::cout << x << std::endl;
-    std::cout << xc1 << std::endl;
-    std::cout << xc2 << std::endl;
-    std::cout << res << std::endl;    
-    std::cout << resFunc << std::endl;
-    const auto xVal = DM({{1, 2, 3}});
-    resFunc(xVal);
-//    std::cout << jac << std::endl;
+    const Sparsity sparsity = jacobian.sparsity();
+//    sparsity.get_triplet()
+
+    std::cout << res << std::endl;
+    std::cout << bool(jacobian.is_dense()) << std::endl;
+    std::cout << jacobian << std::endl;
 }
 
 MainWindow::~MainWindow()
