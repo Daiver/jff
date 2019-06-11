@@ -87,7 +87,7 @@ def deform(
     print(f"jac_func elapsed {time.time() - start_jac_func}")
 
     print(f"construction elapsed {time.time() - start}")
-    exit(0)
+
     def compute_residuals_and_jac(x):
         start = time.time()
         residuals_val = residual_func(x, vertices_val, targets_val).toarray()
@@ -145,7 +145,8 @@ def test01():
 
 def test02():
 
-    geom = geom_tools.from_obj_file("/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHand.obj")
+    # geom = geom_tools.from_obj_file("/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHand.obj")
+    geom = geom_tools.from_obj_file("/home/daiver/Downloads/R3DS_Wrap_3.3.17_Linux/Models/Basemeshes/WrapHead.obj")
     # geom = geom_tools.from_obj_file("/home/daiver/tmp.obj")
     print(f"Model loaded, "
           f"n vertices: {geom.n_vertices()}, "

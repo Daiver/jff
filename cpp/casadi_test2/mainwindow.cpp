@@ -13,18 +13,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     using namespace casadi;
 
-    const SX vertices = SX::sym("vertices", 3, 2);
-    const SX targets = SX::sym("targets", 3, 2);
+    const SX vertices = SX::sym("vertices", 3, 2);    
+    SX x2 = vertices;
+    x2 = x2 + x2;
 
-    const auto res = vertices - targets;
-    const SX jacobian = SX::jacobian(res, vertices);
-
-    const Sparsity sparsity = jacobian.sparsity();
-//    sparsity.get_triplet()
-
-    std::cout << res << std::endl;
-    std::cout << bool(jacobian.is_dense()) << std::endl;
-    std::cout << jacobian << std::endl;
+    std::cout << vertices << std::endl;
+    std::cout << x2 << std::endl;
 }
 
 MainWindow::~MainWindow()
