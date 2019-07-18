@@ -76,4 +76,80 @@ optimizer = keras.optimizers.Adam()
 model.compile(loss=pose_estimation_loss, optimizer=optimizer)
 model.summary()
 
+def generate_training_data(num_samples):
+  # random_angles.shape: (num_samples, 3)
+  random_angles = np.random.uniform(-np.pi, np.pi,
+                                    (num_samples, 3)).astype(np.float32)
 
+  # random_quaternion.shape: (num_samples, 4)
+  random_quaternion = quaternion.from_euler(random_angles)
+
+  # random_translation.shape: (num_samples, 3)
+  random_translation = np.random.uniform(-2.0, 2.0,
+                                         (num_samples, 3)).astype(np.float32)
+
+  # data.shape : (num_samples, num_vertices, 3)
+  data = quaternion.rotate(vertices[tf.newaxis, :, :],
+                           random_quaternion[:, tf.newaxis, :]
+                          ) + random_translation[:, tf.newaxis, :]
+
+  # target.shape : (num_samples, 4+3)
+  target = tf.concat((random_quaternion, random_translation), axis=-1)
+
+  return np.array(data), np.array(target)
+
+num_samples = 10000
+
+data, target = generate_training_data(num_samples)
+
+print(data.shape)   # (num_samples, num_vertices, 3): the vertices
+print(target.shape)  # (num_samples, 4+3): the quaternion and translation
+
+class ProgressTracker(keras.callbacks.Callback):
+
+  def __init__(self, num_epochs, step=5):
+    self.num_epochs = num_epochs
+    self.current_epoch = 0.
+    self.step = step
+    self.last_percentage_report = 0
+
+  def on_epoch_end(self, batch, logs={}):
+    self.current_epoch += 1.
+    training_percentage = int(self.current_epoch * 100.0 / self.num_epochs)
+    if training_percentage - self.last_percentage_report >= self.step:
+      print('Training ' + str(
+          training_percentage) + '% complete. Training loss: ' + str(
+              logs.get('loss')) + ' | Validation loss: ' + str(
+                  logs.get('val_loss')))
+      self.last_percentage_report = training_percentage
+
+reduce_lr_callback = keras.callbacks.ReduceLROnPlateau(
+    monitor='val_loss',
+    factor=0.5,
+    patience=10,
+    verbose=0,
+    mode='auto',
+    min_delta=0.0001,
+    cooldown=0,
+    min_lr=0)
+
+
+# google internal 1
+# Everything is now in place to train.
+EPOCHS = 100
+pt = ProgressTracker(EPOCHS)
+history = model.fit(
+    data,
+    target,
+    epochs=EPOCHS,
+    validation_split=0.2,
+    verbose=0,
+    batch_size=32,
+    callbacks=[reduce_lr_callback, pt])
+
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.ylim([0, 1])
+plt.legend(['loss', 'val loss'], loc='upper left')
+plt.xlabel('Train epoch')
+_ = plt.ylabel('Error [mean square distance]')
