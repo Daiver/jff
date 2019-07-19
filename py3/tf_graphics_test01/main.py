@@ -153,3 +153,5 @@ plt.ylim([0, 1])
 plt.legend(['loss', 'val loss'], loc='upper left')
 plt.xlabel('Train epoch')
 _ = plt.ylabel('Error [mean square distance]')
+
+plt.show()
