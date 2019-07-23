@@ -7,9 +7,9 @@ import tensorflow_graphics
 from tensorflow_graphics.rendering import rasterizer
 
 
-def draw_depth(depth_tf):
+def draw_depth(depth_tf, min_depth):
     depth = depth_tf.numpy().reshape(depth_tf.shape[0], depth_tf.shape[1])
-    depth[np.isinf(depth)] = 0
+    depth[np.isinf(depth)] = min_depth
     min_val = depth.min()
     max_val = depth.max()
     delta = max_val - min_val
@@ -33,9 +33,10 @@ def main():
 
     vertices_tf = vertices_tf * 20
 
+    start_time = time.time()
     depth, tri_indices, bary = rasterizer.rasterize(vertices_tf, faces_tf, 256, 256, min_depth=-10)
-    print(depth)
-    draw_depth(depth)
+    print("elapsed", time.time() - start_time)
+    draw_depth(depth, -10-1e-5)
 
 
 if __name__ == '__main__':
