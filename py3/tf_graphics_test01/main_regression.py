@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import time
 
 import matplotlib.pyplot as plt
@@ -69,15 +65,13 @@ def pose_estimation_loss(y_true, y_pred):
 
 def generate_training_data(num_samples):
     # random_angles.shape: (num_samples, 3)
-    random_angles = np.random.uniform(-np.pi, np.pi,
-                                    (num_samples, 3)).astype(np.float32)
+    random_angles = np.random.uniform(-np.pi, np.pi, (num_samples, 3)).astype(np.float32)
 
     # random_quaternion.shape: (num_samples, 4)
     random_quaternion = quaternion.from_euler(random_angles)
 
     # random_translation.shape: (num_samples, 3)
-    random_translation = np.random.uniform(-2.0, 2.0,
-                                         (num_samples, 3)).astype(np.float32)
+    random_translation = np.random.uniform(-2.0, 2.0, (num_samples, 3)).astype(np.float32)
 
     # data.shape : (num_samples, num_vertices, 3)
     data = quaternion.rotate(
@@ -92,8 +86,24 @@ def generate_training_data(num_samples):
 # Constructs the model.
 model = keras.Sequential()
 model.add(layers.Flatten(input_shape=(num_vertices, 3)))
-model.add(layers.Dense(64, activation=tf.nn.tanh))
-model.add(layers.Dense(64, activation=tf.nn.relu))
+
+model.add(layers.Dense(128, activation=tf.nn.relu))
+model.add(layers.BatchNormalization())
+model.add(layers.Dropout(0.1))
+model.add(layers.Dense(128, activation=tf.nn.relu))
+model.add(layers.BatchNormalization())
+model.add(layers.Dropout(0.1))
+model.add(layers.Dense(128, activation=tf.nn.relu))
+model.add(layers.BatchNormalization())
+model.add(layers.Dropout(0.1))
+model.add(layers.Dense(128, activation=tf.nn.relu))
+model.add(layers.BatchNormalization())
+model.add(layers.Dropout(0.1))
+model.add(layers.Dense(128, activation=tf.nn.relu))
+# model.add(layers.BatchNormalization())
+# model.add(layers.Dropout(0.5))
+# model.add(layers.Dense(256, activation=tf.nn.relu))
+# model.add(layers.BatchNormalization())
 model.add(layers.Dense(7))
 
 optimizer = keras.optimizers.Adam()
@@ -141,7 +151,7 @@ reduce_lr_callback = keras.callbacks.ReduceLROnPlateau(
 
 # google internal 1
 # Everything is now in place to train.
-EPOCHS = 100
+EPOCHS = 400
 pt = ProgressTracker(EPOCHS)
 history = model.fit(
     data,
