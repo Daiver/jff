@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+
 from tensorflow.keras import layers
 
 from tensorflow_graphics.geometry.transformation import quaternion
@@ -25,14 +26,6 @@ tf.enable_eager_execution()
 vertices = tfg_simplified_logo.mesh['vertices'].astype(np.float32)
 faces = tfg_simplified_logo.mesh['faces']
 num_vertices = vertices.shape[0]
-
-
-# Constructs the model.
-model = keras.Sequential()
-model.add(layers.Flatten(input_shape=(num_vertices, 3)))
-model.add(layers.Dense(64, activation=tf.nn.tanh))
-model.add(layers.Dense(64, activation=tf.nn.relu))
-model.add(layers.Dense(7))
 
 
 def pose_estimation_loss(y_true, y_pred):
@@ -74,10 +67,6 @@ def pose_estimation_loss(y_true, y_pred):
     return tf.reduce_mean(vertex_error)
 
 
-optimizer = keras.optimizers.Adam()
-model.compile(loss=pose_estimation_loss, optimizer=optimizer)
-model.summary()
-
 def generate_training_data(num_samples):
     # random_angles.shape: (num_samples, 3)
     random_angles = np.random.uniform(-np.pi, np.pi,
@@ -100,6 +89,17 @@ def generate_training_data(num_samples):
     return np.array(data), np.array(target)
 
 
+# Constructs the model.
+model = keras.Sequential()
+model.add(layers.Flatten(input_shape=(num_vertices, 3)))
+model.add(layers.Dense(64, activation=tf.nn.tanh))
+model.add(layers.Dense(64, activation=tf.nn.relu))
+model.add(layers.Dense(7))
+
+optimizer = keras.optimizers.Adam()
+model.compile(loss=pose_estimation_loss, optimizer=optimizer)
+model.summary()
+
 num_samples = 10000
 
 data, target = generate_training_data(num_samples)
@@ -111,6 +111,7 @@ print(target.shape)  # (num_samples, 4+3): the quaternion and translation
 class ProgressTracker(keras.callbacks.Callback):
 
     def __init__(self, num_epochs, step=5):
+        super().__init__()
         self.num_epochs = num_epochs
         self.current_epoch = 0.
         self.step = step
