@@ -31,12 +31,12 @@ def main():
     faces_tf = tf.convert_to_tensor(teapot_model.triangle_vertex_indices)
     vertices_tf = tf.convert_to_tensor(teapot_model.vertices, dtype=tf.float32)
 
-    vertices_tf = vertices_tf * 20
+    vertices_tf = vertices_tf * 20 + [0, 0, 2.2]
 
     start_time = time.time()
-    depth, tri_indices, bary = rasterizer.rasterize(vertices_tf, faces_tf, 256, 256, min_depth=-10)
+    depth, tri_indices, bary = rasterizer.rasterize(vertices_tf, faces_tf, 256, 256)
     print("elapsed", time.time() - start_time)
-    draw_depth(depth, -10-1e-5)
+    draw_depth(depth, -1e-5)
 
 
 if __name__ == '__main__':
