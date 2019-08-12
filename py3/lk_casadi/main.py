@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 
 import casadi
-from casadi import SX, MX, DM
+from casadi import SX, MX
 
 
 def mk_images(canvas_size):
@@ -27,33 +27,28 @@ def perform_lk(img1, img2, start_point, patch_size=(9, 9)):
 
     img1_interpolant = casadi.interpolant("img1_interpolant", "bspline", [img_coords_x, img_coords_y], img1_flat)
     img2_interpolant = casadi.interpolant("img1_interpolant", "bspline", [img_coords_x, img_coords_y], img2_flat)
-    #
-    # print(img1_interpolant(DM(np.array([[0, 0], [64, 64]]).T)))
-    # print(img2_interpolant(DM(np.array([[0, 0], [70, 64]]).T)))
 
     patch_grid = np.zeros((patch_size[0] * patch_size[1], 2), dtype=np.float32)
     counter = 0
     for x in range(patch_size[1]):
         for y in range(patch_size[0]):
-            patch_grid[counter] = (x, y)
+            patch_grid[counter] = (x - patch_size[1] / 2, y - patch_size[0] / 2)
             counter += 1
 
-    patch_grid = DM(patch_grid.T)
-    print(img1_interpolant(patch_grid))
+    patch_grid = MX(patch_grid.T)
 
-    point_mx = MX.sym("point", 2, 1)
-    #
-    # xgrid = np.linspace(-5,5,11)
-    # ygrid = np.linspace(-4,4,9)
-    # X,Y = np.meshgrid(xgrid,ygrid,indexing='ij')
-    # R = np.sqrt(5*X**2 + Y**2)+ 1
-    # data = np.sin(R)/R
-    # data_flat = data.ravel(order='F')
-    # lut = casadi.interpolant('name','bspline',[xgrid,ygrid],data_flat)
-    # print(lut([0.5,1]))
+    start_point = MX(start_point).reshape((2, 1))
+
+    img1_patch = img1_interpolant(patch_grid + start_point)
+
+    current_point_mx = MX.sym("point", 2, 1)
+    img2_patch = img2_interpolant(patch_grid + current_point_mx)
+
+    diff = img1_patch - img2_patch
 
 
 def main():
+    print("casadi.__version__", casadi.__version__)
     canvas_size = (128, 128)
     img1, img2 = mk_images(canvas_size)
 
