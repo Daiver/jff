@@ -53,18 +53,24 @@ def perform_lk(img1, img2, start_point, patch_size):
     residuals_func = Function("residuals_func", [variables], [residuals])
     jacobian_func = Function("residuals_func", [variables], [jacobian])
 
-    vars_values = np.array([start_point[0], start_point[1]], dtype=np.float32)
-    for iter_ind in range(20):
+    n_iters = 20
+    vars_values = np.array([start_point[1], start_point[0]], dtype=np.float32)
+    for iter_ind in range(n_iters):
         residuals_val = residuals_func(vars_values).toarray().reshape(-1)
         jacobian_val = jacobian_func(vars_values).toarray()
 
         gradient_val = jacobian_val.T @ residuals_val
+        gradient_norm = np.linalg.norm(gradient_val)
         loss_val = (residuals_val ** 2).sum()
-        print(f"loss_val = {loss_val} grad_norm = {np.linalg.norm(gradient_val)}")
+        print(f"{iter_ind} / {n_iters} loss_val = {loss_val} grad_norm = {gradient_norm}")
+        if gradient_norm < 1e-6:
+            break
 
         step = np.linalg.solve(jacobian_val.T @ jacobian_val, gradient_val)
         vars_values -= step
         print(f"vars_values = {vars_values}")
+
+    return vars_values[1], vars_values[0]
 
 
 def main():
@@ -72,7 +78,8 @@ def main():
     canvas_size = (128, 128)
     img1, img2 = mk_images(canvas_size)
 
-    perform_lk(img1, img2, (64, 64), patch_size=(9, 9))
+    res = perform_lk(img1, img2, (64, 64), patch_size=(9, 9))
+    print(res)
     # cv2.imshow("img1", img1)
     # cv2.imshow("img2", img2)
     # cv2.waitKey()
