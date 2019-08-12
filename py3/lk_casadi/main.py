@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 
 import casadi
-from casadi import SX, MX
+from casadi import MX, Function
 
 
 def mk_images(canvas_size):
@@ -15,7 +15,7 @@ def mk_images(canvas_size):
     return img1, img2
 
 
-def perform_lk(img1, img2, start_point, patch_size=(9, 9)):
+def perform_lk(img1, img2, start_point, patch_size):
     img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
     img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 
@@ -41,10 +41,30 @@ def perform_lk(img1, img2, start_point, patch_size=(9, 9)):
 
     img1_patch = img1_interpolant(patch_grid + start_point)
 
-    current_point_mx = MX.sym("point", 2, 1)
+    current_point_mx = MX.sym("current_point", 2, 1)
     img2_patch = img2_interpolant(patch_grid + current_point_mx)
 
     diff = img1_patch - img2_patch
+
+    variables = current_point_mx
+    residuals = diff
+    jacobian = casadi.jacobian(residuals, current_point_mx)
+
+    residuals_func = Function("residuals_func", [variables], [residuals])
+    jacobian_func = Function("residuals_func", [variables], [jacobian])
+
+    vars_values = np.array([start_point[0], start_point[1]], dtype=np.float32)
+    for iter_ind in range(20):
+        residuals_val = residuals_func(vars_values).toarray().reshape(-1)
+        jacobian_val = jacobian_func(vars_values).toarray()
+
+        gradient_val = jacobian_val.T @ residuals_val
+        loss_val = (residuals_val ** 2).sum()
+        print(f"loss_val = {loss_val} grad_norm = {np.linalg.norm(gradient_val)}")
+
+        step = np.linalg.solve(jacobian_val.T @ jacobian_val, gradient_val)
+        vars_values -= step
+        print(f"vars_values = {vars_values}")
 
 
 def main():
@@ -52,7 +72,7 @@ def main():
     canvas_size = (128, 128)
     img1, img2 = mk_images(canvas_size)
 
-    perform_lk(img1, img2, (64, 64))
+    perform_lk(img1, img2, (64, 64), patch_size=(9, 9))
     # cv2.imshow("img1", img1)
     # cv2.imshow("img2", img2)
     # cv2.waitKey()
