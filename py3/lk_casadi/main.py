@@ -19,6 +19,7 @@ def perform_lk(img1, img2, start_point, patch_size):
     img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
     img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 
+    #
     img_coords_x = np.arange(0, img1.shape[1]).astype(np.float32)
     img_coords_y = np.arange(0, img1.shape[0]).astype(np.float32)
 
@@ -26,7 +27,7 @@ def perform_lk(img1, img2, start_point, patch_size):
     img2_flat = img2.ravel(order='F').astype(np.float32)
 
     img1_interpolant = casadi.interpolant("img1_interpolant", "bspline", [img_coords_x, img_coords_y], img1_flat)
-    img2_interpolant = casadi.interpolant("img1_interpolant", "bspline", [img_coords_x, img_coords_y], img2_flat)
+    img2_interpolant = casadi.interpolant("img2_interpolant", "bspline", [img_coords_x, img_coords_y], img2_flat)
 
     patch_grid = np.zeros((patch_size[0] * patch_size[1], 2), dtype=np.float32)
     counter = 0
@@ -53,6 +54,7 @@ def perform_lk(img1, img2, start_point, patch_size):
     residuals_func = Function("residuals_func", [variables], [residuals])
     jacobian_func = Function("residuals_func", [variables], [jacobian])
 
+    # Optimization stuff
     n_iters = 20
     vars_values = np.array([start_point[1], start_point[0]], dtype=np.float32)
     for iter_ind in range(n_iters):
@@ -60,7 +62,7 @@ def perform_lk(img1, img2, start_point, patch_size):
         jacobian_val = jacobian_func(vars_values).toarray()
 
         gradient_val = jacobian_val.T @ residuals_val
-        gradient_norm = np.linalg.norm(gradient_val)
+        gradient_norm = np.sum(np.abs(gradient_val))
         loss_val = (residuals_val ** 2).sum()
         print(f"{iter_ind} / {n_iters} loss_val = {loss_val} grad_norm = {gradient_norm}")
         if gradient_norm < 1e-6:
