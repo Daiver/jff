@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import casadi
 from casadi import SX, Function
 
-from pygauss_newton import gauss_newton
+from sklearn.linear_model import LinearRegression
 
 
 def mk_quadratic(a, b, c):
@@ -51,7 +51,7 @@ def main():
     targets = [
         [1, 0],
         # [0, 0],
-        [0, 1],
+        [0, 1.0],
     ]
     # targets = SX(targets)
     # target = SX([1, 1])
@@ -104,6 +104,11 @@ def main():
         for x, unrolled_func in zip(xs, unrolled_functions):
             print(vars, unrolled_func(x, vars)[0])
     print(vars)
+
+    targets = np.array(targets)
+    clf = LinearRegression(fit_intercept=False)
+    clf.fit(targets[:, 0].reshape(-1, 1), targets[1])
+    print("clf.coef_", clf.coef_)
 
 
 if __name__ == '__main__':
