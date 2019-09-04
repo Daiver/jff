@@ -43,33 +43,49 @@ def main1():
 def main():
     import cvxpy
 
-    # Generate data.
-    m = 20
-    n = 15
-    np.random.seed(1)
-    A = np.random.randn(m, n)
-    b = np.random.randn(m)
-
     xs = np.array([
         [0, 0],
-        [-1, 0],
-        [1, 0]
+        [-1, 1],
+        [1, 1]
     ], dtype=np.float32)
     ys = np.array([
-        1, 0, 0
+        1, -1, -1
     ], dtype=np.float32)
 
     # Define and solve the CVXPY problem.
-    x = cvxpy.Variable(n)
-    cost = cvxpy.sum_squares(A * x - b)
-    prob = cvxpy.Problem(cvxpy.Minimize(cost))
-    prob.solve()
+    slope = cvxpy.Variable(2)
+    bias = cvxpy.Variable()
+
+    predict = lambda xs: xs @ slope + bias
+
+    # loss = cvxpy.sum(cvxpy.pos(1 - cvxpy.multiply(ys, predict(xs))))
+    loss = cvxpy.sum_squares(cvxpy.pos(1 - cvxpy.multiply(ys, predict(xs))))
+    reg = cvxpy.multiply(0.999999, cvxpy.norm(slope, 2))
+    # reg = cvxpy.multiply(2, cvxpy.norm(slope, 2))
+    # cost = cvxpy.sum(cvxpy.pos(bias))
+    prob = cvxpy.Problem(cvxpy.Minimize(loss + reg))
+    prob.solve(verbose=True)
 
     # Print result.
     print("\nThe optimal value is", prob.value)
     print("The optimal x is")
-    print(x.value)
-    print("The norm of the residual is ", cvxpy.norm(A * x - b, p=2).value)
+    print(slope.value, bias.value)
+
+    pts = [(x, y) for x in np.linspace(-2, 2, 51) for y in np.linspace(-2, 2, 51)]
+    pts = np.array(pts)
+    predicted = predict(pts).value
+    print(predicted)
+    pts_n = pts[predicted < 0]
+    pts_p = pts[predicted >= 0]
+
+    tr_n = xs[ys < 0]
+    tr_p = xs[ys >= 0]
+
+    plt.plot(pts_n[:, 0], pts_n[:, 1], ".r")
+    plt.plot(pts_p[:, 0], pts_p[:, 1], ".g")
+    plt.plot(tr_n[:, 0], tr_n[:, 1], "Dr")
+    plt.plot(tr_p[:, 0], tr_p[:, 1], "Dg")
+    plt.show()
 
 
 if __name__ == '__main__':
