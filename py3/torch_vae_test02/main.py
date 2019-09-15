@@ -104,7 +104,7 @@ if __name__ == "__main__":
         run_training_stage(epoch)
         run_testing_stage(epoch)
         with torch.no_grad():
-            sample = torch.randn(64, latent_size).to(device)
+            sample = torch.randn(256, latent_size).to(device)
             sample = model.decode(sample).cpu()
-            save_image(sample.view(64, 1, 28, 28),
+            save_image(sample.view(256, 1, 28, 28),
                        'results/sample_' + str(epoch) + '.png')
