@@ -12,7 +12,8 @@ from torchvision.utils import save_image
 torch.manual_seed(42)
 
 epochs = 10
-batch_size = 32
+# batch_size = 32
+batch_size = 512
 device = "cuda:0"
 latent_size = 16
 hidden_size = 400
@@ -120,7 +121,7 @@ def run_training_stage(epoch):
 
     print('====> Epoch: {} Average loss: {:.4f}'.format(
           epoch, train_loss / len(train_loader.dataset)))
-    torch.save(model, f'checkpoints/{prefix}_{str(start_time)}_{epoch}.pt')
+    torch.save(model, f'checkpoints/{prefix}_{str(start_time)}_{epoch}.pt'.replace(":", "_"))
 
 
 def run_testing_stage(epoch):
@@ -129,7 +130,6 @@ def run_testing_stage(epoch):
     with torch.no_grad():
         for i, (data, labels) in enumerate(test_loader):
             data = data.to(device)
-            labels = labels.to(device)
             recon_batch, mu, logvar = model(data)
             test_loss += loss_function(recon_batch, data, mu, logvar).item()
             if i == 0:
