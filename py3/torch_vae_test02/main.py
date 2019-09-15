@@ -8,10 +8,13 @@ from torch.nn import functional as F
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
 
+from vae_fc_model import VAEFC
+from vae_conv_model import VAEConv
+
 
 torch.manual_seed(42)
 
-epochs = 10
+epochs = 20
 # batch_size = 32
 batch_size = 512
 device = "cuda:0"
@@ -30,56 +33,9 @@ test_loader = torch.utils.data.DataLoader(
     batch_size=batch_size, shuffle=True, **kwargs)
 
 
-class VAE(nn.Module):
-    def __init__(self):
-        # activation = nn.ReLU()
-        activation = nn.ELU
-        super(VAE, self).__init__()
-        self.encoder_base = nn.Sequential(
-            nn.Linear(784, hidden_size),
-            activation(),
-            nn.Linear(hidden_size, hidden_size),
-            activation(),
-        )
-        self.fc21 = nn.Linear(hidden_size, latent_size)
-        self.fc22 = nn.Linear(hidden_size, latent_size)
-
-        self.decoder = nn.Sequential(
-            nn.Linear(latent_size, hidden_size),
-            activation(),
-            nn.Linear(hidden_size, hidden_size),
-            activation(),
-            nn.Linear(hidden_size, 784),
-            nn.Sigmoid()
-        )
-
-    def encode(self, x):
-        h1 = self.encoder_base(x)
-        return self.fc21(h1), self.fc22(h1)
-
-    def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5*logvar)
-        eps = torch.randn_like(std)
-        return eps.mul(std).add_(mu)
-
-    def decode(self, z):
-        return self.decoder(z)
-
-    def forward(self, x):
-        mu, logvar = self.encode(x.view(-1, 784))
-        z = self.reparameterize(mu, logvar)
-        return self.decode(z), mu, logvar
-
-
-model = VAE().to(device)
+# model = VAEFC(hidden_size=400, latent_size=latent_size).to(device)
+model = VAEConv(latent_size=latent_size).to(device)
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
-
-
-def classes_to_one_hot(sample, n_classes=10):
-    res = torch.zeros((sample.size(0), n_classes))
-    for i, s in enumerate(sample):
-        res[i, s] = 1
-    return res
 
 
 # Reconstruction + KL divergence losses summed over all elements and batch
