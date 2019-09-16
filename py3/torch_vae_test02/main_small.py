@@ -26,7 +26,7 @@ def loss_function(recon_x, x, mu, logvar):
     # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
-    return BCE + KLD
+    return BCE + 10*KLD
 
 
 def run_training_stage(model, optimizer, train_loader, device, log_interval, epoch):
@@ -109,7 +109,7 @@ def draw_figure(angle):
 
 
 def main():
-    train_samples = [draw_figure(angle) for angle in np.linspace(0, 2*np.pi, 32 + 1)][:-1]
+    train_samples = [draw_figure(angle) for angle in np.linspace(0, 2*np.pi, 16 + 1)][:-1]
     grid = np_draw_tools.make_grid(train_samples)
     cv2.imshow("", grid)
     cv2.waitKey(1000)
@@ -122,10 +122,11 @@ def main():
     epochs = 2000
     # batch_size = 32
     # batch_size = 32
-    batch_size = 128
+    # batch_size = 64
+    batch_size = 512
     device = "cuda:0"
-    latent_size = 2
-    log_interval = 1
+    latent_size = 1
+    log_interval = 10
 
     kwargs = {'num_workers': 8, 'pin_memory': True}
     train_loader = torch.utils.data.DataLoader(train_dataset_torch, batch_size=batch_size, shuffle=True, **kwargs)
@@ -135,9 +136,10 @@ def main():
     model = VAEConv(latent_size=latent_size).to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-2)
 
-    sample_lin = torch.linspace(-1, 1, 32).to(device)
-    sample_mesh = torch.meshgrid(sample_lin, sample_lin)
-    sample = torch.stack(sample_mesh, -1).view(-1, 2)
+    # sample_lin = torch.linspace(-1, 1, 32).to(device)
+    # sample_mesh = torch.meshgrid(sample_lin, sample_lin)
+    # sample = torch.stack(sample_mesh, -1).view(-1, 2)
+    sample = torch.linspace(-1.5, 1.5, 32*10).to(device).view(-1, 1)
     lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[300, 600], gamma=0.5)
     for epoch in range(1, epochs + 1):
         run_training_stage(model, optimizer, train_loader, device, log_interval, epoch)
