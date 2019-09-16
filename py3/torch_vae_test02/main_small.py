@@ -114,16 +114,17 @@ def main():
     cv2.imshow("", grid)
     cv2.waitKey(1000)
 
-    train_dataset_torch = [TF.to_tensor(x) for x in train_samples]
-    test_dataset_torch = [TF.to_tensor(x) for x in train_samples]
+    train_dataset_torch = [TF.to_tensor(x) for x in train_samples] * 512
+    test_dataset_torch = [TF.to_tensor(x) for x in train_samples] * 512
 
     torch.manual_seed(42)
 
     epochs = 2000
     # batch_size = 32
-    batch_size = 32
+    # batch_size = 32
+    batch_size = 128
     device = "cuda:0"
-    latent_size = 1
+    latent_size = 2
     log_interval = 1
 
     kwargs = {'num_workers': 8, 'pin_memory': True}
@@ -134,14 +135,18 @@ def main():
     model = VAEConv(latent_size=latent_size).to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-2)
 
-    sample = torch.linspace(-1, 1, 256).view(-1, 1).to(device)
+    sample_lin = torch.linspace(-1, 1, 32).to(device)
+    sample_mesh = torch.meshgrid(sample_lin, sample_lin)
+    sample = torch.stack(sample_mesh, -1).view(-1, 2)
+    lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[300, 600], gamma=0.5)
     for epoch in range(1, epochs + 1):
         run_training_stage(model, optimizer, train_loader, device, log_interval, epoch)
+        lr_scheduler.step()
         run_testing_stage(model, test_loader, device, epoch)
         with torch.no_grad():
             sample_gen = model.decode(sample).cpu()
             save_image(sample_gen.view(-1, 1, 28, 28),
-                       'results/sample_' + str(epoch) + '.png')
+                       'results/sample_' + str(epoch) + '.png', nrow=32)
 
 
 if __name__ == "__main__":
