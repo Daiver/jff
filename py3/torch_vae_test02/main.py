@@ -1,9 +1,7 @@
-
-import argparse
 import torch
 import torch.utils.data
 import datetime
-from torch import nn, optim
+from torch import optim
 from torch.nn import functional as F
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
@@ -21,16 +19,6 @@ device = "cuda:0"
 latent_size = 16
 hidden_size = 400
 log_interval = 1
-
-
-kwargs = {'num_workers': 8, 'pin_memory': True} 
-train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('data', train=True, download=True,
-                   transform=transforms.ToTensor()),
-    batch_size=batch_size, shuffle=True, **kwargs)
-test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('data', train=False, transform=transforms.ToTensor()),
-    batch_size=batch_size, shuffle=True, **kwargs)
 
 
 # model = VAEFC(hidden_size=400, latent_size=latent_size).to(device)
@@ -51,7 +39,7 @@ def loss_function(recon_x, x, mu, logvar):
     return BCE + KLD
 
 
-def run_training_stage(epoch):
+def run_training_stage(train_loader, epoch):
     model.train()
     train_loss = 0
 
@@ -80,7 +68,7 @@ def run_training_stage(epoch):
     torch.save(model, f'checkpoints/{prefix}_{str(start_time)}_{epoch}.pt'.replace(":", "_"))
 
 
-def run_testing_stage(epoch):
+def run_testing_stage(test_loader, epoch):
     model.eval()
     test_loss = 0
     with torch.no_grad():
@@ -99,12 +87,25 @@ def run_testing_stage(epoch):
     print('====> Test set loss: {:.4f}'.format(test_loss))
 
 
-if __name__ == "__main__":
+def main():
+    kwargs = {'num_workers': 8, 'pin_memory': True}
+    train_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('data', train=True, download=True,
+                       transform=transforms.ToTensor()),
+        batch_size=batch_size, shuffle=True, **kwargs)
+    test_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('data', train=False, transform=transforms.ToTensor()),
+        batch_size=batch_size, shuffle=True, **kwargs)
+
     for epoch in range(1, epochs + 1):
-        run_training_stage(epoch)
-        run_testing_stage(epoch)
+        run_training_stage(train_loader, epoch)
+        run_testing_stage(test_loader, epoch)
         with torch.no_grad():
             sample = torch.randn(256, latent_size).to(device)
             sample = model.decode(sample).cpu()
             save_image(sample.view(256, 1, 28, 28),
                        'results/sample_' + str(epoch) + '.png')
+
+
+if __name__ == "__main__":
+    main()
