@@ -10,17 +10,6 @@ from vae_fc_model import VAEFC
 from vae_conv_model import VAEConv
 
 
-torch.manual_seed(42)
-
-epochs = 20
-# batch_size = 32
-batch_size = 512
-device = "cuda:0"
-latent_size = 16
-hidden_size = 400
-log_interval = 1
-
-
 # Reconstruction + KL divergence losses summed over all elements and batch
 def loss_function(recon_x, x, mu, logvar):
     BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
@@ -34,7 +23,7 @@ def loss_function(recon_x, x, mu, logvar):
     return BCE + KLD
 
 
-def run_training_stage(model, optimizer, train_loader, epoch):
+def run_training_stage(model, optimizer, train_loader, device, log_interval, epoch):
     model.train()
     train_loss = 0
 
@@ -63,7 +52,7 @@ def run_training_stage(model, optimizer, train_loader, epoch):
     torch.save(model, f'checkpoints/{prefix}_{str(start_time)}_{epoch}.pt'.replace(":", "_"))
 
 
-def run_testing_stage(model, test_loader, epoch):
+def run_testing_stage(model, test_loader, device, epoch):
     model.eval()
     test_loss = 0
     with torch.no_grad():
@@ -74,7 +63,7 @@ def run_testing_stage(model, test_loader, epoch):
             if i == 0:
                 n = min(data.size(0), 8)
                 comparison = torch.cat([data[:n],
-                                      recon_batch.view(batch_size, 1, 28, 28)[:n]])
+                                      recon_batch.view(-1, 1, 28, 28)[:n]])
                 save_image(comparison.cpu(),
                          'results/reconstruction_' + str(epoch) + '.png', nrow=n)
 
@@ -83,6 +72,15 @@ def run_testing_stage(model, test_loader, epoch):
 
 
 def main():
+    torch.manual_seed(42)
+
+    epochs = 20
+    # batch_size = 32
+    batch_size = 512
+    device = "cuda:0"
+    latent_size = 16
+    hidden_size = 400
+    log_interval = 1
     kwargs = {'num_workers': 8, 'pin_memory': True}
     train_loader = torch.utils.data.DataLoader(
         datasets.MNIST('data', train=True, download=True,
@@ -97,8 +95,8 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
     for epoch in range(1, epochs + 1):
-        run_training_stage(model, optimizer, train_loader, epoch)
-        run_testing_stage(model, test_loader, epoch)
+        run_training_stage(model, optimizer, train_loader, device, log_interval, epoch)
+        run_testing_stage(model, test_loader, device, epoch)
         with torch.no_grad():
             sample = torch.randn(256, latent_size).to(device)
             sample = model.decode(sample).cpu()
