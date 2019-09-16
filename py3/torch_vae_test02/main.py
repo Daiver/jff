@@ -72,6 +72,10 @@ def run_testing_stage(model, test_loader, device, epoch):
 
 
 def main():
+
+    train_dataset = datasets.MNIST('data', train=True, download=True, transform=transforms.ToTensor())
+    test_dataset = datasets.MNIST('data', train=False, transform=transforms.ToTensor())
+
     torch.manual_seed(42)
 
     epochs = 20
@@ -81,14 +85,10 @@ def main():
     latent_size = 16
     hidden_size = 400
     log_interval = 1
+
     kwargs = {'num_workers': 8, 'pin_memory': True}
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('data', train=True, download=True,
-                       transform=transforms.ToTensor()),
-        batch_size=batch_size, shuffle=True, **kwargs)
-    test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('data', train=False, transform=transforms.ToTensor()),
-        batch_size=batch_size, shuffle=True, **kwargs)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True, **kwargs)
 
     # model = VAEFC(hidden_size=400, latent_size=latent_size).to(device)
     model = VAEConv(latent_size=latent_size).to(device)
