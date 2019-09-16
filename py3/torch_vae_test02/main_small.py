@@ -9,10 +9,11 @@ import datetime
 from torch import optim
 from torch.nn import functional as F
 from torchvision import datasets, transforms
+from torchvision.transforms import functional as TF
 from torchvision.utils import save_image
 
 from vae_fc_model import VAEFC
-from vae_conv_model import VAEConv
+from vae_conv_model_small import VAEConv
 
 
 # Reconstruction + KL divergence losses summed over all elements and batch
@@ -35,7 +36,7 @@ def run_training_stage(model, optimizer, train_loader, device, log_interval, epo
     start_time = datetime.datetime.now()
     prefix = 'vanila'
 
-    for batch_idx, (data, labels) in enumerate(train_loader):
+    for batch_idx, data in enumerate(train_loader):
         data = data.to(device)
         # print(labels)
 
@@ -61,7 +62,7 @@ def run_testing_stage(model, test_loader, device, epoch):
     model.eval()
     test_loss = 0
     with torch.no_grad():
-        for i, (data, labels) in enumerate(test_loader):
+        for i, data in enumerate(test_loader):
             data = data.to(device)
             recon_batch, mu, logvar = model(data)
             test_loss += loss_function(recon_batch, data, mu, logvar).item()
@@ -108,40 +109,38 @@ def draw_figure(angle):
 
 
 def main():
-    train_samples = [draw_figure(angle) for angle in np.linspace(0, 2*np.pi, 9)][:-1]
+    train_samples = [draw_figure(angle) for angle in np.linspace(0, 2*np.pi, 32 + 1)][:-1]
     grid = np_draw_tools.make_grid(train_samples)
     cv2.imshow("", grid)
-    cv2.waitKey()
-    return
+    cv2.waitKey(1000)
 
-    train_dataset_torch = datasets.MNIST('data', train=True, download=True, transform=transforms.ToTensor())
-    test_dataset_torch = datasets.MNIST('data', train=False, transform=transforms.ToTensor())
+    train_dataset_torch = [TF.to_tensor(x) for x in train_samples]
+    test_dataset_torch = [TF.to_tensor(x) for x in train_samples]
 
     torch.manual_seed(42)
 
-    epochs = 20
+    epochs = 2000
     # batch_size = 32
-    batch_size = 512
+    batch_size = 32
     device = "cuda:0"
-    latent_size = 16
-    hidden_size = 400
+    latent_size = 1
     log_interval = 1
 
     kwargs = {'num_workers': 8, 'pin_memory': True}
     train_loader = torch.utils.data.DataLoader(train_dataset_torch, batch_size=batch_size, shuffle=True, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dataset_torch, batch_size=batch_size, shuffle=True, **kwargs)
 
-    # model = VAEFC(hidden_size=400, latent_size=latent_size).to(device)
+    # model = VAEFC(hidden_size=10, latent_size=latent_size).to(device)
     model = VAEConv(latent_size=latent_size).to(device)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-2)
 
+    sample = torch.linspace(-1, 1, 256).view(-1, 1).to(device)
     for epoch in range(1, epochs + 1):
         run_training_stage(model, optimizer, train_loader, device, log_interval, epoch)
         run_testing_stage(model, test_loader, device, epoch)
         with torch.no_grad():
-            sample = torch.randn(256, latent_size).to(device)
-            sample = model.decode(sample).cpu()
-            save_image(sample.view(256, 1, 28, 28),
+            sample_gen = model.decode(sample).cpu()
+            save_image(sample_gen.view(-1, 1, 28, 28),
                        'results/sample_' + str(epoch) + '.png')
 
 
