@@ -21,11 +21,6 @@ hidden_size = 400
 log_interval = 1
 
 
-# model = VAEFC(hidden_size=400, latent_size=latent_size).to(device)
-model = VAEConv(latent_size=latent_size).to(device)
-optimizer = optim.Adam(model.parameters(), lr=1e-3)
-
-
 # Reconstruction + KL divergence losses summed over all elements and batch
 def loss_function(recon_x, x, mu, logvar):
     BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
@@ -39,7 +34,7 @@ def loss_function(recon_x, x, mu, logvar):
     return BCE + KLD
 
 
-def run_training_stage(train_loader, epoch):
+def run_training_stage(model, optimizer, train_loader, epoch):
     model.train()
     train_loss = 0
 
@@ -68,7 +63,7 @@ def run_training_stage(train_loader, epoch):
     torch.save(model, f'checkpoints/{prefix}_{str(start_time)}_{epoch}.pt'.replace(":", "_"))
 
 
-def run_testing_stage(test_loader, epoch):
+def run_testing_stage(model, test_loader, epoch):
     model.eval()
     test_loss = 0
     with torch.no_grad():
@@ -97,9 +92,13 @@ def main():
         datasets.MNIST('data', train=False, transform=transforms.ToTensor()),
         batch_size=batch_size, shuffle=True, **kwargs)
 
+    # model = VAEFC(hidden_size=400, latent_size=latent_size).to(device)
+    model = VAEConv(latent_size=latent_size).to(device)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+
     for epoch in range(1, epochs + 1):
-        run_training_stage(train_loader, epoch)
-        run_testing_stage(test_loader, epoch)
+        run_training_stage(model, optimizer, train_loader, epoch)
+        run_testing_stage(model, test_loader, epoch)
         with torch.no_grad():
             sample = torch.randn(256, latent_size).to(device)
             sample = model.decode(sample).cpu()
