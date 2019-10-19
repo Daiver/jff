@@ -5,6 +5,7 @@ import geom_tools
 import np_draw_tools
 
 import torch
+from models import SpatialTransformer
 
 
 def draw_geom(geom: geom_tools.Mesh, canvas_size, transformation=None) -> np.ndarray:
@@ -23,6 +24,11 @@ def main():
     bbox = geom.bbox()
     print(geom_tools.summary(geom))
     print(bbox)
+
+    model = SpatialTransformer(3, 64)
+    x = torch.zeros(2, 3, 10)
+    x = model(x)
+    print(x)
 
     canvas_size = (1024, 1024)
     view_transform = geom_tools.fit_to_view_transform(geom.bbox(), canvas_size)

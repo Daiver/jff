@@ -8,6 +8,7 @@ class SpatialTransformer(nn.Module):
     def __init__(self, in_channels, middle_channels):
         super().__init__()
         self.in_channels = in_channels
+        self.middle_channels = middle_channels
         self.feature_extractor = nn.Sequential(
             nn.Conv1d(in_channels=in_channels, out_channels=middle_channels, kernel_size=1),
             nn.BatchNorm1d(middle_channels),
@@ -30,9 +31,12 @@ class SpatialTransformer(nn.Module):
         )
 
     def forward(self, x):
+        batch_size = x.shape[0]
         x = self.feature_extractor(x)
-        x = torch.max(x, dim=2)[0]
-        assert x.ndimension() == 2
+        x = torch.max(x, dim=2, keepdim=True)[0]
+        # assert x.ndimension() == 2
+        x = x.view(batch_size, self.middle_channels)
+        print(x.shape)
         x = self.head(x)
 
         x = x.view(-1, self.in_channels, self.in_channels)
