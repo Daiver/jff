@@ -22,4 +22,5 @@ class DatasetWithAugmentations:
         sample = self.dataset[idx]
         angle = np.random.uniform(-np.pi / 4.0, np.pi / 4.0)
         sample = deform_sample(sample, angle)
-        return sample, angle
+        sample = sample.transpose()
+        return sample, np.array([angle], dtype=np.float32)

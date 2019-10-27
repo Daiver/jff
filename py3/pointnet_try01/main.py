@@ -34,10 +34,10 @@ def main():
 
     # model = SpatialTransformer(3, 64)
     model = PointNet(3)
-    x = torch.zeros(2, 3, 10)
-    x = model(x)
-    print(x)
-    print(x.shape)
+    # x = torch.zeros(2, 3, 10)
+    # x = model(x)
+    # print(x)
+    # print(x.shape)
 
     canvas_size = (1024, 1024)
     view_transform = geom_tools.fit_to_view_transform(geom.bbox(), canvas_size)
@@ -49,13 +49,16 @@ def main():
     n_epochs = 100
     batch_size = 4
     lr = 1e-3
-    device = "cuda:0"
+    device = "cuda"
+    # device = "cpu"
+
+    print(f"torch.cuda.is_available() = {torch.cuda.is_available()}")
 
     dataset = [
-        geom.vertices,
-        geom.vertices,
-        geom.vertices,
-        geom.vertices,
+        deepcopy(geom.vertices),
+        deepcopy(geom.vertices),
+        deepcopy(geom.vertices),
+        deepcopy(geom.vertices),
     ]
     data_transformer = DatasetWithAugmentations(dataset)
     dataloader = DataLoader(
@@ -65,7 +68,9 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=lr)
     loss_function = nn.MSELoss()
 
+    model = model.to(device)
     for epoch in range(n_epochs):
+        model.train()
         for iteration, (data, target) in enumerate(dataloader):
             data, target = data.to(device), target.to(device)
             res = model(data)
@@ -75,6 +80,7 @@ def main():
 
             optimizer.step()
             optimizer.zero_grad()
+        model.eval()
 
 
 if __name__ == "__main__":

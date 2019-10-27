@@ -35,7 +35,6 @@ class SpatialTransformer(nn.Module):
         x = self.feature_extractor(x)
         x = torch.max(x, dim=2, keepdim=True)[0]
         x = x.view(batch_size, self.middle_channels)
-        print(x.shape)
         x = self.head(x)
 
         x = x.view(-1, self.in_channels, self.in_channels)
@@ -72,12 +71,15 @@ class PointNet(nn.Module):
         )
 
     def forward(self, x):
+        print(f"inp = {x.shape}")
         first_trans = self.first_transformer(x)
         x = x.transpose(2, 1)
         x = torch.bmm(x, first_trans)
         x = x.transpose(2, 1)
+        print(f"after transform = {x.shape}")
 
         x = self.feature_extractor(x)
+        print(f"after feature = {x.shape}")
 
         x = torch.max(x, dim=2, keepdim=True)[0]
         x = x.view(x.shape[0], -1)
