@@ -7,6 +7,7 @@ import geom_tools
 import np_draw_tools
 
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
@@ -45,6 +46,11 @@ def main():
     # cv2.imshow("", canvas)
     # cv2.waitKey()
 
+    n_epochs = 100
+    batch_size = 4
+    lr = 1e-3
+    device = "cuda:0"
+
     dataset = [
         geom.vertices,
         geom.vertices,
@@ -52,12 +58,23 @@ def main():
         geom.vertices,
     ]
     data_transformer = DatasetWithAugmentations(dataset)
-    for sample, angle in data_transformer:
-        geom.vertices = sample
-        canvas = draw_geom(geom, canvas_size, view_transform)
-        print(angle)
-        cv2.imshow("", canvas)
-        cv2.waitKey()
+    dataloader = DataLoader(
+        dataset=data_transformer, num_workers=4, batch_size=batch_size
+    )
+
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+    loss_function = nn.MSELoss()
+
+    for epoch in range(n_epochs):
+        for iteration, (data, target) in enumerate(dataloader):
+            data, target = data.to(device), target.to(device)
+            res = model(data)
+            loss = loss_function(res, target)
+            loss.backward()
+            print(f"{epoch + 1} / {n_epochs} loss = {loss.item()}")
+
+            optimizer.step()
+            optimizer.zero_grad()
 
 
 if __name__ == "__main__":
