@@ -10,8 +10,10 @@ class VAEFC(nn.Module):
         super(VAEFC, self).__init__()
         self.encoder_base = nn.Sequential(
             nn.Linear(784, hidden_size),
+            # nn.BatchNorm1d(hidden_size),
             activation(),
             nn.Linear(hidden_size, hidden_size),
+            # nn.BatchNorm1d(hidden_size),
             activation(),
         )
         self.fc21 = nn.Linear(hidden_size, latent_size)
@@ -19,8 +21,10 @@ class VAEFC(nn.Module):
 
         self.decoder = nn.Sequential(
             nn.Linear(latent_size, hidden_size),
+            # nn.BatchNorm1d(hidden_size),
             activation(),
             nn.Linear(hidden_size, hidden_size),
+            # nn.BatchNorm1d(hidden_size),
             activation(),
             nn.Linear(hidden_size, 784),
             nn.Sigmoid()

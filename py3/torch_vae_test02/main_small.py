@@ -1,45 +1,21 @@
+import numpy as np
+
+import cv2
+import np_draw_tools
+
 import torch
 import torch.utils.data
 import datetime
 from torch import optim
 from torch.nn import functional as F
 from torchvision import datasets, transforms
+from torchvision.transforms import functional as TF
 from torchvision.utils import save_image
 
 from vae_fc_model import VAEFC
-from vae_conv_model import VAEConv
+from vae_conv_model_small import VAEConv
 
 
-<<<<<<< HEAD
-torch.manual_seed(42)
-
-epochs = 50
-# batch_size = 32
-batch_size = 64
-device = "cuda:0"
-latent_size = 16
-hidden_size = 400
-log_interval = 100
-
-
-kwargs = {'num_workers': 8, 'pin_memory': True} 
-train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('data', train=True, download=True,
-                   transform=transforms.ToTensor()),
-    batch_size=batch_size, shuffle=True, **kwargs)
-test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('data', train=False, transform=transforms.ToTensor()),
-    batch_size=batch_size, shuffle=True, **kwargs)
-
-
-# model = VAEFC(hidden_size=400, latent_size=latent_size).to(device)
-model = VAEConv(latent_size=latent_size).to(device)
-optimizer = optim.Adam(model.parameters(), lr=1e-3)
-lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[15, 25])
-
-
-=======
->>>>>>> 1eedf44801ae14674847d90fb7ed2d8673b574a7
 # Reconstruction + KL divergence losses summed over all elements and batch
 def loss_function(recon_x, x, mu, logvar):
     BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
@@ -50,7 +26,7 @@ def loss_function(recon_x, x, mu, logvar):
     # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
-    return BCE + KLD
+    return BCE + 10*KLD
 
 
 def run_training_stage(model, optimizer, train_loader, device, log_interval, epoch):
@@ -60,7 +36,7 @@ def run_training_stage(model, optimizer, train_loader, device, log_interval, epo
     start_time = datetime.datetime.now()
     prefix = 'vanila'
 
-    for batch_idx, (data, labels) in enumerate(train_loader):
+    for batch_idx, data in enumerate(train_loader):
         data = data.to(device)
         # print(labels)
 
@@ -86,7 +62,7 @@ def run_testing_stage(model, test_loader, device, epoch):
     model.eval()
     test_loss = 0
     with torch.no_grad():
-        for i, (data, labels) in enumerate(test_loader):
+        for i, data in enumerate(test_loader):
             data = data.to(device)
             recon_batch, mu, logvar = model(data)
             test_loss += loss_function(recon_batch, data, mu, logvar).item()
@@ -101,50 +77,79 @@ def run_testing_stage(model, test_loader, device, epoch):
     print('====> Test set loss: {:.4f}'.format(test_loss))
 
 
-<<<<<<< HEAD
-if __name__ == "__main__":
-    sample_lattent = torch.randn(256, latent_size).to(device)
-    for epoch in range(1, epochs + 1):
-        run_training_stage(epoch)
-        lr_scheduler.step()
-        run_testing_stage(epoch)
-=======
-def main():
+def rotation_matrix2d(theta):
+    return np.array((
+        (np.cos(theta), -np.sin(theta)),
+        (np.sin(theta),  np.cos(theta))
+    ))
 
-    train_dataset = datasets.MNIST('data', train=True, download=True, transform=transforms.ToTensor())
-    test_dataset = datasets.MNIST('data', train=False, transform=transforms.ToTensor())
+
+def draw_figure(angle):
+    canvas_size = (28, 28)
+    canvas_center = np.array([canvas_size[0] / 2, canvas_size[1] / 2])
+    canvas = np.zeros(canvas_size + (1,), dtype=np.uint8)
+    lines = np.array([
+        (5, 14),
+        (14, 14),
+        (14, 5),
+        (14, 14),
+    ], dtype=np.float32)
+    rot_mat = rotation_matrix2d(angle)
+    lines = lines - canvas_center
+    lines = lines @ rot_mat.T
+    lines = lines + canvas_center
+
+    for i in range(len(lines) // 2):
+        x1, y1 = lines[2 * i + 0]
+        x2, y2 = lines[2 * i + 1]
+        pt1 = (int(round(x1)), int(round(y1)))
+        pt2 = (int(round(x2)), int(round(y2)))
+        cv2.line(canvas, pt1, pt2, 255, thickness=3)
+    return canvas
+
+
+def main():
+    train_samples = [draw_figure(angle) for angle in np.linspace(0, 2*np.pi, 16 + 1)][:-1]
+    grid = np_draw_tools.make_grid(train_samples)
+    cv2.imshow("", grid)
+    cv2.waitKey(1000)
+
+    train_dataset_torch = [TF.to_tensor(x) for x in train_samples] * 512
+    test_dataset_torch = [TF.to_tensor(x) for x in train_samples] * 512
 
     torch.manual_seed(42)
 
-    epochs = 20
+    epochs = 2000
     # batch_size = 32
+    # batch_size = 32
+    # batch_size = 64
     batch_size = 512
     device = "cuda:0"
-    latent_size = 16
-    hidden_size = 400
-    log_interval = 1
+    latent_size = 1
+    log_interval = 10
 
     kwargs = {'num_workers': 8, 'pin_memory': True}
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, **kwargs)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True, **kwargs)
+    train_loader = torch.utils.data.DataLoader(train_dataset_torch, batch_size=batch_size, shuffle=True, **kwargs)
+    test_loader = torch.utils.data.DataLoader(test_dataset_torch, batch_size=batch_size, shuffle=True, **kwargs)
 
-    # model = VAEFC(hidden_size=400, latent_size=latent_size).to(device)
+    # model = VAEFC(hidden_size=10, latent_size=latent_size).to(device)
     model = VAEConv(latent_size=latent_size).to(device)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-2)
 
+    # sample_lin = torch.linspace(-1, 1, 32).to(device)
+    # sample_mesh = torch.meshgrid(sample_lin, sample_lin)
+    # sample = torch.stack(sample_mesh, -1).view(-1, 2)
+    sample = torch.linspace(-1.5, 1.5, 32*10).to(device).view(-1, 1)
+    lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[300, 600], gamma=0.5)
     for epoch in range(1, epochs + 1):
         run_training_stage(model, optimizer, train_loader, device, log_interval, epoch)
+        lr_scheduler.step()
         run_testing_stage(model, test_loader, device, epoch)
->>>>>>> 1eedf44801ae14674847d90fb7ed2d8673b574a7
         with torch.no_grad():
-            sample = model.decode(sample_lattent).cpu()
-            save_image(sample.view(256, 1, 28, 28),
-<<<<<<< HEAD
+            sample_gen = model.decode(sample).cpu()
+            save_image(sample_gen.view(-1, 1, 28, 28),
                        'results/sample_' + str(epoch) + '.png', nrow=32)
-=======
-                       'results/sample_' + str(epoch) + '.png')
 
 
 if __name__ == "__main__":
     main()
->>>>>>> 1eedf44801ae14674847d90fb7ed2d8673b574a7
