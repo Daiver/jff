@@ -4,6 +4,13 @@ from scipy.spatial.transform.rotation import Rotation
 import geom_tools
 
 
+def deform_sample(sample: np.ndarray, angle: float):
+    rot = Rotation.from_euler("z", angle, degrees=False)
+    transformation = geom_tools.rotation_around_vertex(rotation_matrix=rot.as_dcm(), rotation_center=sample.mean())
+    sample = geom_tools.transform_vertices(transformation)
+    return sample
+
+
 class DatasetWithAugmentations:
     def __init__(self, dataset: Collection):
         self.dataset = dataset
@@ -14,7 +21,5 @@ class DatasetWithAugmentations:
     def __getitem__(self, idx):
         sample = self.dataset[idx]
         angle = np.random.uniform(-np.pi / 4.0, np.pi / 4.0)
-        rot = Rotation.from_euler("z", angle, degrees=False)
-        transformation = geom_tools.rotation_around_vertex(rotation_matrix=rot.as_dcm(), rotation_center=sample.mean())
-        sample = geom_tools.transform_vertices(transformation)
+        sample = deform_sample(sample, angle)
         return sample, angle
