@@ -6,7 +6,7 @@ from torch.nn import functional as F
 class VAEConv(nn.Module):
     def __init__(self, latent_size: int):
         self.latent_size = latent_size
-        self.n_last_filters = 64
+        self.n_last_filters = 32
 
         # activation = nn.ELU
         activation = lambda num_parameters: nn.PReLU(num_parameters=num_parameters)
@@ -14,9 +14,13 @@ class VAEConv(nn.Module):
         # activation = nn.ReLU
         super().__init__()
         self.encoder_base = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=8, kernel_size=5, padding=2, stride=2),  # -> 14x14
+            nn.Conv2d(in_channels=1, out_channels=8, kernel_size=3, padding=1, stride=1),  # -> 28x28
             nn.BatchNorm2d(8),
             activation(8),
+            nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, padding=1, stride=2),  # -> 14x14
+            nn.BatchNorm2d(8),
+            activation(8),
+
             nn.Conv2d(in_channels=8, out_channels=16, kernel_size=5, padding=2, stride=2),  # -> 7x7
             nn.BatchNorm2d(16),
             activation(16),
@@ -35,9 +39,16 @@ class VAEConv(nn.Module):
         self.decoder = nn.Sequential(
             nn.Conv2d(
                 in_channels=self.n_last_filters, out_channels=32,
-                kernel_size=3, padding=3, stride=1),
+                kernel_size=3, padding=2, stride=1),  # -> 5x5
             nn.BatchNorm2d(32),
             activation(32),
+
+            nn.Conv2d(
+                in_channels=self.n_last_filters, out_channels=32,
+                kernel_size=3, padding=2, stride=1),  # -> 7x7
+            nn.BatchNorm2d(32),
+            activation(32),
+
             nn.UpsamplingBilinear2d(scale_factor=2),  # -> 14x14
             nn.Conv2d(
                 in_channels=32, out_channels=16,

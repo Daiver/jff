@@ -14,13 +14,13 @@ from vae_conv_model import VAEConv
 
 torch.manual_seed(42)
 
-epochs = 20
+epochs = 50
 # batch_size = 32
-batch_size = 512
+batch_size = 64
 device = "cuda:0"
 latent_size = 16
 hidden_size = 400
-log_interval = 1
+log_interval = 100
 
 
 kwargs = {'num_workers': 8, 'pin_memory': True} 
@@ -36,6 +36,7 @@ test_loader = torch.utils.data.DataLoader(
 # model = VAEFC(hidden_size=400, latent_size=latent_size).to(device)
 model = VAEConv(latent_size=latent_size).to(device)
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
+lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[15, 25])
 
 
 # Reconstruction + KL divergence losses summed over all elements and batch
@@ -100,11 +101,12 @@ def run_testing_stage(epoch):
 
 
 if __name__ == "__main__":
+    sample_lattent = torch.randn(256, latent_size).to(device)
     for epoch in range(1, epochs + 1):
         run_training_stage(epoch)
+        lr_scheduler.step()
         run_testing_stage(epoch)
         with torch.no_grad():
-            sample = torch.randn(256, latent_size).to(device)
-            sample = model.decode(sample).cpu()
+            sample = model.decode(sample_lattent).cpu()
             save_image(sample.view(256, 1, 28, 28),
-                       'results/sample_' + str(epoch) + '.png')
+                       'results/sample_' + str(epoch) + '.png', nrow=32)
