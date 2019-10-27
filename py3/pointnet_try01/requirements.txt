@@ -1,5 +1,6 @@
 torch
 numpy
+scipy
 opencv-python
 git+https://github.com/Daiver/pygeom_tools#egg=geom_tools
 git+https://github.com/Daiver/np_draw_tools#egg=np_draw_tools
