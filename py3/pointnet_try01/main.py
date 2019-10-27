@@ -1,11 +1,12 @@
 import numpy as np
 import cv2
+from scipy.spatial.transform import Rotation
 
 import geom_tools
 import np_draw_tools
 
 import torch
-from models import SpatialTransformer
+from models import SpatialTransformer, PointNet
 
 
 def draw_geom(geom: geom_tools.Mesh, canvas_size, transformation=None) -> np.ndarray:
@@ -25,10 +26,12 @@ def main():
     print(geom_tools.summary(geom))
     print(bbox)
 
-    model = SpatialTransformer(3, 64)
+    # model = SpatialTransformer(3, 64)
+    model = PointNet(3)
     x = torch.zeros(2, 3, 10)
     x = model(x)
     print(x)
+    print(x.shape)
 
     canvas_size = (1024, 1024)
     view_transform = geom_tools.fit_to_view_transform(geom.bbox(), canvas_size)
