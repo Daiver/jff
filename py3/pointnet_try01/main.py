@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from copy import deepcopy
 from scipy.spatial.transform import Rotation
 
 import geom_tools
@@ -10,6 +11,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from models import SpatialTransformer, PointNet
+from dataset_tools import DatasetWithAugmentations
 
 
 def draw_geom(geom: geom_tools.Mesh, canvas_size, transformation=None) -> np.ndarray:
@@ -38,10 +40,24 @@ def main():
 
     canvas_size = (1024, 1024)
     view_transform = geom_tools.fit_to_view_transform(geom.bbox(), canvas_size)
-    geom.vertices = geom_tools.rotated_and_translated(Rotation.from_euler("z", 50, degrees=True).as_dcm(), [0, 0, 0], geom.vertices)
-    canvas = draw_geom(geom, canvas_size, view_transform)
-    cv2.imshow("", canvas)
-    cv2.waitKey()
+
+    # canvas = draw_geom(geom, canvas_size, view_transform)
+    # cv2.imshow("", canvas)
+    # cv2.waitKey()
+
+    dataset = [
+        geom.vertices,
+        geom.vertices,
+        geom.vertices,
+        geom.vertices,
+    ]
+    data_transformer = DatasetWithAugmentations(dataset)
+    for sample, angle in data_transformer:
+        geom.vertices = sample
+        canvas = draw_geom(geom, canvas_size, view_transform)
+        print(angle)
+        cv2.imshow("", canvas)
+        cv2.waitKey()
 
 
 if __name__ == "__main__":

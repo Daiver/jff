@@ -5,9 +5,9 @@ import geom_tools
 
 
 def deform_sample(sample: np.ndarray, angle: float):
-    rot = Rotation.from_euler("z", angle, degrees=False)
-    transformation = geom_tools.rotation_around_vertex(rotation_matrix=rot.as_dcm(), rotation_center=sample.mean())
-    sample = geom_tools.transform_vertices(transformation)
+    rot = Rotation.from_euler("z", angle, degrees=False).as_dcm()
+    transformation = geom_tools.rotation_around_vertex(rotation_matrix=rot, rotation_center=sample.mean(axis=0))
+    sample = geom_tools.transform_vertices(transformation, sample)
     return sample
 
 
