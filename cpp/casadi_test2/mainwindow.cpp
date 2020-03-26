@@ -3,17 +3,22 @@
 
 #include <iostream>
 #include "casadi/casadi.hpp"
+#include "casadi/core/calculus.hpp"
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    using namespace casadi;
 
-    const casadi::SX x = casadi::SX::sym("x");
-    const casadi::SX y = casadi::SX::sym("y");
-    const auto res = x*x + y;
-    std::cout << res << std::endl;
+    const SX vertices = SX::sym("vertices", 3, 2);    
+    SX x2 = vertices;
+    x2 = x2 + x2;
+
+    std::cout << vertices << std::endl;
+    std::cout << x2 << std::endl;
 }
 
 MainWindow::~MainWindow()
