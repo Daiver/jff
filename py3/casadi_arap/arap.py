@@ -39,8 +39,11 @@ def make_rot_arap_residuals(adjacency, old_vertices_positions, new_vertices_rota
 
         fan_rotation = new_vertices_rotation[:, 3 * v_ind: 3 * (v_ind + 1)]
 
-        residuals.append(
-            fan_rot_arap_residual(fan_rotation, new_fan_center, new_fan_ring1, old_fan_center, old_fan_ring1))
+        loc_residuals = fan_rot_arap_residual(
+            fan_rotation,
+            new_fan_center, new_fan_ring1,
+            old_fan_center, old_fan_ring1)
+        residuals.append(loc_residuals)
     residuals = casadi.vertcat(*residuals)
     return residuals
 

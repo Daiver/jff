@@ -87,7 +87,8 @@ def deform(
     print(f"jac_func elapsed {time.time() - start_jac_func}")
 
     print(f"construction elapsed {time.time() - start}")
-    exit(0)
+    # exit(0)
+
     def compute_residuals_and_jac(x):
         start = time.time()
         residuals_val = residual_func(x, vertices_val, targets_val).toarray()
@@ -106,7 +107,7 @@ def deform(
         init_vertices.reshape(-1)
     ))
 
-    res = perform_gauss_newton(init_vars, compute_residuals_and_jac, 50, dumping_factor=0.5)
+    res = perform_gauss_newton(init_vars, compute_residuals_and_jac, 50, dumping_factor=1e-9)
     new_vertices = res[9 * n_vertices:].reshape(-1, 3).T
     return new_vertices
 
@@ -172,8 +173,8 @@ def test02():
 
 
 def main():
-    # test01()
-    test02()
+    test01()
+    # test02()
 
 
 if __name__ == '__main__':
