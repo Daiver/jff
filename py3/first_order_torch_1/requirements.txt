@@ -1,0 +1,5 @@
+torch
+torchvision
+numpy
+opencv-python
+git+https://github.com/Daiver/np_draw_tools

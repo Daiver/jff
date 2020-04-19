@@ -4,14 +4,17 @@
 __global__
 void add(int n, float *x, float *y)
 {
-    for(int i = 0; i < n; ++i){
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    //int stride = blockDim.x * gridDim.x;
+    /*for(int i = index; i < n; i += stride){
         y[i] = x[i] + y[i];
-    }
+    }*/
+    y[index] = x[index] + y[index];
 }
 
 int main(int, char **)
 {
-    const int N = 1 << 2;
+    const int N = 1 << 30;
     float *x;
     float *y;
     std::cout << "Before alloc" << std::endl;
@@ -29,7 +32,11 @@ int main(int, char **)
     std::cout << std::flush;
     std::cout << "Before add" << std::endl;
     std::cout << std::flush;
-    add<<<1, 1>>>(N, x, y);
+    // add<<<1, 1>>>(N, x, y);
+    // add<<<1, 256>>>(N, x, y);
+    const int blockSize = 256;
+    const int nBlocks = (N + blockSize - 1) / blockSize;
+    add<<<nBlocks, blockSize>>>(N, x, y);
 
     std::cout << "Before sync" << std::endl;
     cudaDeviceSynchronize();
