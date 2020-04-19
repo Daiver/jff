@@ -5,6 +5,7 @@ import cv2
 import torch
 from torch.utils.data import DataLoader
 import torch.nn as nn
+import torch.optim as optim
 import torch.nn.functional as F
 import torchvision
 
@@ -53,6 +54,19 @@ def mk_translation_sequence(background: np.ndarray, n_samples: int, samples_make
     ], dtype=np.float32)
 
 
+def torch_translate_images(images, translations, device):
+    n_samples = images.shape[0]
+    assert translations.shape[0] == n_samples
+    rotations = torch.from_numpy(np.tile(np.eye(2, dtype=np.float32), (n_samples, 1, 1))).to(device)
+
+    translations = translations.view(-1, 2, 1)
+    thetas = torch.cat((rotations, translations), 2)
+    grid = F.affine_grid(thetas, size=images.shape)
+
+    res = F.grid_sample(images, grid)
+    return res
+
+
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, stride: int = 1):
         assert stride == 1 or stride == 2
@@ -94,6 +108,8 @@ class Model(nn.Module):
 
         n_fc_in = n_feature_channels * 4 * 4
         self.fc = nn.Linear(n_fc_in, 2)
+        self.fc.weight.data.zero_()
+        self.fc.bias.data.zero_()
 
     def forward(self, x):
         x = self.first_conv(x)  # 64 -> 32
@@ -112,7 +128,8 @@ def main():
     n_samples = 200
     device = "cuda"
     batch_size = 32
-    n_epochs = 10
+    n_epochs = 100
+    lr = 1e-3
 
     background = draw_background(canvas_size)
     fig1 = draw_fig1_on_background(background, [10, 10])
@@ -125,17 +142,61 @@ def main():
     cv2.waitKey(100)
 
     dataset = torch.from_numpy(figs).permute([0, 3, 1, 2])
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
     model = Model().to(device)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
 
     for epoch_ind in range(n_epochs):
+        losses = []
         for batch_ind, batch in enumerate(dataloader):
-            n_real_samples = batch.shape[0]
+            batch = batch.to(device)
+            translations = model(batch)
 
+            n_images = batch.shape[0]
+            assert n_images % 2 == 0
+            divide_ind = n_images // 2
+            base_images = batch[:divide_ind]
+            target_images = batch[divide_ind:]
 
-    ans = model(dataset.to(device))
+            base_translations = translations[:divide_ind]
+            target_translations = translations[divide_ind:]
 
+            final_translations = target_translations - base_translations
+
+            transformed_images = torch_translate_images(base_images, final_translations, device)
+
+            loss = F.l1_loss(transformed_images, target_images)
+
+            losses.append(loss.item())
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+        print(f"{epoch_ind + 1}/{n_epochs} loss: {np.mean(losses)}")
+
+    images = dataset[:20].to(device)
+    translations = model(images)
+
+    n_images = images.shape[0]
+    assert n_images % 2 == 0
+    divide_ind = n_images // 2
+    base_images = images[:divide_ind]
+    target_images = images[divide_ind:]
+    base_translations = translations[:divide_ind]
+    target_translations = translations[divide_ind:]
+    final_translations = target_translations - base_translations
+    transformed_images = torch_translate_images(base_images, final_translations, device)
+
+    for x, y in zip(target_images, transformed_images):
+        x = x.cpu().detach().permute([1, 2, 0]).numpy()
+        y = y.cpu().detach().permute([1, 2, 0]).numpy()
+        diff = np.abs(x - y)
+
+        cv2.imshow("x", x)
+        cv2.imshow("y", y)
+        cv2.imshow("d", diff)
+        cv2.waitKey()
 
 
 if __name__ == '__main__':
