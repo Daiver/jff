@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 import np_draw_tools
 
-from models import KpPredictor
+from models import KpPredictor, Hourglass
 
 seed = 42
 random.seed(seed)
@@ -88,7 +88,15 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
     kp_predictor = KpPredictor().to(device)
-    optimizer = optim.Adam(kp_predictor.parameters(), lr=lr)
+    occlusion_predictor = Hourglass(n_in_channels=3, n_out_channels=1, n_feature_channels=16).to(device)
+    refiner = Hourglass(n_in_channels=3, n_out_channels=3, n_feature_channels=16).to(device)
+
+    params_to_optimize = \
+        list(kp_predictor.parameters()) + \
+        list(occlusion_predictor.parameters()) + \
+        list(refiner.parameters())
+
+    optimizer = optim.Adam(params_to_optimize, lr=lr)
 
     for epoch_ind in range(n_epochs):
         losses = []
@@ -108,8 +116,12 @@ def main():
             final_translations = target_translations - base_translations
 
             transformed_images = torch_translate_images(base_images, final_translations, device)
+            occlusion_masks = torch.sigmoid(occlusion_predictor(transformed_images))
+            transformed_images_filtered = occlusion_masks * transformed_images
+            result_images = refiner(transformed_images_filtered)
 
-            loss = F.l1_loss(transformed_images, target_images)
+            loss = F.l1_loss(result_images, target_images)
+            # loss = F.l1_loss(transformed_images, target_images)
 
             losses.append(loss.item())
             optimizer.zero_grad()
