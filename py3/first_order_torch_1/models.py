@@ -96,11 +96,15 @@ class KpPredictor(nn.Module):
 
 
 class Hourglass(nn.Module):
-    def __init__(self):
+    def __init__(
+            self,
+            n_in_channels,
+            n_out_channels,
+            n_feature_channels=16
+    ):
         super().__init__()
-        n_feature_channels = 32
         self.first_conv = nn.Sequential(
-            nn.Conv2d(3, n_feature_channels, kernel_size=7, padding=3, stride=1),
+            nn.Conv2d(n_in_channels, n_feature_channels, kernel_size=7, padding=3, stride=1),
             nn.BatchNorm2d(n_feature_channels),
             nn.LeakyReLU()
         )
@@ -109,14 +113,25 @@ class Hourglass(nn.Module):
         self.down_block3 = ResidualBlock(in_channels=n_feature_channels, out_channels=n_feature_channels, stride=2)
         self.down_block4 = ResidualBlock(in_channels=n_feature_channels, out_channels=n_feature_channels, stride=2)
 
+        self.up_block4 = LinkNetBlock(in_channels=n_feature_channels, out_channels=n_feature_channels, scale=2)
+        self.up_block3 = LinkNetBlock(in_channels=n_feature_channels, out_channels=n_feature_channels, scale=2)
+        self.up_block2 = LinkNetBlock(in_channels=n_feature_channels, out_channels=n_feature_channels, scale=2)
+        self.up_block1 = LinkNetBlock(in_channels=n_feature_channels, out_channels=n_feature_channels, scale=2)
+
+        self.final = nn.Conv2d(
+            in_channels=n_feature_channels, out_channels=n_out_channels, kernel_size=3, padding=1, stride=1)
+
     def forward(self, x):
-        x = self.first_conv(x)  # 64 -> 64
-        x = self.block1(x)      # 64 -> 32
-        x = self.block2(x)      # 32 -> 16
-        x = self.block3(x)      # 16 -> 8
-        x = self.block4(x)      # 8  -> 4
+        first = self.first_conv(x)  # 64 -> 64
 
-        x = x.view(x.shape[0], -1)
-        x = self.fc(x)
+        down1 = self.down_block1(first)  # 64 -> 32
+        down2 = self.down_block2(down1)  # 32 -> 16
+        down3 = self.down_block3(down2)  # 16 -> 8
+        down4 = self.down_block4(down3)  # 8  -> 4
 
-        return x
+        up4 = self.up_block4(down4) + down3  # 4  -> 8
+        up3 = self.up_block3(up4) + down2    # 8  -> 16
+        up2 = self.up_block2(up3) + down1    # 16 -> 32
+        up1 = self.up_block1(up2) + first    # 32 -> 64
+
+        return self.final(up1)
