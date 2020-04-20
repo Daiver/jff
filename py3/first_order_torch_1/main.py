@@ -20,15 +20,15 @@ torch.manual_seed(seed)
 def draw_background(canvas_size: Union[List[int], Tuple[int, int]]):
     canvas = np.zeros((canvas_size[0], canvas_size[1], 3), dtype=np.float32)
     scale = canvas_size[0] / 64.0 * 0.5
-    # cv2.putText(
-    #     canvas, "A",
-    #     (canvas_size[0] // 2, canvas_size[1] // 2),
-    #     cv2.FONT_HERSHEY_COMPLEX, scale, (0.5, 0.5, 0.5))
-    #
     cv2.putText(
-        canvas, "B",
-        (canvas_size[0] // 2 - canvas_size[0] // 3, canvas_size[1] // 2 + canvas_size[1] // 4),
-        cv2.FONT_HERSHEY_COMPLEX, scale, (0.0, 0.7, 0.5))
+        canvas, "A",
+        (canvas_size[0] // 2, canvas_size[1] // 2),
+        cv2.FONT_HERSHEY_COMPLEX, scale, (0.5, 0.5, 0.5))
+    #
+    # cv2.putText(
+    #     canvas, "B",
+    #     (canvas_size[0] // 2 - canvas_size[0] // 3, canvas_size[1] // 2 + canvas_size[1] // 4),
+    #     cv2.FONT_HERSHEY_COMPLEX, scale, (0.0, 0.7, 0.5))
     return canvas
 
 
@@ -46,7 +46,7 @@ def draw_fig1_on_background(background: np.ndarray, pos) -> np.ndarray:
 
 
 def mk_translation_sequence(background: np.ndarray, n_samples: int, samples_maker) -> np.ndarray:
-    random_translations = np.random.uniform(-20, 20, size=(n_samples, 2))
+    random_translations = np.random.uniform(-10, 10, size=(n_samples, 2))
     return np.array([
         samples_maker(background, pos)
         for pos in random_translations
@@ -70,9 +70,9 @@ def main():
     canvas_size = (64, 64)
     n_samples = 2048
     device = "cuda"
-    batch_size = 32
-    n_epochs = 100
-    lr = 1e-3
+    batch_size = 256
+    n_epochs = 120
+    lr = 2e-4
 
     background = draw_background(canvas_size)
     fig1 = draw_fig1_on_background(background, [10, 10])
@@ -88,8 +88,8 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
     kp_predictor = KpPredictor().to(device)
-    occlusion_predictor = Hourglass(n_in_channels=3, n_out_channels=1, n_feature_channels=16).to(device)
-    refiner = Hourglass(n_in_channels=3, n_out_channels=3, n_feature_channels=16).to(device)
+    occlusion_predictor = Hourglass(n_in_channels=3, n_out_channels=1, n_feature_channels=32).to(device)
+    refiner = Hourglass(n_in_channels=6, n_out_channels=3, n_feature_channels=32).to(device)
 
     params_to_optimize = \
         list(kp_predictor.parameters()) + \
@@ -118,7 +118,12 @@ def main():
             transformed_images = torch_translate_images(base_images, final_translations, device)
             occlusion_masks = torch.sigmoid(occlusion_predictor(transformed_images))
             transformed_images_filtered = occlusion_masks * transformed_images
-            result_images = refiner(transformed_images_filtered)
+            # result_images = torch.sigmoid(refiner(transformed_images_filtered))
+            result_images = (
+                refiner(
+                    torch.cat((base_images, transformed_images_filtered), dim=1)
+                )
+            )
 
             loss = F.l1_loss(result_images, target_images)
             # loss = F.l1_loss(transformed_images, target_images)
@@ -146,13 +151,23 @@ def main():
     final_translations = target_translations - base_translations
     transformed_images = torch_translate_images(base_images, final_translations, device)
 
-    for x, y in zip(target_images, transformed_images):
+    occlusion_masks = torch.sigmoid(occlusion_predictor(transformed_images))
+    transformed_images_filtered = occlusion_masks * transformed_images
+    result_images = (
+        refiner(
+            torch.cat((base_images, transformed_images_filtered), dim=1)
+        )
+    )
+
+    for x, y, o, t in zip(target_images, result_images, occlusion_masks, transformed_images_filtered):
         x = x.cpu().detach().permute([1, 2, 0]).numpy()
         y = y.cpu().detach().permute([1, 2, 0]).numpy()
+        o = o.cpu().detach().permute([1, 2, 0]).numpy()
         diff = np.abs(x - y)
 
         cv2.imshow("x", x)
         cv2.imshow("y", y)
+        cv2.imshow("o", o)
         cv2.imshow("d", diff)
         cv2.waitKey()
 

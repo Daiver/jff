@@ -55,6 +55,11 @@ class LinkNetBlock(nn.Module):
         else:
             self.shortcut = None
 
+        for x in self.modules():
+            if isinstance(x, nn.BatchNorm2d):
+                x.bias.data.zero_()
+                x.weight.data.zero_()
+
     def forward(self, x):
         z = self.strum(x)
         if self.shortcut is not None:
@@ -118,8 +123,11 @@ class Hourglass(nn.Module):
         self.up_block2 = LinkNetBlock(in_channels=n_feature_channels, out_channels=n_feature_channels, scale=2)
         self.up_block1 = LinkNetBlock(in_channels=n_feature_channels, out_channels=n_feature_channels, scale=2)
 
-        self.final = nn.Conv2d(
-            in_channels=n_feature_channels, out_channels=n_out_channels, kernel_size=3, padding=1, stride=1)
+        self.final = nn.Sequential(
+            ResidualBlock(in_channels=n_feature_channels, out_channels=n_feature_channels, stride=1),
+            nn.Conv2d(
+                in_channels=n_feature_channels, out_channels=n_out_channels, kernel_size=3, padding=1, stride=1)
+        )
 
     def forward(self, x):
         first = self.first_conv(x)  # 64 -> 64
