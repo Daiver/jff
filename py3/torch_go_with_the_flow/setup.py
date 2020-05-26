@@ -8,5 +8,5 @@ setup(
     description='',
     author='Daiver',
     author_email='',
-    url=''
+    url='', requires=['torch', 'numpy']
 )
