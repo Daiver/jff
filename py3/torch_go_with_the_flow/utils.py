@@ -1,7 +1,6 @@
+import multiprocessing
 import cv2
 import numpy as np
-
-from main import canvas_size
 
 
 def visualize_optical_flow(flow: np.ndarray, out_pixel_type=np.float32) -> np.ndarray:
@@ -14,15 +13,15 @@ def visualize_optical_flow(flow: np.ndarray, out_pixel_type=np.float32) -> np.nd
     flow_vis_hsv[..., 0] = ang * 180 / np.pi / 2
     flow_vis_hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
     flow_vis_rgb = cv2.cvtColor(flow_vis_hsv, cv2.COLOR_HSV2BGR)
-    print(flow_vis_rgb.max(), flow_vis_rgb.min())
+    # print(flow_vis_rgb.max(), flow_vis_rgb.min())
     return flow_vis_rgb.astype(out_pixel_type)
 
 
 def warp_by_flow(img: np.ndarray, flow: np.ndarray) -> np.ndarray:
-    remap_flow = np.zeros((canvas_size[1], canvas_size[0], 2), dtype=np.float32)
-    for row in range(canvas_size[1]):
+    remap_flow = np.zeros((flow.shape[0], flow.shape[1], 2), dtype=np.float32)
+    for row in range(flow.shape[0]):
         remap_flow[row, :, 1] = row
-    for col in range(canvas_size[0]):
+    for col in range(flow.shape[1]):
         remap_flow[:, col, 0] = col
     remap_flow += flow
 
@@ -37,17 +36,23 @@ def warp_by_flow(img: np.ndarray, flow: np.ndarray) -> np.ndarray:
 def compute_flow(img0: np.ndarray, img1: np.ndarray) -> np.ndarray:
     flow = cv2.optflow.calcOpticalFlowSF(
         img0.astype(np.uint8), img1.astype(np.uint8),
-        layers=7, averaging_block_size=7, max_flow=10
+        layers=7, averaging_block_size=7, max_flow=7
     )
     return flow
+
+
+def compute_flow_tuple(imgs: (np.ndarray, np.ndarray)) -> np.ndarray:
+    return compute_flow(imgs[0], imgs[1])
 
 
 def compute_flow_for_clip(images: [np.ndarray]) -> [np.ndarray]:
     n_images = len(images)
     assert n_images > 1
 
-    res = []
+    pool = multiprocessing.Pool()
+    pairs = []
     for i in range(0, n_images - 1):
-        res.append(compute_flow(images[i], images[i + 1]))
+        pairs.append((images[i], images[i + 1]))
+    res = pool.map(compute_flow_tuple, pairs)
 
     return res
