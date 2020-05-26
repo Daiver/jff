@@ -32,3 +32,22 @@ def warp_by_flow(img: np.ndarray, flow: np.ndarray) -> np.ndarray:
         interpolation=cv2.INTER_CUBIC)
 
     return warp
+
+
+def compute_flow(img0: np.ndarray, img1: np.ndarray) -> np.ndarray:
+    flow = cv2.optflow.calcOpticalFlowSF(
+        img0.astype(np.uint8), img1.astype(np.uint8),
+        layers=7, averaging_block_size=7, max_flow=10
+    )
+    return flow
+
+
+def compute_flow_for_clip(images: [np.ndarray]) -> [np.ndarray]:
+    n_images = len(images)
+    assert n_images > 1
+
+    res = []
+    for i in range(0, n_images - 1):
+        res.append(compute_flow(images[i], images[i + 1]))
+
+    return res
