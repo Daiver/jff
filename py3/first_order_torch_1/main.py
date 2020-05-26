@@ -23,12 +23,12 @@ def draw_background(canvas_size: Union[List[int], Tuple[int, int]]):
     cv2.putText(
         canvas, "A",
         (canvas_size[0] // 2, canvas_size[1] // 2),
-        cv2.FONT_HERSHEY_COMPLEX, scale, (0.5, 0.5, 0.5))
-    #
-    # cv2.putText(
-    #     canvas, "B",
-    #     (canvas_size[0] // 2 - canvas_size[0] // 3, canvas_size[1] // 2 + canvas_size[1] // 4),
-    #     cv2.FONT_HERSHEY_COMPLEX, scale, (0.0, 0.7, 0.5))
+        cv2.FONT_HERSHEY_COMPLEX, scale, (0.5, 0.5, 1))
+
+    cv2.putText(
+        canvas, "B",
+        (canvas_size[0] // 2 - canvas_size[0] // 3, canvas_size[1] // 2 + canvas_size[1] // 4),
+        cv2.FONT_HERSHEY_COMPLEX, scale, (0.0, 0.7, 0.5))
     return canvas
 
 
@@ -71,8 +71,8 @@ def main():
     n_samples = 2048
     device = "cuda"
     batch_size = 256
-    n_epochs = 120
-    lr = 2e-4
+    n_epochs = 300
+    lr = 5e-4
 
     background = draw_background(canvas_size)
     fig1 = draw_fig1_on_background(background, [10, 10])
@@ -89,7 +89,7 @@ def main():
 
     kp_predictor = KpPredictor().to(device)
     occlusion_predictor = Hourglass(n_in_channels=3, n_out_channels=1, n_feature_channels=32).to(device)
-    refiner = Hourglass(n_in_channels=6, n_out_channels=3, n_feature_channels=32).to(device)
+    refiner = Hourglass(n_in_channels=3, n_out_channels=3, n_feature_channels=128).to(device)
 
     params_to_optimize = \
         list(kp_predictor.parameters()) + \
@@ -121,7 +121,7 @@ def main():
             # result_images = torch.sigmoid(refiner(transformed_images_filtered))
             result_images = (
                 refiner(
-                    torch.cat((base_images, transformed_images_filtered), dim=1)
+                    torch.cat((transformed_images, ), dim=1)
                 )
             )
 
@@ -155,7 +155,7 @@ def main():
     transformed_images_filtered = occlusion_masks * transformed_images
     result_images = (
         refiner(
-            torch.cat((base_images, transformed_images_filtered), dim=1)
+            torch.cat((transformed_images, ), dim=1)
         )
     )
 

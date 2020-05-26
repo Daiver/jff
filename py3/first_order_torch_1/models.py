@@ -73,7 +73,7 @@ class KpPredictor(nn.Module):
         super().__init__()
         n_feature_channels = 32
         self.first_conv = nn.Sequential(
-            nn.Conv2d(3, n_feature_channels, kernel_size=7, padding=3, stride=1),
+            nn.Conv2d(3, n_feature_channels, kernel_size=3, padding=1, stride=1),
             nn.BatchNorm2d(n_feature_channels),
             nn.LeakyReLU()
         )
@@ -109,7 +109,7 @@ class Hourglass(nn.Module):
     ):
         super().__init__()
         self.first_conv = nn.Sequential(
-            nn.Conv2d(n_in_channels, n_feature_channels, kernel_size=7, padding=3, stride=1),
+            nn.Conv2d(n_in_channels, n_feature_channels, kernel_size=3, padding=1, stride=1),
             nn.BatchNorm2d(n_feature_channels),
             nn.LeakyReLU()
         )
