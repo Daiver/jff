@@ -1,4 +1,5 @@
 import time
+import pickle
 import numpy as np
 import cv2
 
@@ -6,11 +7,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.utils.data import DataLoader
 
 import np_draw_tools
 
 import utils
 from utils import visualize_optical_flow, warp_by_flow
+import torch_tools
+from image2pointsdataset import Image2PointsDataset
+from clip2flowdataset import Clip2FlowDataset
 
 canvas_size = (128, 128)
 
@@ -23,17 +28,45 @@ def draw_sample(coord):
 
 
 def generate_dataset():
-    n_samples = 80
+    n_x_steps = 80
+    # n_x_steps = 2
+    n_y_steps = 3
 
-    point = [25, 50]
+    point_orig = [25, 50]
     images = []
     positions = []
-    for i in range(n_samples):
-        positions.append(point)
-        images.append(draw_sample(point))
-        point[0] += 1
+    for dy in range(n_y_steps):
+        for dx in range(n_x_steps):
+            point = [point_orig[0] + dx, point_orig[1] + 5 * dy]
+            positions.append(point)
+            images.append(draw_sample(point))
 
     return images, positions
+
+
+def generate_dataset_and_compute_flow():
+    images, positions = generate_dataset()
+
+    time_start = time.time()
+    flows = utils.compute_flow_for_clip(images)
+    print(f"elapsed {time.time() - time_start}")
+    return images, positions, flows
+
+
+def visualize_dataset(images, positions, flows):
+    for i in range(len(images) - 1):
+        img0 = images[i]
+        img1 = images[i + 1]
+        flow = flows[i]
+        warp = warp_by_flow(img1, flow)
+
+        flow_vis_rgb = visualize_optical_flow(flow)
+
+        cv2.imshow("i0_w", warp)
+        cv2.imshow("img0", img0)
+        cv2.imshow("img1", img1)
+        cv2.imshow("flow", flow_vis_rgb)
+        np_draw_tools.wait_esc()
 
 
 class ResidualBlock(nn.Module):
@@ -72,7 +105,7 @@ class Model(nn.Module):
         super().__init__()
 
         n_outs = 2
-        n_feats = 32
+        n_feats = 16
 
         self.backbone = nn.Sequential(
             nn.Conv2d(in_channels=3, out_channels=n_feats, kernel_size=3, stride=1, padding=1, bias=False),
@@ -88,37 +121,101 @@ class Model(nn.Module):
 
         self.head = nn.Sequential(
             nn.Linear(in_features=4*4*n_feats, out_features=n_feats),
-            nn.BatchNorm2d(n_feats),
+            nn.BatchNorm1d(n_feats),
             nn.LeakyReLU(inplace=True),
             nn.Linear(in_features=n_feats, out_features=n_outs),
         )
 
     def forward(self, x):
+        batch_size = x.shape[0]
         x = self.backbone(x)
-        x = F.adaptive_avg_pool2d(x, output_size=(4, 4))
+        x = F.adaptive_avg_pool2d(x, output_size=(4, 4)).view(batch_size, -1)
         x = self.head(x)
         return x
 
 
 def main():
-    train_images, train_positions = generate_dataset()
+    device = 'cuda:0'
+    batch_size = 16
+    lr = 1e-4
+    n_epochs = 1000
 
-    time_start = time.time()
-    flows = utils.compute_flow_for_clip(train_images)
-    print(f"elapsed {time.time() - time_start}")
-    # for i in range(len(train_images) - 1):
-    #     img0 = train_images[i]
-    #     img1 = train_images[i + 1]
-    #     flow = flows[i]
-    #     warp = warp_by_flow(img1, flow)
-    #
-    #     flow_vis_rgb = visualize_optical_flow(flow)
-    #
-    #     cv2.imshow("i0_w", warp)
-    #     cv2.imshow("img0", img0)
-    #     cv2.imshow("img1", img1)
-    #     cv2.imshow("flow", flow_vis_rgb)
-    #     np_draw_tools.wait_esc()
+    model = Model().to(device)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+    # criterion = nn.MSELoss()
+    criterion = nn.L1Loss()
+
+    train_images, train_positions, train_flows = generate_dataset_and_compute_flow()
+    # visualize_dataset(train_images, train_positions, train_flows)
+    train_points_dataset_full = Image2PointsDataset(train_images, train_positions)
+    train_points_dataset = Image2PointsDataset(train_images[:5], train_positions[:5])
+    train_flows_dataset = Clip2FlowDataset(train_images, train_flows)
+
+    val_points_loader = DataLoader(train_points_dataset_full, batch_size=batch_size, shuffle=True)
+    train_points_loader = DataLoader(train_points_dataset, batch_size=batch_size, shuffle=True)
+    train_flows_loader = DataLoader(train_flows_dataset, batch_size=batch_size, shuffle=True)
+
+    for epoch in range(100):
+        model.train()
+        losses = []
+        for iter_ind, batch_data in enumerate(train_points_loader):
+            images, positions = batch_data
+            images, positions = images.to(device), positions.to(device)
+            positions = torch_tools.screen_to_norm(positions, images.shape[3], images.shape[2])
+
+            predict = model(images)
+            loss = criterion(predict, positions)
+            losses.append(loss.item())
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+        model.eval()
+        val_losses = []
+        for iter_ind, batch_data in enumerate(val_points_loader):
+            with torch.no_grad():
+                images, positions = batch_data
+                images, positions = images.to(device), positions.to(device)
+                positions = torch_tools.screen_to_norm(positions, images.shape[3], images.shape[2])
+
+                predict = model(images)
+                loss = criterion(predict, positions)
+                val_losses.append(loss.item())
+
+        print(f"{epoch + 1}/{n_epochs}: loss {np.mean(losses)}, val_loss {np.mean(val_losses)}")
+
+    for epoch in range(n_epochs):
+        model.train()
+        losses = []
+        for iter_ind, batch_data in enumerate(train_flows_loader):
+            images0, images1, flows = batch_data
+            images0, images1, flows = images0.to(device), images1.to(device), flows.to(device)
+
+            predict0 = model(images0)
+            predict1 = model(images1)
+
+            diff = predict1 - predict0
+            flow_values = F.grid_sample(flows, predict0.view(-1, 1, 1, 2), align_corners=True).view(-1, 2)
+
+            loss = criterion(diff, flow_values)
+            losses.append(loss.item())
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+        model.eval()
+        val_losses = []
+        for iter_ind, batch_data in enumerate(val_points_loader):
+            with torch.no_grad():
+                images, positions = batch_data
+                images, positions = images.to(device), positions.to(device)
+                positions = torch_tools.screen_to_norm(positions, images.shape[3], images.shape[2])
+
+                predict = model(images)
+                loss = criterion(predict, positions)
+                val_losses.append(loss.item())
+
+        print(f"{epoch + 1}/{n_epochs}: loss {np.mean(losses)}, val_loss {np.mean(val_losses)}")
 
 
 if __name__ == '__main__':
