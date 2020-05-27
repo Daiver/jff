@@ -28,18 +28,23 @@ def draw_sample(coord):
 
 
 def generate_dataset():
-    n_x_steps = 80
+    n_x_steps = 85
     # n_x_steps = 2
-    n_y_steps = 3
+    n_y_steps = 1
 
     point_orig = [25, 50]
     images = []
     positions = []
-    for dy in range(n_y_steps):
-        for dx in range(n_x_steps):
-            point = [point_orig[0] + dx, point_orig[1] + 5 * dy]
-            positions.append(point)
-            images.append(draw_sample(point))
+
+    for dx in range(n_x_steps):
+        point = [point_orig[0] + dx, point_orig[1]]
+        positions.append(point)
+        images.append(draw_sample(point))
+
+    for dx in range(n_x_steps):
+        point = [point_orig[0] + n_x_steps - dx, point_orig[1] + 5]
+        positions.append(point)
+        images.append(draw_sample(point))
 
     return images, positions
 
@@ -137,7 +142,7 @@ class Model(nn.Module):
 def main():
     device = 'cuda:0'
     batch_size = 16
-    lr = 1e-4
+    lr = 5e-4
     n_epochs = 1000
 
     model = Model().to(device)
@@ -148,14 +153,20 @@ def main():
     train_images, train_positions, train_flows = generate_dataset_and_compute_flow()
     # visualize_dataset(train_images, train_positions, train_flows)
     train_points_dataset_full = Image2PointsDataset(train_images, train_positions)
-    train_points_dataset = Image2PointsDataset(train_images[:5], train_positions[:5])
+
+    supervised_indices = range(0, len(train_images), 10)
+    print(supervised_indices)
+    train_points_dataset = Image2PointsDataset(
+        np.array(train_images)[supervised_indices],
+        np.array(train_positions)[supervised_indices]
+    )
     train_flows_dataset = Clip2FlowDataset(train_images, train_flows)
 
     val_points_loader = DataLoader(train_points_dataset_full, batch_size=batch_size, shuffle=True)
-    train_points_loader = DataLoader(train_points_dataset, batch_size=batch_size, shuffle=True)
-    train_flows_loader = DataLoader(train_flows_dataset, batch_size=batch_size, shuffle=True)
+    train_points_loader = DataLoader(train_points_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+    train_flows_loader = DataLoader(train_flows_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
-    for epoch in range(100):
+    for epoch in range(300):
         model.train()
         losses = []
         for iter_ind, batch_data in enumerate(train_points_loader):
@@ -196,6 +207,7 @@ def main():
 
             diff = predict1 - predict0
             flow_values = F.grid_sample(flows, predict0.view(-1, 1, 1, 2), align_corners=True).view(-1, 2)
+            flow_values = torch_tools.screen_to_norm(flow_values, images0.shape[3], images0.shape[2]) + 1
 
             loss = criterion(diff, flow_values)
             losses.append(loss.item())
@@ -203,6 +215,19 @@ def main():
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+        for iter_ind, batch_data in enumerate(train_points_loader):
+            images, positions = batch_data
+            images, positions = images.to(device), positions.to(device)
+            positions = torch_tools.screen_to_norm(positions, images.shape[3], images.shape[2])
+
+            predict = model(images)
+            loss = criterion(predict, positions)
+            losses.append(loss.item())
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
         model.eval()
         val_losses = []
         for iter_ind, batch_data in enumerate(val_points_loader):
