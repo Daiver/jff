@@ -1,23 +1,16 @@
-import time
-import pickle
 import numpy as np
 import cv2
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 from torch.utils.data import DataLoader
 
 import np_draw_tools
 
-import utils
-from utils import visualize_optical_flow, warp_by_flow
 import torch_tools
 from image2pointsdataset import Image2PointsDataset
-from clip2flowdataset import Clip2FlowDataset
 
-from train import Model, generate_dataset_and_compute_flow, generate_dataset
+from generate_data import generate_dataset, generate_dataset_and_compute_flow
+from model import Model
 
 
 def main():
