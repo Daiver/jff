@@ -110,7 +110,7 @@ class Model(nn.Module):
         super().__init__()
 
         n_outs = 2
-        n_feats = 16
+        n_feats = 32
 
         self.backbone = nn.Sequential(
             nn.Conv2d(in_channels=3, out_channels=n_feats, kernel_size=3, stride=1, padding=1, bias=False),
@@ -141,7 +141,7 @@ class Model(nn.Module):
 
 def main():
     device = 'cuda:0'
-    batch_size = 16
+    batch_size = 64
     lr = 5e-4
     n_epochs = 1000
 
@@ -154,7 +154,7 @@ def main():
     # visualize_dataset(train_images, train_positions, train_flows)
     train_points_dataset_full = Image2PointsDataset(train_images, train_positions)
 
-    supervised_indices = range(0, len(train_images), 10)
+    supervised_indices = list(range(0, len(train_images), 50))
     print(supervised_indices)
     train_points_dataset = Image2PointsDataset(
         np.array(train_images)[supervised_indices],
@@ -163,8 +163,8 @@ def main():
     train_flows_dataset = Clip2FlowDataset(train_images, train_flows)
 
     val_points_loader = DataLoader(train_points_dataset_full, batch_size=batch_size, shuffle=True)
-    train_points_loader = DataLoader(train_points_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
-    train_flows_loader = DataLoader(train_flows_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+    train_points_loader = DataLoader(train_points_dataset, batch_size=batch_size, shuffle=True, drop_last=False)
+    train_flows_loader = DataLoader(train_flows_dataset, batch_size=batch_size, shuffle=True, drop_last=False)
 
     for epoch in range(300):
         model.train()
@@ -195,6 +195,8 @@ def main():
 
         print(f"{epoch + 1}/{n_epochs}: loss {np.mean(losses)}, val_loss {np.mean(val_losses)}")
 
+    torch.save(model.state_dict(), "checkpoint_supervised.pt")
+
     for epoch in range(n_epochs):
         model.train()
         losses = []
@@ -215,18 +217,20 @@ def main():
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        for iter_ind, batch_data in enumerate(train_points_loader):
-            images, positions = batch_data
-            images, positions = images.to(device), positions.to(device)
-            positions = torch_tools.screen_to_norm(positions, images.shape[3], images.shape[2])
+        if epoch % 1 == 0:
+            # print("Additional supervised step")
+            for iter_ind, batch_data in enumerate(train_points_loader):
+                images, positions = batch_data
+                images, positions = images.to(device), positions.to(device)
+                positions = torch_tools.screen_to_norm(positions, images.shape[3], images.shape[2])
 
-            predict = model(images)
-            loss = criterion(predict, positions)
-            losses.append(loss.item())
+                predict = model(images)
+                loss = criterion(predict, positions)
+                losses.append(loss.item())
 
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
         model.eval()
         val_losses = []
@@ -241,6 +245,7 @@ def main():
                 val_losses.append(loss.item())
 
         print(f"{epoch + 1}/{n_epochs}: loss {np.mean(losses)}, val_loss {np.mean(val_losses)}")
+    torch.save(model.state_dict(), "checkpoint_weaksupervised.pt")
 
 
 if __name__ == '__main__':

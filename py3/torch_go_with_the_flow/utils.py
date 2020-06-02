@@ -38,6 +38,7 @@ def compute_flow(img0: np.ndarray, img1: np.ndarray) -> np.ndarray:
         img0.astype(np.uint8), img1.astype(np.uint8),
         layers=7, averaging_block_size=5, max_flow=5
     )
+
     flow[np.isnan(flow)] = 0.0
     if np.any(np.isnan(flow)):
         print("flow contains nan")
