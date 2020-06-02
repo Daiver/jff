@@ -36,7 +36,8 @@ def visualize_dataset(images, positions, flows):
 def main():
     device = 'cuda:0'
     batch_size = 64
-    lr = 5e-4
+    # batch_size = 128
+    lr = 2e-4
     n_epochs = 1000
 
     model = Model().to(device)
@@ -48,17 +49,23 @@ def main():
     # visualize_dataset(train_images, train_positions, train_flows)
     train_points_dataset_full = Image2PointsDataset(train_images, train_positions)
 
-    supervised_indices = list(range(0, len(train_images), 50))
+    # supervised_indices = list(range(0, len(train_images), 50))
+    # supervised_indices = list(range(0, len(train_images), 30))
+    supervised_indices = list(range(0, len(train_images), 20))
+
     print(supervised_indices)
     train_points_dataset = Image2PointsDataset(
-        np.array(train_images)[supervised_indices],
-        np.array(train_positions)[supervised_indices]
+        np.array(train_images)[supervised_indices * 5],
+        np.array(train_positions)[supervised_indices * 5]
     )
     train_flows_dataset = Clip2FlowDataset(train_images, train_flows)
 
     val_points_loader = DataLoader(train_points_dataset_full, batch_size=batch_size, shuffle=True)
     train_points_loader = DataLoader(train_points_dataset, batch_size=batch_size, shuffle=True, drop_last=False)
     train_flows_loader = DataLoader(train_flows_dataset, batch_size=batch_size, shuffle=True, drop_last=False)
+
+    print("len(train_points_dataset)", len(train_points_dataset))
+    print("len(train_flows_dataset)", len(train_flows_dataset))
 
     for epoch in range(300):
         model.train()
@@ -89,7 +96,7 @@ def main():
 
         print(f"{epoch + 1}/{n_epochs}: loss {np.mean(losses)}, val_loss {np.mean(val_losses)}")
 
-    torch.save(model.state_dict(), "checkpoint_supervised.pt")
+    torch.save(model.state_dict(), "checkpoints/checkpoint_supervised.pt")
 
     for epoch in range(n_epochs):
         model.train()
@@ -139,7 +146,8 @@ def main():
                 val_losses.append(loss.item())
 
         print(f"{epoch + 1}/{n_epochs}: loss {np.mean(losses)}, val_loss {np.mean(val_losses)}")
-    torch.save(model.state_dict(), "checkpoint_weaksupervised.pt")
+        if epoch % 10 == 0:
+            torch.save(model.state_dict(), "checkpoints/checkpoint_weaksupervised.pt")
 
 
 if __name__ == '__main__':
