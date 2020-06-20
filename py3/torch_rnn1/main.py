@@ -17,7 +17,7 @@ class Model(nn.Module):
         # self.i2h = nn.Linear(input_size + hidden_size, hidden_size)
         #
         # self.i2o = nn.Linear(input_size + hidden_size, output_size)
-        inner_size = 6
+        inner_size = 10
         self.i2h = nn.Sequential(
             nn.Linear(input_size + hidden_size, inner_size),
             nn.LeakyReLU(),
@@ -38,11 +38,13 @@ class Model(nn.Module):
         return output, hidden
 
 
-seq_len = 5
+seq_len = 6
 
 
 def int2uint4(val: int) -> np.ndarray:
     res = np.zeros(seq_len, dtype=np.float32)
+    res[5] = val % 2
+    val //= 2
     res[4] = val % 2
     val //= 2
     res[3] = val % 2
@@ -56,10 +58,13 @@ def int2uint4(val: int) -> np.ndarray:
 
 
 def main():
-    n_epochs = 2000
-    batch_size = 8
+    n_epochs = 10000
+    batch_size = 32
 
-    data = [int2uint4(x) for x in range(31)]
+    data = [
+        int2uint4(x)
+        for x in range(64)
+    ]
     labels = [
         1.0 if i % 5 == 0 else 0.0
         # 1.0 if i % 4 == 0 else 0.0
@@ -89,8 +94,10 @@ def main():
             losses.append(loss.item())
             optimizer.zero_grad()
             loss.backward()
+            nn.utils.clip_grad_norm_(model.parameters(), 0.1)
             optimizer.step()
-        print(f"{epoch + 1:04d}/{n_epochs} {np.mean(losses)}")
+        if epoch % 10 == 0:
+            print(f"{epoch + 1:04d}/{n_epochs} {np.mean(losses)}")
 
     model.eval()
     for batch in dataloader:
@@ -100,9 +107,12 @@ def main():
         hidden = torch.zeros(x.shape[1], hidden_size)
         for i in range(seq_len):
             res, hidden = model(x[i], hidden)
-        res = res.round().detach()
+        res = res.detach().round()
+        loss = nnf.mse_loss(res, label)
+        res = res.round()
         print(label.squeeze())
         print(res.squeeze())
+        print(loss.squeeze())
 
 
 if __name__ == '__main__':
