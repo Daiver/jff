@@ -14,6 +14,19 @@ def screen_to_norm(coords: torch.Tensor, width: int, height: int, align_corners:
     return res
 
 
+def norm_to_screen(coords: torch.Tensor, width: int, height: int, align_corners: bool = True):
+    assert align_corners
+    assert coords.dim() == 2
+    assert coords.shape[1] == 2
+    assert width > 0 and height > 0
+
+    res = coords.clone()
+    res.add_(1)
+    res[:, 0] *= float(width - 1) / 2.0
+    res[:, 1] *= float(height - 1) / 2.0
+    return res
+
+
 def screen_to_norm_batch(coords: torch.Tensor, width: int, height: int, align_corners: bool = True):
     assert align_corners
     assert coords.dim() == 3
