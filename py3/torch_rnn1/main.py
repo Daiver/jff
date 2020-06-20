@@ -6,7 +6,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 
-hidden_size = 4
+hidden_size = 3
 
 
 class Model(nn.Module):
@@ -17,7 +17,7 @@ class Model(nn.Module):
         # self.i2h = nn.Linear(input_size + hidden_size, hidden_size)
         #
         # self.i2o = nn.Linear(input_size + hidden_size, output_size)
-        inner_size = 16
+        inner_size = 8
         self.i2h = nn.Sequential(
             nn.Linear(input_size + hidden_size, inner_size),
             nn.LeakyReLU(),
@@ -80,7 +80,7 @@ def main():
 
     dataloader = DataLoader(dataset=pairs, batch_size=batch_size, shuffle=True)
     model = Model()
-    optimizer = optim.Adam(model.parameters(), lr=3e-4)
+    optimizer = optim.Adam(model.parameters(), lr=1e-2)
     # criterion = nn.NLLLoss()
     criterion = nn.BCELoss()
     # criterion = nn.MSELoss()
