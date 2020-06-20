@@ -6,7 +6,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 
-hidden_size = 4
+hidden_size = 2
 
 
 class Model(nn.Module):
@@ -17,7 +17,7 @@ class Model(nn.Module):
         # self.i2h = nn.Linear(input_size + hidden_size, hidden_size)
         #
         # self.i2o = nn.Linear(input_size + hidden_size, output_size)
-        inner_size = 10
+        inner_size = 8
         self.i2h = nn.Sequential(
             nn.Linear(input_size + hidden_size, inner_size),
             nn.LeakyReLU(),
@@ -58,7 +58,7 @@ def int2uint4(val: int) -> np.ndarray:
 
 
 def main():
-    n_epochs = 10000
+    n_epochs = 15000
     batch_size = 32
 
     data = [
