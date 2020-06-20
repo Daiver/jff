@@ -6,7 +6,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 
-hidden_size = 2
+hidden_size = 4
 
 
 class Model(nn.Module):
@@ -17,7 +17,7 @@ class Model(nn.Module):
         # self.i2h = nn.Linear(input_size + hidden_size, hidden_size)
         #
         # self.i2o = nn.Linear(input_size + hidden_size, output_size)
-        inner_size = 8
+        inner_size = 16
         self.i2h = nn.Sequential(
             nn.Linear(input_size + hidden_size, inner_size),
             nn.LeakyReLU(),
@@ -38,11 +38,15 @@ class Model(nn.Module):
         return output, hidden
 
 
-seq_len = 6
+seq_len = 8
 
 
 def int2uint4(val: int) -> np.ndarray:
     res = np.zeros(seq_len, dtype=np.float32)
+    res[7] = val % 2
+    val //= 2
+    res[6] = val % 2
+    val //= 2
     res[5] = val % 2
     val //= 2
     res[4] = val % 2
@@ -58,12 +62,12 @@ def int2uint4(val: int) -> np.ndarray:
 
 
 def main():
-    n_epochs = 15000
+    n_epochs = 50000
     batch_size = 32
 
     data = [
         int2uint4(x)
-        for x in range(64)
+        for x in range(256)
     ]
     labels = [
         1.0 if i % 5 == 0 else 0.0
@@ -76,7 +80,7 @@ def main():
 
     dataloader = DataLoader(dataset=pairs, batch_size=batch_size, shuffle=True)
     model = Model()
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=3e-4)
     # criterion = nn.NLLLoss()
     criterion = nn.BCELoss()
     # criterion = nn.MSELoss()
@@ -94,7 +98,7 @@ def main():
             losses.append(loss.item())
             optimizer.zero_grad()
             loss.backward()
-            nn.utils.clip_grad_norm_(model.parameters(), 0.1)
+            nn.utils.clip_grad_norm_(model.parameters(), 1)
             optimizer.step()
         if epoch % 10 == 0:
             print(f"{epoch + 1:04d}/{n_epochs} {np.mean(losses)}")
