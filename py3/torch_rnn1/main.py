@@ -6,7 +6,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 
-hidden_size = 3
+hidden_size = 4
 
 
 class Model(nn.Module):
@@ -17,7 +17,7 @@ class Model(nn.Module):
         # self.i2h = nn.Linear(input_size + hidden_size, hidden_size)
         #
         # self.i2o = nn.Linear(input_size + hidden_size, output_size)
-        inner_size = 8
+        inner_size = 16
         self.i2h = nn.Sequential(
             nn.Linear(input_size + hidden_size, inner_size),
             nn.LeakyReLU(),
@@ -26,6 +26,7 @@ class Model(nn.Module):
 
         self.i2o = nn.Sequential(
             nn.Linear(input_size + hidden_size, inner_size),
+            # nn.BatchNorm1d(inner_size),
             nn.LeakyReLU(),
             nn.Linear(inner_size, output_size),
         )
@@ -38,11 +39,13 @@ class Model(nn.Module):
         return output, hidden
 
 
-seq_len = 8
+seq_len = 9
 
 
 def int2uint4(val: int) -> np.ndarray:
     res = np.zeros(seq_len, dtype=np.float32)
+    res[8] = val % 2
+    val //= 2
     res[7] = val % 2
     val //= 2
     res[6] = val % 2
@@ -67,7 +70,7 @@ def main():
 
     data = [
         int2uint4(x)
-        for x in range(256)
+        for x in range(512)
     ]
     labels = [
         1.0 if i % 5 == 0 else 0.0
