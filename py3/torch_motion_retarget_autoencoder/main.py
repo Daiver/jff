@@ -30,8 +30,8 @@ def make_circle_dataset():
 
 def main():
     device = "cuda"
-    epochs = 10
-    batch_size = 128
+    epochs = 20
+    batch_size = 64
 
     circle_set = make_circle_dataset()
     # for i, x in enumerate(circle_set):
@@ -42,14 +42,15 @@ def main():
         torch.from_numpy(x).float().permute(2, 0, 1) / 255.0
         for x in circle_set
     ]
-
+    print(f"N samples {len(train_set)}")
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, drop_last=True)
     val_loader = DataLoader(train_set, batch_size=batch_size, shuffle=False)
 
     model = Model().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-5)
     # criterion = nn.MSELoss()
     criterion = nn.L1Loss()
+    # criterion = nn.BCELoss()
     for epoch_ind in range(epochs):
         losses = []
         model.train()
