@@ -37,8 +37,8 @@ def main():
     device = 'cuda:0'
     batch_size = 64
     # batch_size = 128
-    lr = 2e-4
-    n_epochs = 1000
+    lr = 1e-5
+    n_epochs = 5000
 
     model = Model().to(device)
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -55,8 +55,8 @@ def main():
 
     print(supervised_indices)
     train_points_dataset = Image2PointsDataset(
-        np.array(train_images)[supervised_indices * 5],
-        np.array(train_positions)[supervised_indices * 5]
+        np.array(train_images)[supervised_indices * 10],
+        np.array(train_positions)[supervised_indices * 10]
     )
     train_flows_dataset = Clip2FlowDataset(train_images, train_flows)
 
@@ -67,7 +67,7 @@ def main():
     print("len(train_points_dataset)", len(train_points_dataset))
     print("len(train_flows_dataset)", len(train_flows_dataset))
 
-    for epoch in range(300):
+    for epoch in range(1000):
         model.train()
         losses = []
         for iter_ind, batch_data in enumerate(train_points_loader):

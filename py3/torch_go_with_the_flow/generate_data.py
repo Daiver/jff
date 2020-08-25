@@ -47,6 +47,26 @@ def generate_dataset():
         positions.append(point)
         images.append(draw_sample(point))
 
+    for dx in range(n_x_steps):
+        point = [point_orig[0] + dx, point_orig[1] + 20]
+        positions.append(point)
+        images.append(draw_sample(point))
+
+    for dx in range(n_x_steps):
+        point = [point_orig[0] + n_x_steps - dx, point_orig[1] + 20]
+        positions.append(point)
+        images.append(draw_sample(point))
+
+    for dx in range(n_x_steps):
+        point = [point_orig[0] + dx, point_orig[1] + 25]
+        positions.append(point)
+        images.append(draw_sample(point))
+
+    for dx in range(n_x_steps):
+        point = [point_orig[0] + n_x_steps - dx, point_orig[1] + 25]
+        positions.append(point)
+        images.append(draw_sample(point))
+
     return images, positions
 
 

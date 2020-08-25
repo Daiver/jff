@@ -54,8 +54,8 @@ def main():
             predict_weak_one = predict_weak[i].detach().cpu().numpy()
             predict_super_one = predict_super[i].detach().cpu().numpy()
 
-            cv2.circle(image, np_draw_tools.to_int_tuple(predict_weak_one), 2, color=(0, 0, 255), thickness=-1)
-            cv2.circle(image, np_draw_tools.to_int_tuple(predict_super_one), 2, color=(255, 255, 0), thickness=-1)
+            cv2.circle(image, np_draw_tools.to_int_tuple(predict_weak_one), 2, color=(0, 0, 1), thickness=-1)
+            cv2.circle(image, np_draw_tools.to_int_tuple(predict_super_one), 2, color=(0, 0.2, 0), thickness=-1)
 
             cv2.imshow("img", image)
             cv2.waitKey()

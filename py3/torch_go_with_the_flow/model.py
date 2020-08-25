@@ -7,25 +7,26 @@ class Model(nn.Module):
         super().__init__()
 
         n_outs = 2
-        n_feats = 32
+        n_feats = 16
 
         self.backbone = nn.Sequential(
             nn.Conv2d(in_channels=3, out_channels=n_feats, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(n_feats),
             nn.LeakyReLU(inplace=True),
 
-            ResidualBlock(in_channels=n_feats, out_channels=n_feats, stride=2),  # 128 -> 64
-            ResidualBlock(in_channels=n_feats, out_channels=n_feats, stride=2),  # 64 -> 32
-            ResidualBlock(in_channels=n_feats, out_channels=n_feats, stride=2),  # 32 -> 16
-            ResidualBlock(in_channels=n_feats, out_channels=n_feats, stride=2),  # 16 -> 8
-            ResidualBlock(in_channels=n_feats, out_channels=n_feats, stride=2),  # 8 -> 4
+            ResidualBlock(in_channels=n_feats, out_channels=2*n_feats, stride=2),  # 128 -> 64
+            ResidualBlock(in_channels=2*n_feats, out_channels=2*n_feats, stride=2),  # 64 -> 32
+            ResidualBlock(in_channels=2*n_feats, out_channels=2*n_feats, stride=2),  # 32 -> 16
+            ResidualBlock(in_channels=2*n_feats, out_channels=2*n_feats, stride=2),  # 16 -> 8
+            # ResidualBlock(in_channels=2*n_feats, out_channels=2*n_feats, stride=2),  # 8 -> 4
         )
 
         self.head = nn.Sequential(
-            nn.Linear(in_features=4*4*n_feats, out_features=n_feats),
-            nn.BatchNorm1d(n_feats),
-            nn.LeakyReLU(inplace=True),
-            nn.Linear(in_features=n_feats, out_features=n_outs),
+            nn.Linear(in_features=4 * 4 * 2 * n_feats, out_features=n_outs),
+            # nn.Linear(in_features=4*4*2*n_feats, out_features=2*n_feats),
+            # nn.BatchNorm1d(2*n_feats),
+            # nn.LeakyReLU(inplace=True),
+            # nn.Linear(in_features=2*n_feats, out_features=n_outs),
         )
 
     def forward(self, x):
