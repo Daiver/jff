@@ -19,11 +19,11 @@ class Model(nn.Module):
             ResidualBlock(in_channels=2 * n_feats, out_channels=2 * n_feats, stride=2),  # 32 -> 16
             ResidualBlock(in_channels=2 * n_feats, out_channels=2 * n_feats, stride=2),  # 16 -> 8
             ResidualBlock(in_channels=2 * n_feats, out_channels=4 * n_feats, stride=2),  # 8 -> 4
-            ResidualBlock(in_channels=4 * n_feats, out_channels=n_feats, stride=1),  # 4 -> 4
+            ResidualBlock(in_channels=4 * n_feats, out_channels=2, stride=1),  # 4 -> 4
         )
 
         self.decoder = nn.Sequential(
-            nn.Conv2d(in_channels=n_feats, out_channels=4 * n_feats, kernel_size=1, padding=0, bias=True),
+            nn.Conv2d(in_channels=2, out_channels=4 * n_feats, kernel_size=1, padding=0, bias=True),
             ResidualBlock(in_channels=4 * n_feats, out_channels=4 * n_feats, stride=1),
             nn.UpsamplingBilinear2d(scale_factor=2),  # 4 -> 8
             ResidualBlock(in_channels=4 * n_feats, out_channels=4 * n_feats, stride=1),
