@@ -28,12 +28,30 @@ def make_circle_dataset():
     return res
 
 
+def draw_rectangle_sample(center):
+    canvas = np.zeros((canvas_size[0], canvas_size[1], 3), dtype=np.uint8)
+    point = np.array(center).round().astype(np.int32)
+    pt1 = (point[0] - 5, point[1] - 5)
+    pt2 = (point[0] + 5, point[1] + 5)
+    cv2.rectangle(canvas, pt1=pt1, pt2=pt2, color=(255, 0, 0), thickness=-1)
+    return canvas
+
+
+def make_rectangle_dataset():
+    res = []
+    for y in range(10, 110, 2):
+        for x in range(10, 110, 2):
+            res.append(draw_rectangle_sample((x, y)))
+    return res
+
+
 def main():
     device = "cuda"
-    epochs = 500
+    epochs = 50
     batch_size = 8
 
-    circle_set = make_circle_dataset()
+    # circle_set = make_circle_dataset()
+    circle_set = make_rectangle_dataset()
     # for i, x in enumerate(circle_set):
     #     cv2.imshow("", x)
     #     cv2.waitKey()
@@ -75,7 +93,7 @@ def main():
             for p, s in zip(pred, sample):
                 to_show.append(p)
                 to_show.append(s)
-            to_show = np_draw_tools.make_grid(to_show[:10], 2)
+            to_show = np_draw_tools.make_grid(to_show[:20], 4)
             cv2.imshow("", to_show)
             cv2.waitKey(100)
             break
