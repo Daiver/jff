@@ -2,12 +2,13 @@ from torch import nn as nn
 from torch.nn import functional as F
 from coord_conv import CoordConv
 
-class Model(nn.Module):
+
+n_feats = 32
+
+
+class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
-
-        n_outs = 2
-        n_feats = 32
 
         self.encoder = nn.Sequential(
             nn.Conv2d(in_channels=3, out_channels=n_feats, kernel_size=3, stride=1, padding=1, bias=False),
@@ -21,6 +22,15 @@ class Model(nn.Module):
             ResidualBlock(in_channels=2 * n_feats, out_channels=4 * n_feats, stride=2),  # 8 -> 4
             ResidualBlock(in_channels=4 * n_feats, out_channels=2, stride=1),  # 4 -> 4
         )
+
+    def forward(self, x):
+        x = self.encoder(x)
+        return x
+
+
+class Decoder(nn.Module):
+    def __init__(self):
+        super().__init__()
 
         self.decoder = nn.Sequential(
             nn.Conv2d(in_channels=2, out_channels=4 * n_feats, kernel_size=1, padding=0, bias=True),
@@ -40,7 +50,6 @@ class Model(nn.Module):
         )
 
     def forward(self, x):
-        x = self.encoder(x)
         x = self.decoder(x)
         return x
 

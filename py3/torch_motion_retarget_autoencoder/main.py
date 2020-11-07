@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 import np_draw_tools
 
-from model import Model
+from models import Encoder, Decoder
 
 canvas_size = (128, 128)
 
@@ -50,47 +50,55 @@ def main():
     epochs = 50
     batch_size = 8
 
-    # circle_set = make_circle_dataset()
-    circle_set = make_rectangle_dataset()
+    circle_set = make_circle_dataset()
+    rect_set = make_rectangle_dataset()
     # for i, x in enumerate(circle_set):
     #     cv2.imshow("", x)
     #     cv2.waitKey()
 
-    train_set = [
+    train_rect_set = [
         torch.from_numpy(x).float().permute(2, 0, 1) / 255.0
-        for x in circle_set
+        for x in rect_set
     ]
-    print(f"N samples {len(train_set)}")
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, drop_last=True)
-    val_loader = DataLoader(train_set, batch_size=batch_size, shuffle=False)
+    print(f"N samples {len(train_rect_set)}")
+    train_rect_loader = DataLoader(train_rect_set, batch_size=batch_size, shuffle=True, drop_last=True)
+    val_rect_loader = DataLoader(train_rect_set, batch_size=batch_size, shuffle=False)
 
-    model = Model().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=1e-4)
+    encoder = Encoder().to(device)
+    decoder_rect = Decoder().to(device)
+    optimizer = optim.Adam(list(encoder.parameters()) + list(decoder_rect.parameters()), lr=1e-4)
     # criterion = nn.MSELoss()
     # criterion = nn.L1Loss()
     criterion = nn.BCELoss()
     for epoch_ind in range(epochs):
         losses = []
-        model.train()
-        for sample in train_loader:
-            sample = sample.to(device)
-            pred = model(sample)
-            loss = criterion(pred, sample)
+        encoder.train()
+        decoder_rect.train()
+        for sample_rect in train_rect_loader:
+            sample_rect = sample_rect.to(device)
+            pred_rect = encoder(sample_rect)
+            pred_rect = decoder_rect(pred_rect)
+            loss_rect = criterion(pred_rect, sample_rect)
+
+            loss = loss_rect
+
             losses.append(loss.item())
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        model.eval()
+        encoder.eval()
+        decoder_rect.eval()
         print(f"{epoch_ind + 1} / {epochs} loss {np.mean(losses)}")
-        for sample in val_loader:
-            sample = sample.to(device)
-            pred = model(sample)
-            pred = (pred.detach().permute(0, 2, 3, 1).cpu().numpy() * 255).astype(np.uint8)
-            sample = (sample.detach().permute(0, 2, 3, 1).cpu().numpy() * 255).astype(np.uint8)
+        for sample_rect in val_rect_loader:
+            sample_rect = sample_rect.to(device)
+            pred_rect = encoder(sample_rect)
+            pred_rect = decoder_rect(pred_rect)
+            pred_rect = (pred_rect.detach().permute(0, 2, 3, 1).cpu().numpy() * 255).astype(np.uint8)
+            sample_rect = (sample_rect.detach().permute(0, 2, 3, 1).cpu().numpy() * 255).astype(np.uint8)
 
             to_show = []
-            for p, s in zip(pred, sample):
+            for p, s in zip(pred_rect, sample_rect):
                 to_show.append(p)
                 to_show.append(s)
             to_show = np_draw_tools.make_grid(to_show[:20], 4)
