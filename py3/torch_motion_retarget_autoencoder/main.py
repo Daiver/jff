@@ -30,8 +30,8 @@ def make_circle_dataset():
 
 def main():
     device = "cuda"
-    epochs = 20
-    batch_size = 64
+    epochs = 500
+    batch_size = 8
 
     circle_set = make_circle_dataset()
     # for i, x in enumerate(circle_set):
@@ -47,10 +47,10 @@ def main():
     val_loader = DataLoader(train_set, batch_size=batch_size, shuffle=False)
 
     model = Model().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=1e-5)
+    optimizer = optim.Adam(model.parameters(), lr=1e-4)
     # criterion = nn.MSELoss()
-    criterion = nn.L1Loss()
-    # criterion = nn.BCELoss()
+    # criterion = nn.L1Loss()
+    criterion = nn.BCELoss()
     for epoch_ind in range(epochs):
         losses = []
         model.train()
@@ -75,10 +75,11 @@ def main():
             for p, s in zip(pred, sample):
                 to_show.append(p)
                 to_show.append(s)
-            to_show = np_draw_tools.make_grid(to_show, 2)
+            to_show = np_draw_tools.make_grid(to_show[:10], 2)
             cv2.imshow("", to_show)
             cv2.waitKey(100)
             break
+    cv2.waitKey()
 
 
 if __name__ == '__main__':
