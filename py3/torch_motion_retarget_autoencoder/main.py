@@ -22,9 +22,9 @@ def draw_circle_sample(center):
 
 def make_circle_dataset():
     res = []
-    for y in range(10, 110, 2):
-        for x in range(10, 110, 2):
-            res.append(draw_circle_sample((x, y)))
+    for i in range(1000):
+        x, y = np.random.uniform(0, canvas_size[0]), np.random.uniform(0, canvas_size[0])
+        res.append(draw_circle_sample((x, y)))
     return res
 
 
@@ -39,9 +39,9 @@ def draw_rectangle_sample(center):
 
 def make_rectangle_dataset():
     res = []
-    for y in range(10, 110, 2):
-        for x in range(10, 110, 2):
-            res.append(draw_rectangle_sample((x, y)))
+    for i in range(1000):
+        x, y = np.random.uniform(0, canvas_size[0]), np.random.uniform(0, canvas_size[0])
+        res.append(draw_rectangle_sample((x, y)))
     return res
 
 
@@ -68,7 +68,7 @@ def main():
 
     print(f"N samples {len(train_rect_set)}")
     train_rect_loader = DataLoader(train_rect_set, batch_size=batch_size, shuffle=True, drop_last=True)
-    val_rect_loader = DataLoader(train_rect_set, batch_size=batch_size * 4, shuffle=False)
+    val_rect_loader = DataLoader(train_rect_set, batch_size=batch_size * 16, shuffle=False)
 
     train_circle_loader = DataLoader(train_circle_set, batch_size=batch_size, shuffle=True, drop_last=True)
 
@@ -127,7 +127,7 @@ def main():
             for p, s in zip(pred_rect, sample_rect):
                 to_show.append(p)
                 to_show.append(s)
-            to_show = np_draw_tools.make_grid(to_show[:32], 4)
+            to_show = np_draw_tools.make_grid(to_show[:64], 8)
             cv2.imshow("", to_show)
             cv2.waitKey(100)
             break
