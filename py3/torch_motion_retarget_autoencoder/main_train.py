@@ -10,27 +10,21 @@ import np_draw_tools
 
 from data_generation import make_rectangle_dataset, make_circle_dataset
 from models import Encoder, Decoder
+from utils import numpy_images_to_torch
 
 
 def main():
     n_samples_to_generate = 1500
 
-    device = "cuda"
     epochs = 50
+    device = "cuda"
     batch_size = 8
 
     circle_set = make_circle_dataset(n_samples_to_generate)
     rect_set = make_rectangle_dataset(n_samples_to_generate)
 
-    train_rect_set = [
-        torch.from_numpy(x).float().permute(2, 0, 1) / 255.0
-        for x in rect_set
-    ]
-
-    train_circle_set = [
-        torch.from_numpy(x).float().permute(2, 0, 1) / 255.0
-        for x in circle_set
-    ]
+    train_rect_set = numpy_images_to_torch(rect_set)
+    train_circle_set = numpy_images_to_torch(circle_set)
 
     print(f"N rect samples {len(train_rect_set)} N circle samples {len(train_circle_set)}")
     train_rect_loader = DataLoader(train_rect_set, batch_size=batch_size, shuffle=True, drop_last=True)
