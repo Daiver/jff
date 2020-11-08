@@ -15,7 +15,7 @@ def up_down_trajectory():
     res = []
     start = 0
     finish = 110
-    n_steps = 300
+    n_steps = 200
     delta = (finish - start) / (n_steps - 1)
 
     start_pt = (5, 64)
@@ -39,7 +39,7 @@ def left_right_trajectory():
     res = []
     start = 0
     finish = 110
-    n_steps = 300
+    n_steps = 200
     delta = (finish - start) / (n_steps - 1)
 
     start_pt = (5, 64)
@@ -62,7 +62,7 @@ def left_right_trajectory():
 def circle_trajectory():
     start = 0
     finish = 2 * np.pi
-    n_steps = 300
+    n_steps = 200
     radius = 50
     center = (64, 64)
 
@@ -89,8 +89,8 @@ def main():
     # rect_set = make_rectangle_dataset(n_samples_to_generate)
 
     # coords = circle_trajectory()
-    # coords = left_right_trajectory()
-    coords = up_down_trajectory()
+    coords = left_right_trajectory()
+    # coords = up_down_trajectory()
     input_set = samples_from_coords(coords, draw_rectangle_sample)
 
     device = "cuda"
@@ -110,6 +110,7 @@ def main():
 
     torch_rect_set = numpy_images_to_torch(input_set)
     loader = DataLoader(torch_rect_set, batch_size=batch_size)
+    index = 0
     for sample in loader:
         sample = sample.to(device)
         pred = encoder(sample)
@@ -121,9 +122,22 @@ def main():
         for p, s in zip(pred, sample):
             to_show = [s, p]
             to_show = np_draw_tools.make_grid(to_show)
-            cv2.imshow("", to_show)
-            cv2.waitKey(30)
+            cv2.imwrite(f"results/leftright/leftright_{index}.jpg", to_show)
+            index += 1
+            # cv2.imshow("", to_show)
+            # cv2.waitKey(30)
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    n_samples_to_generate = 1500
+    circle_set = make_circle_dataset(n_samples_to_generate)
+    rect_set = make_rectangle_dataset(n_samples_to_generate)
+    index = 0
+    for r, c in zip(circle_set, rect_set):
+        to_show = [r, c]
+        to_show = np_draw_tools.make_grid(to_show)
+        cv2.imwrite(f"results/samples/samples_{index}.jpg", to_show)
+        index += 1
+        if index > 30:
+            break
