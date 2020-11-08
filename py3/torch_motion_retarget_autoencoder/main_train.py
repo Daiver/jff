@@ -8,53 +8,19 @@ from torch.utils.data import DataLoader
 
 import np_draw_tools
 
+from data_generation import make_rectangle_dataset, make_circle_dataset
 from models import Encoder, Decoder
-
-canvas_size = (128, 128)
-
-
-def draw_circle_sample(center):
-    canvas = np.zeros((canvas_size[0], canvas_size[1], 3), dtype=np.uint8)
-    point = np.array(center).round().astype(np.int32)
-    cv2.circle(canvas, (point[0], point[1]), 5, (0, 255, 0), thickness=-1)
-    return canvas
-
-
-def make_circle_dataset():
-    res = []
-    for i in range(1000):
-        x, y = np.random.uniform(0, canvas_size[0]), np.random.uniform(0, canvas_size[0])
-        res.append(draw_circle_sample((x, y)))
-    return res
-
-
-def draw_rectangle_sample(center):
-    canvas = np.zeros((canvas_size[0], canvas_size[1], 3), dtype=np.uint8)
-    point = np.array(center).round().astype(np.int32)
-    pt1 = (point[0] - 5, point[1] - 5)
-    pt2 = (point[0] + 5, point[1] + 5)
-    cv2.rectangle(canvas, pt1=pt1, pt2=pt2, color=(255, 0, 0), thickness=-1)
-    return canvas
-
-
-def make_rectangle_dataset():
-    res = []
-    for i in range(1000):
-        x, y = np.random.uniform(0, canvas_size[0]), np.random.uniform(0, canvas_size[0])
-        res.append(draw_rectangle_sample((x, y)))
-    return res
 
 
 def main():
+    n_samples_to_generate = 1500
+
     device = "cuda"
     epochs = 50
     batch_size = 8
 
-    circle_set = make_circle_dataset()
-    rect_set = make_rectangle_dataset()
-    # for i, x in enumerate(circle_set):
-    #     cv2.imshow("", x)
-    #     cv2.waitKey()
+    circle_set = make_circle_dataset(n_samples_to_generate)
+    rect_set = make_rectangle_dataset(n_samples_to_generate)
 
     train_rect_set = [
         torch.from_numpy(x).float().permute(2, 0, 1) / 255.0
@@ -66,7 +32,7 @@ def main():
         for x in circle_set
     ]
 
-    print(f"N samples {len(train_rect_set)}")
+    print(f"N rect samples {len(train_rect_set)} N circle samples {len(train_circle_set)}")
     train_rect_loader = DataLoader(train_rect_set, batch_size=batch_size, shuffle=True, drop_last=True)
     val_rect_loader = DataLoader(train_rect_set, batch_size=batch_size * 16, shuffle=False)
 
@@ -131,6 +97,9 @@ def main():
             cv2.imshow("", to_show)
             cv2.waitKey(100)
             break
+    torch.save(encoder.state_dict(), "encoder.pt")
+    torch.save(decoder_circle.state_dict(), "decoder_circle.pt")
+    torch.save(decoder_rect.state_dict(), "decoder_rect.pt")
     cv2.waitKey()
 
 
