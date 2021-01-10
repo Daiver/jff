@@ -1,0 +1,5 @@
+wheel
+numpy
+git+https://github.com/Daiver/np_draw_tools
+torch
+opencv-python
