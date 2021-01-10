@@ -6,10 +6,12 @@ hidden_size = 4
 
 
 class RNN(nn.Module):
-    def __init__(self):
+    def __init__(
+            self,
+            input_size: int,
+            output_size: int
+    ):
         super().__init__()
-        input_size = 4
-        output_size = 4
 
         inner_size = 16
         self.i2h = nn.Sequential(
