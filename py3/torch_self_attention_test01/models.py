@@ -2,7 +2,7 @@ import torch
 from torch import nn as nn
 
 
-hidden_size = 4
+hidden_size = 64
 
 
 class RNN(nn.Module):
@@ -13,7 +13,7 @@ class RNN(nn.Module):
     ):
         super().__init__()
 
-        inner_size = 16
+        inner_size = 64
         self.i2h = nn.Sequential(
             nn.Linear(input_size + hidden_size, inner_size),
             nn.LeakyReLU(),

@@ -11,13 +11,14 @@ from models import RNN, hidden_size
 
 def main():
     batch_size = 2
-    n_epochs = 1000
+    n_epochs = 20000
 
     data = torch.tensor([
         [1, 2, 0, 3],
-        [4, 5, 2, 1],
+        [4, 4, 2, 1],
     ])
     targets = torch.flip(data, [1])
+
     data = nnf.one_hot(data).float()
     targets = nnf.one_hot(targets).float()
     pairs = list(zip(data, targets))
@@ -27,7 +28,7 @@ def main():
 
     dataloader = DataLoader(dataset=pairs, batch_size=batch_size, shuffle=True)
     model = RNN(input_size=n_features, output_size=n_features)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=5e-3)
     # criterion = nn.NLLLoss()
     criterion = nn.BCELoss()
     # criterion = nn.MSELoss()
@@ -60,11 +61,13 @@ def main():
         res, hidden = model(x[:, i], hidden)
         ress.append(res)
     res = torch.stack(ress, 1)
-    for x, y in zip(data, res):
+    for x, y, r in zip(data, targets, res):
         x = torch.argmax(x, dim=-1)
         y = torch.argmax(y, dim=-1)
+        r = torch.argmax(r, dim=-1)
         print(x.detach().numpy())
         print(y.detach().numpy())
+        print(r.detach().numpy())
         print("======")
 
 
