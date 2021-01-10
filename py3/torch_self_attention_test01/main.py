@@ -10,13 +10,15 @@ from models import RNN, hidden_size
 
 
 def main():
-    batch_size = 2
-    n_epochs = 2000
+    batch_size = 4
+    n_epochs = 10000
 
     data = torch.tensor([
         [1, 2, 0, 3],
         [4, 4, 2, 1],
-        [1, 1, 1, 1]
+        [1, 1, 1, 1],
+        [1, 3, 1, 1],
+        [0, 1, 3, 0]
     ])
     targets = torch.flip(data, [1])
 
@@ -29,7 +31,7 @@ def main():
 
     dataloader = DataLoader(dataset=pairs, batch_size=batch_size, shuffle=True)
     model = RNN(input_size=n_features, output_size=n_features)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-4)
     # criterion = nn.NLLLoss()
     # criterion = nn.BCELoss()
     criterion = nn.MSELoss()
