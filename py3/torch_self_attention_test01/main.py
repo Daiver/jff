@@ -11,11 +11,12 @@ from models import RNN, hidden_size
 
 def main():
     batch_size = 2
-    n_epochs = 20000
+    n_epochs = 2000
 
     data = torch.tensor([
         [1, 2, 0, 3],
         [4, 4, 2, 1],
+        [1, 1, 1, 1]
     ])
     targets = torch.flip(data, [1])
 
@@ -28,10 +29,10 @@ def main():
 
     dataloader = DataLoader(dataset=pairs, batch_size=batch_size, shuffle=True)
     model = RNN(input_size=n_features, output_size=n_features)
-    optimizer = optim.Adam(model.parameters(), lr=5e-3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
     # criterion = nn.NLLLoss()
-    criterion = nn.BCELoss()
-    # criterion = nn.MSELoss()
+    # criterion = nn.BCELoss()
+    criterion = nn.MSELoss()
 
     for epoch in range(n_epochs):
         losses = []
@@ -44,6 +45,9 @@ def main():
                 res, hidden = model(x[:, i], hidden)
                 ress.append(res)
             res = torch.stack(ress, 1)
+            if epoch == n_epochs - 1:
+                print(torch.argmax(label, -1))
+                print(torch.argmax(res, -1))
 
             loss = criterion(res, label)
             losses.append(loss.item())
@@ -53,22 +57,6 @@ def main():
             optimizer.step()
         # if epoch % 10 == 0:
         print(f"{epoch + 1:04d}/{n_epochs} {np.mean(losses)}")
-
-    ress = []
-    x = data
-    hidden = torch.zeros(x.shape[0], hidden_size)
-    for i in range(seq_len):
-        res, hidden = model(x[:, i], hidden)
-        ress.append(res)
-    res = torch.stack(ress, 1)
-    for x, y, r in zip(data, targets, res):
-        x = torch.argmax(x, dim=-1)
-        y = torch.argmax(y, dim=-1)
-        r = torch.argmax(r, dim=-1)
-        print(x.detach().numpy())
-        print(y.detach().numpy())
-        print(r.detach().numpy())
-        print("======")
 
 
 if __name__ == '__main__':
