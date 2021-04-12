@@ -24,9 +24,9 @@ class SelfAttention(nn.Module):
         queries = self.toqueries(x).view(batch_size, seq_size, self.n_heads, n_features)
         values = self.tovalues(x).view(batch_size, seq_size, self.n_heads, n_features)
 
-        keys = keys.transpose(1, 2).view(batch_size * self.n_heads, seq_size, n_features)
-        queries = queries.transpose(1, 2).view(batch_size * self.n_heads, seq_size, n_features)
-        values = values.transpose(1, 2).view(batch_size * self.n_heads, seq_size, n_features)
+        keys = keys.transpose(1, 2).contiguous().view(batch_size * self.n_heads, seq_size, n_features)
+        queries = queries.transpose(1, 2).contiguous().view(batch_size * self.n_heads, seq_size, n_features)
+        values = values.transpose(1, 2).contiguous().view(batch_size * self.n_heads, seq_size, n_features)
 
         queries = queries / (n_features ** (1/4))
         keys = keys / (n_features ** (1/4))
@@ -40,5 +40,5 @@ class SelfAttention(nn.Module):
         # scores : batch_size*n_heads x seq_size x seq_size
         # values : batch_size*n_heads x seq_size x n_features
         res = torch.bmm(scores, values).view(batch_size, self.n_heads, seq_size, n_features)
-        res = res.transpose(1, 2).view(batch_size, seq_size, self.n_heads * n_features)
+        res = res.transpose(1, 2).contiguous().view(batch_size, seq_size, self.n_heads * n_features)
         return self.unifyheads(res)
