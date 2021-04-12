@@ -4,7 +4,7 @@ from torch import nn
 from self_attention import SelfAttention
 
 
-class Transformer(nn.Module):
+class TransformerBlock(nn.Module):
     def __init__(
             self,
             n_features: int,
