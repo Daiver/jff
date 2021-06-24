@@ -23,8 +23,16 @@ def laplacian_smoothing_one_step(
     return res
 
 
-def laplacian_smoothing(vertices: np.ndarray) -> np.ndarray:
-    pass
+def laplacian_smoothing(
+        vertices: np.ndarray,
+        adjacency_table: List[List[int]],
+        degree: float,
+        n_iters: int
+) -> np.ndarray:
+    res = vertices.copy()
+    for iteration in range(n_iters):
+        res = laplacian_smoothing_one_step(res, adjacency_table, degree)
+    return res
 
 
 def main():
@@ -37,7 +45,7 @@ def main():
         [0, 1, 2]
     ]
     adj_table = geom_tools.adjacency_tools.vertices_adjacency_from_polygon_vertex_indices(triangle_indices)
-    res = laplacian_smoothing_one_step(vertices, adj_table, 0.5)
+    res = laplacian_smoothing(vertices, adj_table, 0.5, 10)
     pass
 
 
