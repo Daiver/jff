@@ -49,13 +49,13 @@ def compute_basis_for_fan(
         vertex_ind: int
 ) -> np.ndarray:
     assert vertices.shape == normals.shape
-    adj_indices = adjacency_table[vertex_ind]
-    assert len(adj_indices) > 0
     normal = normals[vertex_ind]
-    first_edge = vertices[adj_indices[0]] - vertices[vertex_ind]
+    center = vertices[vertex_ind]
+    first_neighbour = vertices[adjacency_table[vertex_ind][0]]
+    first_edge = normalize(first_neighbour - center)
     first_axis = normalize(np.cross(normal, first_edge))
     second_axis = normalize(np.cross(first_axis, normal))
-    return np.vstack((normal, first_axis, second_axis))
+    return np.vstack((normal, first_axis, second_axis)).T
 
 
 def compute_basis_for_mesh(
