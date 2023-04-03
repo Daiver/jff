@@ -5,7 +5,7 @@ authors = ["daiver <ra22341@ya.ru>"]
 
 [dependencies]
 itertools = "0.4"
-time = "0.1"
+time = "0.2"
 
 [dependencies.rustonum]
 git = "https://github.com/daiver/rustonum"
